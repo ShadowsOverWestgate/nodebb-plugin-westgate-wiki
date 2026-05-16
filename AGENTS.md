@@ -1553,6 +1553,20 @@ Implementation status, 2026-04-30:
   NodeBB core hook after `privileges.posts.filter` and before
   `getPostSummaryByPids`, or add a carefully-scoped route/controller wrapper as
   a separate task.
+- Known remaining live-socket gap, observed during bulk wiki bot deployment:
+  wiki topics can be correctly filtered from `/unread` and persisted header
+  unread counts, but online users may still see transient unread badge bumps
+  because NodeBB emits `event:new_post` / `event:new_topic` immediately after
+  `POST /api/v3/topics`. The client header increments from that socket event
+  before the next filtered unread query corrects it. Treat this as a
+  plugin-owned "stealth wiki post" follow-up, not a toolkit workaround. The
+  likely fix is to register `filter:sockets.sendNewPostToUids`,
+  `filter:sockets.sendNewPostToUid`, and/or
+  `filter:sockets.sendNewTopicToUid`; when the post/topic cid is an effective
+  wiki namespace, suppress the recipient list or emitted payload so wiki bot
+  creates do not produce live unread popups. Do not mark topics read for every
+  user from the deployer; that is user-specific, races the socket event, and
+  would couple wiki publication to global forum user state.
 
 Live verification, 2026-05-01:
 
@@ -1560,6 +1574,7 @@ Live verification, 2026-05-01:
 - Confirmed on the live server that main forum search no longer returns wiki
   posts.
 - Remaining live checks: `/top`, `/popular`, `/unread`, header unread count,
+  live socket unread badge behavior during wiki bot topic creation,
   `/recent.rss`, `/api/recent/posts`, and `/recentposts.rss`.
 
 ### Phase 0: Confirm Surface Inventory
@@ -1652,6 +1667,9 @@ Tasks:
 7. Decide whether opening a wiki page should mark its backing topic read. If
    not, unread filtering must remain permanent so hidden unread wiki topics do
    not keep inflating header counters.
+8. Add live-socket filtering for wiki topics so `event:new_post` and
+   `event:new_topic` do not transiently increment online users' header unread
+   badges before `filter:topics.getUnreadTids` has a chance to correct counts.
 
 Exit criteria:
 
@@ -2035,6 +2053,9 @@ Mark items here as work lands in the repository.
 - [ ] Decide whether `/api/recent/posts` and `/recentposts.rss` need a NodeBB
   core hook or separate wrapper to filter recent post summaries from wiki
   categories.
+- [ ] Add live socket filtering for wiki bot page creation so wiki-backed
+  `event:new_post` / `event:new_topic` fanout does not create transient header
+  unread badge popups for online users.
 - [ ] After canonical paths land, implement the wiki-owned search backend
   contract under `/wiki/search` and `/api/v3/plugins/westgate-wiki/search`.
 - [x] After canonical paths land, update the existing namespace compose search
