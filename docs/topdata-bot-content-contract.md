@@ -9,6 +9,10 @@ Wiki article bodies are stored as sanitized HTML in the first NodeBB post for
 the topic. Tiptap JSON is editor-internal state, not the deployed persistence
 format.
 
+Generated pages may begin with `sow-topdata-wiki` HTML marker comments. The
+wiki plugin must still detect those posts as stored HTML so NodeBB does not run
+them through normal Markdown escaping before article rendering.
+
 The create and edit API body field for generated article content is `content`.
 The plugin compose path also mirrors sanitized HTML into `sourceContent` where
 that is needed for NodeBB edit compatibility, but bot deploys should treat
