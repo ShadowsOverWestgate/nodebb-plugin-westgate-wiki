@@ -21,7 +21,7 @@ function test(name, fn) {
 
 installJsdomGlobals();
 
-const [{ Editor }, StarterKitModule, HighlightModule, ImageModule, TableModule, TableCellModule, TableHeaderModule, TableRowModule, PreservedNodeAttributesModule, StyledSpanModule, ContainerBlockModule, MediaRowModule, ImageFigureModule, WikiAlignmentTableModule, WikiCalloutModule, WikiPoetryQuoteModule, WikiEditingKeymapModule, SlashCommandModule, WikiCodeBlockModule, WikiBlockBackgroundModule, WikiLinkModule, WikiEntitiesModule, toolbarSchemaModule, editorTocModule, linkInteractionsModule, imageResizeModule, mediaSelectionModule, mediaCellSelectionModule, legacyHtmlModule, sanitizerContractModule, colorContrastModule] = await Promise.all([
+const [{ Editor }, StarterKitModule, HighlightModule, ImageModule, TableModule, TableCellModule, TableHeaderModule, TableRowModule, PreservedNodeAttributesModule, StyledSpanModule, ContainerBlockModule, MediaRowModule, ImageFigureModule, WikiAlignmentTableModule, WikiCalloutModule, WikiPoetryQuoteModule, WikiInfoboxModule, WikiEditingKeymapModule, SlashCommandModule, WikiCodeBlockModule, WikiBlockBackgroundModule, WikiLinkModule, WikiEntitiesModule, toolbarSchemaModule, editorTocModule, linkInteractionsModule, imageResizeModule, mediaSelectionModule, mediaCellSelectionModule, legacyHtmlModule, sanitizerContractModule, colorContrastModule] = await Promise.all([
   import("@tiptap/core"),
   import("@tiptap/starter-kit"),
   import("../tiptap/src/extensions/wiki-highlight.mjs"),
@@ -38,6 +38,7 @@ const [{ Editor }, StarterKitModule, HighlightModule, ImageModule, TableModule, 
   import("../tiptap/src/extensions/wiki-alignment-table.mjs"),
   import("../tiptap/src/extensions/wiki-callout.mjs"),
   import("../tiptap/src/extensions/wiki-poetry-quote.mjs"),
+  import("../tiptap/src/extensions/wiki-infobox.mjs"),
   import("../tiptap/src/extensions/wiki-editing-keymap.mjs"),
   import("../tiptap/src/extensions/slash-command.mjs"),
   import("../tiptap/src/extensions/wiki-code-block.mjs"),
@@ -77,6 +78,18 @@ const ImageFigure = ImageFigureModule.default;
 const WikiAlignmentTable = WikiAlignmentTableModule.default;
 const WikiCallout = WikiCalloutModule.default;
 const WikiPoetryQuote = WikiPoetryQuoteModule.default;
+const WikiInfobox = WikiInfoboxModule.default;
+const {
+  WikiInfoboxContent,
+  WikiInfoboxImage,
+  WikiInfoboxRow,
+  WikiInfoboxRows,
+  WikiInfoboxSection,
+  WikiInfoboxSubtitle,
+  WikiInfoboxTerm,
+  WikiInfoboxTitle,
+  WikiInfoboxValue
+} = WikiInfoboxModule;
 const WikiEditingKeymap = WikiEditingKeymapModule.default;
 const SlashCommand = SlashCommandModule.default;
 const WikiCodeBlock = WikiCodeBlockModule.default;
@@ -155,6 +168,16 @@ function createEditor(content) {
       WikiAlignmentTable,
       WikiCallout,
       WikiPoetryQuote,
+      WikiInfoboxTitle,
+      WikiInfoboxSubtitle,
+      WikiInfoboxImage,
+      WikiInfoboxSection,
+      WikiInfoboxRows,
+      WikiInfoboxRow,
+      WikiInfoboxTerm,
+      WikiInfoboxValue,
+      WikiInfoboxContent,
+      WikiInfobox,
       WikiEditingKeymap,
       WikiCodeBlock,
       WikiBlockBackground,
@@ -223,6 +246,17 @@ function findJsonNode(node, typeName) {
     }
   }
   return null;
+}
+
+function collectJsonNodeTypes(node, types) {
+  if (!node) {
+    return types;
+  }
+  types.add(node.type);
+  for (const child of node.content || []) {
+    collectJsonNodeTypes(child, types);
+  }
+  return types;
 }
 
 function findTextRange(editor, text) {
@@ -2129,6 +2163,125 @@ await test("wikiCallout css uses themed icon callout bars in articles and editor
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout--success\s*\{[\s\S]*candle-flame\.svg/);
 });
 
+await test("wikiInfobox parses and renders saved infobox helper structure", function () {
+  const savedHtml = [
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene Voss</div>',
+    '<div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Vampire Noble</div>',
+    '<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/uploads/selene.png" alt="Selene"></figure>',
+    '<div class="wiki-infobox__section" data-wiki-infobox-part="section">Details</div>',
+    '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
+    '<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div>',
+    '</dl>',
+    '<div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Optional notes.</p></div>',
+    '</aside>'
+  ].join("");
+  const editor = createEditor(savedHtml);
+  const types = collectJsonNodeTypes(editor.getJSON(), new Set());
+  const rendered = editor.getHTML();
+
+  [
+    "wikiInfobox",
+    "wikiInfoboxTitle",
+    "wikiInfoboxSubtitle",
+    "wikiInfoboxImage",
+    "wikiInfoboxRows",
+    "wikiInfoboxRow",
+    "wikiInfoboxTerm",
+    "wikiInfoboxValue",
+    "wikiInfoboxContent"
+  ].forEach(function (typeName) {
+    assert.ok(types.has(typeName), `${typeName} should be present in editor JSON`);
+  });
+  assert.match(rendered, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.match(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title"/);
+  assert.match(rendered, /class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle"/);
+  assert.match(rendered, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img[^>]+src="\/uploads\/selene\.png"[^>]*><\/figure>/);
+  assert.match(rendered, /class="wiki-infobox__section" data-wiki-infobox-part="section"/);
+  assert.match(rendered, /class="wiki-infobox__rows" data-wiki-infobox-part="rows"/);
+  assert.match(rendered, /class="wiki-infobox__row" data-wiki-infobox-part="row"/);
+  assert.match(rendered, /class="wiki-infobox__content" data-wiki-infobox-part="content"/);
+  assert.match(rendered, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  editor.destroy();
+});
+
+await test("normalized saved infoboxes round trip through the Tiptap editor", function () {
+  const savedHtml = [
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene Voss</div>',
+    '<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/uploads/selene.png" alt="Selene"></figure>',
+    '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
+    '<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div>',
+    '</dl>',
+    '</aside>'
+  ].join("");
+  const editor = createEditor(normalizeLegacyHtmlForTiptap(savedHtml));
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.match(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title"/);
+  assert.match(rendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">/);
+  assert.match(rendered, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  assert.match(rendered, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img[^>]+src="\/uploads\/selene\.png"[^>]*><\/figure>/);
+  editor.destroy();
+});
+
+await test("wikiInfobox insert command creates starter infobox HTML", function () {
+  const editor = createEditor("<p>Start</p>");
+
+  assert.equal(editor.commands.insertWikiInfobox(), true);
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /data-wiki-node="infobox"/);
+  assert.match(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title">Untitled Infobox<\/div>/);
+  assert.match(rendered, /class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Label<\/dt><dd>Value<\/dd><\/div>/);
+  editor.destroy();
+});
+
+await test("wikiInfobox helper commands insert supported helper blocks inside the active infobox", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside>');
+
+  const titleRange = findTextRange(editor, "Selene");
+  editor.commands.setTextSelection(titleRange.from);
+  assert.equal(editor.commands.addWikiInfoboxSubtitle(), true);
+  assert.equal(editor.commands.addWikiInfoboxImage(), true);
+  assert.equal(editor.commands.addWikiInfoboxSection(), true);
+  assert.equal(editor.commands.addWikiInfoboxRow(), true);
+  assert.equal(editor.commands.addWikiInfoboxContent(), true);
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle"/);
+  assert.match(rendered, /class="wiki-infobox__image" data-wiki-infobox-part="image"/);
+  assert.match(rendered, /class="wiki-infobox__section" data-wiki-infobox-part="section"/);
+  assert.match(rendered, /class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Label<\/dt><dd>Value<\/dd><\/div>/);
+  assert.match(rendered, /class="wiki-infobox__content" data-wiki-infobox-part="content"/);
+  editor.destroy();
+});
+
+await test("wikiInfobox unwrap and delete commands only affect the active infobox", function () {
+  const unwrapEditor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside><p>After</p>');
+
+  unwrapEditor.commands.setTextSelection(findTextRange(unwrapEditor, "Selene").from);
+  assert.equal(unwrapEditor.commands.unwrapWikiInfobox(), true);
+  const unwrapped = unwrapEditor.getHTML();
+  assert.doesNotMatch(unwrapped, /<aside class="wiki-infobox"/);
+  assert.match(unwrapped, /<p>Before<\/p>/);
+  assert.match(unwrapped, /Selene/);
+  assert.match(unwrapped, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  assert.match(unwrapped, /<p>After<\/p>/);
+  unwrapEditor.destroy();
+
+  const deleteEditor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside><p>After</p>');
+  deleteEditor.commands.setTextSelection(findTextRange(deleteEditor, "Selene").from);
+  assert.equal(deleteEditor.commands.deleteWikiInfobox(), true);
+  const deleted = deleteEditor.getHTML();
+  assert.doesNotMatch(deleted, /<aside class="wiki-infobox"/);
+  assert.doesNotMatch(deleted, /Selene/);
+  assert.match(deleted, /<p>Before<\/p>/);
+  assert.match(deleted, /<p>After<\/p>/);
+  deleteEditor.destroy();
+});
+
 await test("wikiPoetryQuote insert command creates an attributed quote", function () {
   const editor = createEditor("<p>Start</p>");
 
@@ -2694,6 +2847,20 @@ await test("buildHeadingToc nests smaller headings under the nearest larger head
   assert.equal(toc[0].children[1].children[0].text, "Deep Direct");
   assert.equal(toc[1].text, "Next Root");
   assert.match(toc[0].id, /^wiki-editor-heading-/);
+  editor.destroy();
+});
+
+await test("buildHeadingToc excludes headings inside wiki infobox nodes", function () {
+  const editor = createEditor(
+    '<h1>Overview</h1><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__content" data-wiki-infobox-part="content"><h2>Infobox Heading</h2><p>Details.</p></div></aside><h1>History</h1>'
+  );
+  const toc = buildHeadingToc(editor);
+
+  assert.equal(toc.length, 2);
+  assert.equal(toc[0].text, "Overview");
+  assert.equal(toc[1].text, "History");
+  assert.deepEqual(toc[0].children, []);
+  assert.deepEqual(toc[1].children, []);
   editor.destroy();
 });
 
