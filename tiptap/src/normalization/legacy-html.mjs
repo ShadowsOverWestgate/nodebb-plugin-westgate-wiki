@@ -425,6 +425,53 @@ function isSupportedInfoboxRowsStructure(element) {
   });
 }
 
+function hasUnsupportedInfoboxRowMedia(node) {
+  if (!node || node.nodeType !== 1) {
+    return false;
+  }
+
+  const element = node;
+  const tag = element.tagName.toLowerCase();
+  if (["audio", "canvas", "embed", "figure", "iframe", "img", "object", "picture", "svg", "table", "video"].includes(tag)) {
+    return true;
+  }
+
+  return !!element.querySelector("audio, canvas, embed, figure, iframe, img, object, picture, svg, table, video");
+}
+
+function detectUnsupportedInfoboxRowsBeforeNormalization(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div data-root="1">${String(html || "")}</div>`, "text/html");
+  const root = doc.body.firstElementChild;
+  if (!root) {
+    return "";
+  }
+
+  normalizeWikiInfoboxes(root);
+
+  for (const rows of Array.from(root.querySelectorAll('[data-wiki-infobox-part="rows"], .wiki-infobox__rows'))) {
+    if (!isInfoboxRowsElement(rows)) {
+      continue;
+    }
+
+    for (const child of Array.from(rows.childNodes || [])) {
+      if (hasUnsupportedInfoboxRowMedia(child)) {
+        return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
+      }
+    }
+
+    for (const row of Array.from(rows.querySelectorAll(':scope > [data-wiki-infobox-part="row"], :scope > .wiki-infobox__row'))) {
+      for (const child of Array.from(row.childNodes || [])) {
+        if (hasUnsupportedInfoboxRowMedia(child)) {
+          return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
+        }
+      }
+    }
+  }
+
+  return "";
+}
+
 function appendInfoboxInlineChildren(document, target, source) {
   Array.from(source.childNodes || []).forEach(function (child) {
     if (child.nodeType === 1) {
@@ -1255,6 +1302,11 @@ export function getNormalizationNotice(html) {
 }
 
 export function detectUnsupportedContent(html) {
+  const infoboxRowsNotice = detectUnsupportedInfoboxRowsBeforeNormalization(html);
+  if (infoboxRowsNotice) {
+    return infoboxRowsNotice;
+  }
+
   const trimmed = normalizeLegacyHtmlForTiptap(String(html || "")).trim();
   if (!trimmed) {
     return "";
