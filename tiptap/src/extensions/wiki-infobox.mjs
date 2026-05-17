@@ -532,7 +532,7 @@ export const WikiInfoboxRows = Node.create({
   parseHTML() {
     return [
       {
-        tag: '[data-wiki-infobox-part="rows"]',
+        tag: 'dl[data-wiki-infobox-part="rows"]',
         getAttrs: function (element) {
           return isInsideInfoboxElement(element) && hasParseableInfoboxRowsContent(element) ? null : false;
         },

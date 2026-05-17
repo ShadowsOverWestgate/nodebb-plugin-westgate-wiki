@@ -2433,6 +2433,16 @@ await test("direct infobox prose is preserved through content helpers", function
   editor.destroy();
 });
 
+await test("non-dl infobox rows helper markup does not parse as rows", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div data-wiki-infobox-part="rows"><dt>House</dt><dd>Voss</dd></div></aside>');
+  const json = editor.getJSON();
+  const rendered = editor.getHTML();
+
+  assert.equal(findJsonNode(json, "wikiInfoboxRows"), null);
+  assert.doesNotMatch(rendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">/);
+  editor.destroy();
+});
+
 await test("malformed raw infobox rows parse as repaired row helpers", function () {
   const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><dt>Loose</dt><dd>Value</dd></dl></aside>');
   const prettyPrintedEditor = createEditor([
