@@ -2314,21 +2314,35 @@ function getActiveInfoboxElement(editor, surface) {
   return infobox && surface.contains(infobox) ? infobox : null;
 }
 
-export function calculateInfoboxRailPosition({ surfaceRect, boxRect, panelWidth, panelHeight, viewportHeight }) {
+export function calculateInfoboxRailPosition({ surfaceRect, boxRect, panelWidth, panelHeight, viewportHeight, viewportTop }) {
   const safePanelWidth = panelWidth || 38;
   const safePanelHeight = panelHeight || 0;
   const left = Math.max(8, boxRect.left - surfaceRect.left - safePanelWidth - 8);
-  const viewportTop = Math.max(surfaceRect.top + 8, 12);
+  const safeViewportTop = typeof viewportTop === "number" ? viewportTop : 12;
+  const viewportTopEdge = Math.max(surfaceRect.top + 8, safeViewportTop);
   const viewportBottom = Math.min(surfaceRect.bottom - 8, viewportHeight - 12);
-  const visibleTop = Math.max(boxRect.top, viewportTop);
+  const visibleTop = Math.max(boxRect.top, viewportTopEdge);
   const visibleBottom = Math.min(boxRect.bottom, viewportBottom);
   const maxTop = Math.max(visibleTop, visibleBottom - safePanelHeight);
-  const topViewport = Math.max(visibleTop, Math.min(viewportTop, maxTop));
+  const topViewport = Math.max(visibleTop, Math.min(viewportTopEdge, maxTop));
   const top = Math.max(8, topViewport - surfaceRect.top);
   return {
     left: Math.round(left),
     top: Math.round(top)
   };
+}
+
+function getInfoboxRailViewportTop(surface) {
+  const editorRoot = surface && typeof surface.closest === "function" ? surface.closest(".wiki-editor") : null;
+  const toolbar = editorRoot ? editorRoot.querySelector(".wiki-editor__toolbar-mount") : null;
+  if (!toolbar || typeof toolbar.getBoundingClientRect !== "function") {
+    return 12;
+  }
+  const rect = toolbar.getBoundingClientRect();
+  if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
+    return 12;
+  }
+  return Math.max(12, rect.bottom + 8);
 }
 
 function positionInfoboxRail(panel, infobox, surface) {
@@ -2337,7 +2351,8 @@ function positionInfoboxRail(panel, infobox, surface) {
     boxRect: infobox.getBoundingClientRect(),
     panelWidth: panel.offsetWidth || 38,
     panelHeight: panel.offsetHeight || 0,
-    viewportHeight: window.innerHeight
+    viewportHeight: window.innerHeight,
+    viewportTop: getInfoboxRailViewportTop(surface)
   });
   panel.style.left = `${position.left}px`;
   panel.style.top = `${position.top}px`;
