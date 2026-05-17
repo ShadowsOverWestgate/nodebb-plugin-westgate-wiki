@@ -9,7 +9,10 @@ function isPluginOwnedStructuredContainer(element) {
     return false;
   }
 
-  return classList.contains("wiki-media-row") || classList.contains("wiki-media-cell");
+  return classList.contains("wiki-media-row") ||
+    classList.contains("wiki-media-cell") ||
+    classList.contains("wiki-infobox") ||
+    element.getAttribute("data-wiki-node") === "infobox";
 }
 
 const ContainerBlock = Node.create({

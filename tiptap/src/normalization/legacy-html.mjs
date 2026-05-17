@@ -11,7 +11,10 @@ export const SUPPORTED_TIPTAP_TAGS = new Set([
   "col",
   "colgroup",
   "code",
+  "dd",
   "div",
+  "dl",
+  "dt",
   "em",
   "figcaption",
   "figure",
@@ -302,8 +305,75 @@ function isPoetryQuoteFigure(element) {
   );
 }
 
+function isPluginOwnedInfoboxElement(element) {
+  if (!element || !element.matches) {
+    return false;
+  }
+
+  return element.matches('[data-wiki-node="infobox"], .wiki-infobox, aside.infobox');
+}
+
+function isInsideInfobox(element) {
+  return !!(element && element.closest && element.closest('[data-wiki-node="infobox"], .wiki-infobox, aside.infobox'));
+}
+
+const INFOBOX_PART_CLASS_MAP = new Map([
+  ["title", "wiki-infobox__title"],
+  ["subtitle", "wiki-infobox__subtitle"],
+  ["image", "wiki-infobox__image"],
+  ["section", "wiki-infobox__section"],
+  ["rows", "wiki-infobox__rows"],
+  ["row", "wiki-infobox__row"],
+  ["content", "wiki-infobox__content"]
+]);
+
+function getInfoboxPartFromElement(element) {
+  const explicitPart = (element.getAttribute("data-wiki-infobox-part") || "").trim();
+  if (INFOBOX_PART_CLASS_MAP.has(explicitPart)) {
+    return explicitPart;
+  }
+
+  const classList = element.classList ? Array.from(element.classList) : [];
+  for (const className of classList) {
+    const part = className.replace(/^wiki-infobox__/, "");
+    if (INFOBOX_PART_CLASS_MAP.has(part)) {
+      return part;
+    }
+  }
+
+  return "";
+}
+
+function setInfoboxPart(element, part) {
+  const className = INFOBOX_PART_CLASS_MAP.get(part);
+  if (!className) {
+    return;
+  }
+
+  element.className = className;
+  element.setAttribute("data-wiki-infobox-part", part);
+}
+
+export function normalizeWikiInfoboxes(document, root) {
+  root.querySelectorAll("aside.infobox, aside.wiki-infobox, aside[data-wiki-node='infobox']").forEach(function (element) {
+    if (!isPluginOwnedInfoboxElement(element)) {
+      return;
+    }
+
+    element.className = "wiki-infobox";
+    element.setAttribute("data-wiki-node", "infobox");
+
+    Array.from(element.children || []).forEach(function (child) {
+      const part = getInfoboxPartFromElement(child);
+      if (part) {
+        setInfoboxPart(child, part);
+      }
+    });
+  });
+}
+
 function isInsidePluginOwnedStructure(element) {
-  return !!(element && element.closest && element.closest('[data-wiki-node="alignment-table"], figure.wiki-poetry-quote, [data-wiki-node="poetry-quote"]'));
+  return !!(element && element.closest && element.closest('[data-wiki-node="alignment-table"], figure.wiki-poetry-quote, [data-wiki-node="poetry-quote"], [data-wiki-node="infobox"], .wiki-infobox'));
 }
 
 function isPluginOwnedMediaLayoutElement(element) {
@@ -311,7 +381,7 @@ function isPluginOwnedMediaLayoutElement(element) {
     return false;
   }
 
-  return element.matches('[data-wiki-node="media-row"], [data-wiki-node="media-cell"], .wiki-media-row, .wiki-media-cell');
+  return element.matches('[data-wiki-node="media-row"], [data-wiki-node="media-cell"], .wiki-media-row, .wiki-media-cell, [data-wiki-node="infobox"], .wiki-infobox');
 }
 
 export function normalizeLegacyPresentationalTags(document, root) {
@@ -755,6 +825,8 @@ export function normalizeLegacyHtmlForTiptap(html) {
     return "";
   }
 
+  normalizeWikiInfoboxes(doc, root);
+
   root.querySelectorAll("article, section, div").forEach(function (element) {
     if (isInsidePluginOwnedStructure(element) || isPluginOwnedMediaLayoutElement(element)) {
       return;
@@ -800,6 +872,10 @@ export function normalizeLegacyHtmlForTiptap(html) {
   });
 
   root.querySelectorAll("dt").forEach(function (element) {
+    if (isInsideInfobox(element)) {
+      return;
+    }
+
     const paragraph = doc.createElement("p");
     const strong = doc.createElement("strong");
     while (element.firstChild) {
@@ -810,10 +886,18 @@ export function normalizeLegacyHtmlForTiptap(html) {
   });
 
   root.querySelectorAll("dd").forEach(function (element) {
+    if (isInsideInfobox(element)) {
+      return;
+    }
+
     renameElement(doc, element, "p");
   });
 
   root.querySelectorAll("dl").forEach(function (element) {
+    if (isInsideInfobox(element)) {
+      return;
+    }
+
     unwrapElement(element);
   });
 
