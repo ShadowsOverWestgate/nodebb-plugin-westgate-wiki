@@ -864,6 +864,18 @@ await test("media cell style css exists in article and editor prose", function (
   assert.match(editorCss, /\.wiki-editor-media-cell-color-menu__value\s*\{/);
 });
 
+await test("wikiInfobox css defines reader float, narrow full-width layout, and editor rail", function () {
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*float:\s*right/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*min\(22rem,\s*42%\)/);
+  assert.match(articleBodyCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*float:\s*none/);
+  assert.match(articleBodyCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*100%/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__title\s*\{/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row\s*\{/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[\s\S]*position:\s*absolute/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[\s\S]*flex-direction:\s*column/);
+});
+
 await test("table cell block backgrounds keep their paired foreground color", function () {
   const editor = createEditor("<table><tbody><tr><td><p>Cell background</p></td></tr></tbody></table>");
 

@@ -1158,6 +1158,115 @@
   outline-offset: 3px;
 }
 
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox {
+  position: relative;
+  box-sizing: border-box;
+  float: right;
+  clear: right;
+  width: min(22rem, 42%);
+  margin: 0.25rem 0 1rem 1.25rem;
+  border: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.38));
+  border-radius: var(--wiki-infobox-radius, var(--bs-border-radius, 0.5rem));
+  background: var(--wiki-infobox-bg, linear-gradient(145deg, rgba(31, 18, 35, 0.94), rgba(8, 7, 10, 0.96)));
+  box-shadow: var(--wiki-infobox-shadow, inset 0 1px 0 rgba(255, 244, 214, 0.06), 0 0.85rem 2rem rgba(0, 0, 0, 0.3));
+  color: var(--wiki-infobox-color, var(--wiki-prose-color, var(--bs-body-color, inherit)));
+  overflow: hidden;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox.ProseMirror-selectednode,
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox:focus-within {
+  outline: 2px solid var(--wiki-editor-focus-border, var(--bs-primary, #0d6efd));
+  outline-offset: 2px;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__title,
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__section,
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__subtitle,
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__content {
+  min-height: 1.45em;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__title {
+  background: var(--wiki-infobox-title-bg, rgba(194, 163, 90, 0.12));
+  border-bottom: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.32));
+  color: var(--wiki-infobox-title-color, var(--wiki-prose-heading-color, inherit));
+  font-family: var(--wiki-prose-heading-font-family, var(--bs-heading-font-family, inherit));
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  padding: 0.65rem 0.8rem;
+  text-align: center;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__subtitle {
+  color: var(--wiki-prose-caption-color, var(--bs-secondary-color, inherit));
+  font-size: 0.88rem;
+  padding: 0.45rem 0.8rem 0;
+  text-align: center;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__image {
+  margin: 0;
+  padding: 0.75rem 0.75rem 0;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__section {
+  background: var(--wiki-infobox-section-bg, rgba(194, 163, 90, 0.1));
+  border-top: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.22));
+  border-bottom: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.18));
+  color: var(--wiki-infobox-section-color, var(--wiki-prose-link-color, inherit));
+  font-family: var(--wiki-prose-heading-font-family, var(--bs-heading-font-family, inherit));
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin: 0.75rem 0 0;
+  padding: 0.35rem 0.8rem;
+  text-align: center;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__rows {
+  margin: 0;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__row {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 42%) minmax(0, 1fr);
+  border-bottom: 1px solid var(--wiki-infobox-row-border, rgba(194, 163, 90, 0.12));
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__row > dt,
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__row > dd {
+  margin: 0;
+  min-height: 1.45em;
+  padding: 0.45rem 0.65rem;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__row > dt {
+  color: var(--wiki-infobox-label-color, var(--wiki-prose-caption-color, inherit));
+  font-weight: 700;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__content {
+  padding: 0.75rem 0.85rem;
+}
+
+.westgate-wiki-compose .wiki-editor-infobox-rail {
+  position: absolute;
+  z-index: 22;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+  padding: 0.3rem;
+  border: 1px solid var(--wiki-editor-toolbar-border, var(--bs-border-color, #dee2e6));
+  border-radius: var(--bs-border-radius, 0.5rem);
+  background: var(--wiki-editor-toolbar-background, var(--bs-body-bg, #fff));
+  box-shadow: 0 0.45rem 1.25rem color-mix(in srgb, #000 22%, transparent);
+}
+
+.westgate-wiki-compose .wiki-editor-infobox-rail[hidden] {
+  display: none;
+}
+
 .wiki-editor-media-cell-color-menu {
   display: grid;
   gap: 0.55rem;
