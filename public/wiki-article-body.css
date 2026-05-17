@@ -27,6 +27,13 @@
  *   --wiki-prose-media-iframe-border
  *   --wiki-prose-raw-embed-bg, --wiki-prose-raw-embed-border, --wiki-prose-raw-embed-color
  *
+ *   Infobox (read + editor content):
+ *   --wiki-infobox-bg, --wiki-infobox-border, --wiki-infobox-radius
+ *   --wiki-infobox-shadow, --wiki-infobox-color
+ *   --wiki-infobox-title-bg, --wiki-infobox-title-color
+ *   --wiki-infobox-section-bg, --wiki-infobox-section-color
+ *   --wiki-infobox-row-border, --wiki-infobox-label-color
+ *
  *   Compose only (editable surface):
  *   --wiki-compose-editable-bg, --wiki-compose-editable-border-color
  *   --wiki-compose-editable-focus-shadow

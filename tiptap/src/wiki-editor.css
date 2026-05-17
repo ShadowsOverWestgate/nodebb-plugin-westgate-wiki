@@ -572,6 +572,8 @@
 }
 
 .westgate-wiki-compose .wiki-editor__surface {
+  container-name: wiki-editor-surface;
+  container-type: inline-size;
   min-height: 28rem;
   min-width: 0;
   position: relative;
@@ -1259,8 +1261,11 @@
   z-index: 22;
   display: flex;
   flex-direction: column;
+  flex-wrap: nowrap;
   gap: 0.25rem;
   align-items: center;
+  max-height: min(calc(100vh - 2rem), 28rem);
+  overflow-y: auto;
   padding: 0.3rem;
   border: 1px solid var(--wiki-editor-toolbar-border, var(--bs-border-color, #dee2e6));
   border-radius: var(--bs-border-radius, 0.5rem);
@@ -1273,6 +1278,15 @@
 }
 
 @media (max-width: 767.98px) {
+  .westgate-wiki-compose .wiki-editor__content .wiki-infobox {
+    float: none;
+    clear: both;
+    width: 100%;
+    margin: 1rem 0;
+  }
+}
+
+@container wiki-editor-surface (max-width: 767.98px) {
   .westgate-wiki-compose .wiki-editor__content .wiki-infobox {
     float: none;
     clear: both;
