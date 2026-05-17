@@ -1087,6 +1087,25 @@ await test("alignment table full mode preserves full labels as secondary display
   editor.destroy();
 });
 
+await test("alignment table command inserts inside an active infobox without splitting it", function () {
+  const editor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside><p>After</p>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.insertWikiAlignmentTable({ highlighted: ["tn"], mode: "full" }), true);
+
+  const json = editor.getJSON();
+  assert.deepEqual(json.content.map(function (node) { return node.type; }), ["paragraph", "wikiInfobox", "paragraph"]);
+  assert.equal(findJsonNodes(json, "wikiInfobox").length, 1);
+  const infobox = findJsonNode(json, "wikiInfobox");
+  assert.deepEqual(infobox.content.map(function (node) { return node.type; }), ["wikiInfoboxTitle", "wikiInfoboxContent"]);
+  const chart = findJsonNode(infobox, "wikiAlignmentTable");
+  assert.ok(chart);
+  assert.equal(chart.attrs.highlighted, "tn");
+  assert.equal(chart.attrs.mode, "full");
+  assert.match(editor.getHTML(), /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><div class="wiki-alignment-table/);
+  editor.destroy();
+});
+
 await test("normalizeLegacyHtmlForTiptap preserves saved alignment tables as plugin-owned structures", function () {
   const savedHtml = '<div class="wiki-alignment-table wiki-alignment-table--compact" data-wiki-node="alignment-table" data-alignments="lg tn" data-mode="compact" contenteditable="false"><div class="wiki-alignment-table__cell wiki-alignment-table__cell--active" data-alignment="lg">LG</div><div class="wiki-alignment-table__cell" data-alignment="ng">NG</div></div>';
   const normalized = normalizeLegacyHtmlForTiptap(savedHtml);
@@ -3273,6 +3292,7 @@ await test("infobox vertical rail source exposes all internal helper actions", f
     "infobox-add-title",
     "infobox-add-subtitle",
     "infobox-add-image",
+    "infobox-add-alignment-table",
     "infobox-add-section",
     "infobox-add-row",
     "infobox-add-content",
@@ -3289,6 +3309,7 @@ await test("infobox vertical rail source exposes all internal helper actions", f
   assert.match(editorBundleSource, /editor\.can\(\)\.deleteWikiInfoboxHelper\(\)/);
   assert.match(editorBundleSource, /function\s+addImageSlotAndUpload\s*\(\)\s*\{[\s\S]{0,360}addWikiInfoboxImage\(\)\.run\(\)[\s\S]{0,360}typeof uploadImage === "function"[\s\S]{0,180}uploadImage\(\)/);
   assert.match(editorBundleSource, /id:\s*"infobox-add-image"[\s\S]{0,180}action:\s*addImageSlotAndUpload/);
+  assert.match(editorBundleSource, /id:\s*"infobox-add-alignment-table"[\s\S]{0,240}openAlignmentTableDialog\(\{ editor \}\)/);
   assert.match(editorBundleSource, /createInfoboxContextToolbar\(editorMount,\s*editor,\s*pickAndUploadImage\)/);
   assert.match(editorBundleSource, /selectInfoboxImageSlot\(editor,\s*target,\s*editorMount\)/);
   assert.match(editorBundleSource, /pickAndUploadImage\(\)/);
