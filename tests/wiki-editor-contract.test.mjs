@@ -430,6 +430,21 @@ await test("detectUnsupportedContent accepts canonical infobox rows", function (
   );
 });
 
+await test("detectUnsupportedContent accepts infobox row media normalized into image helpers", function () {
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"></div></dl></aside>'),
+    ""
+  );
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><img src="/seal.png" alt="Seal"></div></dl></aside>'),
+    ""
+  );
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><img src="/seal.png" alt="Seal"></figure></div></dl></aside>'),
+    ""
+  );
+});
+
 await test("detectUnsupportedContent rejects noncanonical infobox rows helper tags", function () {
   assert.match(
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><div data-wiki-infobox-part="rows"><dt>House</dt><dd>Voss</dd></div></aside>'),
@@ -464,14 +479,6 @@ await test("infobox row cell block children preserve text boundaries", function 
 });
 
 await test("detectUnsupportedContent rejects lossy infobox row media", function () {
-  assert.match(
-    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"></div></dl></aside>'),
-    /definition rows/
-  );
-  assert.match(
-    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><img src="/seal.png" alt="Seal"></div></dl></aside>'),
-    /definition rows/
-  );
   assert.match(
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><img src="/seal.png" alt="Seal"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>'),
     /definition rows/
@@ -1065,6 +1072,9 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   const rowWithExtraImageFigure = normalizeLegacyHtmlForTiptap(
     '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><img src="/seal.png" alt="Seal"></figure></div></dl></aside>'
   );
+  const rowWithLinkedCaptionedFigure = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><a href="/seal-full.png"><img src="/seal.png" alt="Seal"></a><figcaption>Seal</figcaption></figure></div></dl></aside>'
+  );
   const prettyPrintedDirectRows = [
     '<aside class="wiki-infobox" data-wiki-node="infobox">',
     '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
@@ -1085,6 +1095,9 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   assert.match(rowWithExtraImage, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
   assert.match(rowWithExtraImageFigure, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
   assert.match(rowWithExtraImageFigure, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
+  assert.match(rowWithLinkedCaptionedFigure, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
+  assert.match(rowWithLinkedCaptionedFigure, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><figure class="image"><a href="\/seal-full\.png"><img src="\/seal\.png" alt="Seal"><\/a><figcaption>Seal<\/figcaption><\/figure><\/div>/);
+  assert.doesNotMatch(rowWithLinkedCaptionedFigure, /<dd>Voss\s*<a|<dd>Voss\s*<figcaption|<dd>Voss\s*Seal/);
   assert.match(prettyPrintedRows, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt>\s*<dd>Voss<\/dd><\/div>/);
   assert.equal(detectUnsupportedContent(prettyPrintedDirectRows), "");
 });
@@ -1121,6 +1134,16 @@ await test("normalizeLegacyHtmlForTiptap upgrades simple pasted infobox class na
   assert.match(normalized, /class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle"/);
   assert.match(normalized, /class="wiki-infobox__section" data-wiki-infobox-part="section"/);
   assert.match(normalized, /class="wiki-infobox__content" data-wiki-infobox-part="content"/);
+});
+
+await test("normalizeLegacyHtmlForTiptap treats non-dl legacy rows as content", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="infobox"><div class="rows">Details</div></aside>'
+  );
+
+  assert.match(normalized, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.doesNotMatch(normalized, /data-wiki-infobox-part="rows"|wiki-infobox__rows/);
+  assert.match(normalized, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Details<\/p><\/div>/);
 });
 
 await test("normalizeLegacyHtmlForTiptap upgrades pasted infobox rows nested under rows helpers", function () {

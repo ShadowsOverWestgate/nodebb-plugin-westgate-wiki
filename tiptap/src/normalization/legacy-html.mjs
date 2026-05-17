@@ -425,6 +425,41 @@ function isSupportedInfoboxRowsStructure(element) {
   });
 }
 
+function isCaptionlessInfoboxImageFigure(element) {
+  if (!isSupportedImageFigure(element)) {
+    return false;
+  }
+
+  const children = Array.from(element.children || []);
+  return children.length === 1 && children[0].tagName.toLowerCase() === "img";
+}
+
+function getInfoboxImageExtraElement(node) {
+  if (!node || node.nodeType !== 1) {
+    return null;
+  }
+  const tagName = node.tagName.toLowerCase();
+  if (tagName === "img") {
+    return node;
+  }
+  if (isCaptionlessInfoboxImageFigure(node)) {
+    return getFigureImageElement(node);
+  }
+  return null;
+}
+
+function isInfoboxContentFigureExtraElement(node) {
+  return !!(
+    node &&
+    node.nodeType === 1 &&
+    node.tagName.toLowerCase() === "figure" &&
+    node.classList &&
+    node.classList.contains("image") &&
+    getFigureImageElement(node) &&
+    !getInfoboxImageExtraElement(node)
+  );
+}
+
 function hasUnsupportedInfoboxRowExtra(node) {
   if (!node) {
     return false;
@@ -510,6 +545,9 @@ function detectUnsupportedInfoboxRowsBeforeNormalization(html) {
 
     for (const row of Array.from(rows.querySelectorAll(':scope > [data-wiki-infobox-part="row"], :scope > .wiki-infobox__row'))) {
       for (const child of Array.from(row.childNodes || [])) {
+        if (getInfoboxImageExtraElement(child)) {
+          continue;
+        }
         if (hasUnsupportedInfoboxRowExtra(child)) {
           return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
         }
@@ -615,7 +653,8 @@ function getInfoboxCellImageExtras(cell) {
     return [];
   }
   const media = Array.from(cell.querySelectorAll("img, figure")).filter(function (node) {
-    return getInfoboxImageExtraElement(node);
+    const contentFigure = node.closest && node.closest("figure.image");
+    return getInfoboxImageExtraElement(node) && !(contentFigure && contentFigure !== node && isInfoboxContentFigureExtraElement(contentFigure));
   });
   return media.filter(function (node) {
     return !media.some(function (other) {
@@ -624,18 +663,34 @@ function getInfoboxCellImageExtras(cell) {
   });
 }
 
-function getInfoboxImageExtraElement(node) {
+function getInfoboxCellContentFigureExtras(cell) {
+  if (!cell) {
+    return [];
+  }
+  const media = Array.from(cell.querySelectorAll("figure")).filter(function (node) {
+    return isInfoboxContentFigureExtraElement(node);
+  });
+  return media.filter(function (node) {
+    return !media.some(function (other) {
+      return other !== node && other.contains && other.contains(node);
+    });
+  });
+}
+
+function isInfoboxFallbackHelperElement(node) {
   if (!node || node.nodeType !== 1) {
-    return null;
+    return false;
   }
-  const tagName = node.tagName.toLowerCase();
-  if (tagName === "img") {
-    return node;
+  const part = node.getAttribute("data-wiki-infobox-part");
+  return part === "image" || part === "content" || (node.classList && (node.classList.contains("wiki-infobox__image") || node.classList.contains("wiki-infobox__content")));
+}
+
+function getInfoboxRowsFallbackReference(rows) {
+  let reference = rows.nextSibling;
+  while (isInfoboxFallbackHelperElement(reference)) {
+    reference = reference.nextSibling;
   }
-  if (isSupportedImageFigure(node)) {
-    return getFigureImageElement(node);
-  }
-  return null;
+  return reference;
 }
 
 function moveInfoboxRowImageExtras(document, row, extras) {
@@ -649,7 +704,6 @@ function moveInfoboxRowImageExtras(document, row, extras) {
     return;
   }
 
-  const reference = rows.nextSibling;
   extras.forEach(function (node) {
     const imageNode = getInfoboxImageExtraElement(node);
     if (!imageNode || !imageNode.parentNode) {
@@ -658,7 +712,29 @@ function moveInfoboxRowImageExtras(document, row, extras) {
     const image = document.createElement("figure");
     setInfoboxPart(image, "image");
     image.appendChild(imageNode);
-    parent.insertBefore(image, reference);
+    parent.insertBefore(image, getInfoboxRowsFallbackReference(rows));
+  });
+}
+
+function moveInfoboxRowContentExtras(document, row, extras) {
+  if (!extras.length || !row.parentElement || !isInfoboxRowsElement(row.parentElement)) {
+    return;
+  }
+
+  const rows = row.parentElement;
+  const parent = rows.parentNode;
+  if (!parent) {
+    return;
+  }
+
+  extras.forEach(function (node) {
+    if (!node.parentNode) {
+      return;
+    }
+    const content = document.createElement("div");
+    setInfoboxPart(content, "content");
+    content.appendChild(node);
+    parent.insertBefore(content, getInfoboxRowsFallbackReference(rows));
   });
 }
 
@@ -673,6 +749,17 @@ function repairInfoboxRow(document, row) {
     return child.tagName && child.tagName.toLowerCase() === "dd";
   }) || null;
   const cellImageExtras = getInfoboxCellImageExtras(term).concat(getInfoboxCellImageExtras(value));
+  const cellContentExtras = getInfoboxCellContentFigureExtras(term).concat(getInfoboxCellContentFigureExtras(value));
+  const initialExtraNodes = Array.from(row.childNodes || []).filter(function (child) {
+    return child !== term && child !== value && !isIgnorableInfoboxSibling(child);
+  });
+  moveInfoboxRowImageExtras(document, row, initialExtraNodes.filter(function (child) {
+    return !!getInfoboxImageExtraElement(child);
+  }).concat(cellImageExtras));
+  moveInfoboxRowContentExtras(document, row, initialExtraNodes.filter(function (child) {
+    return isInfoboxContentFigureExtraElement(child);
+  }).concat(cellContentExtras));
+
   if (term) {
     normalizeInfoboxCell(document, term);
   }
@@ -685,12 +772,8 @@ function repairInfoboxRow(document, row) {
   const extras = extraNodes.filter(function (child) {
     return hasVisibleInfoboxNode(child);
   });
-  const imageExtras = extraNodes.filter(function (child) {
-    return !!getInfoboxImageExtraElement(child);
-  }).concat(cellImageExtras);
 
   if (term && value) {
-    moveInfoboxRowImageExtras(document, row, imageExtras);
     extras.forEach(function (child) {
       appendInfoboxNodeAsInline(document, value, child);
     });
@@ -707,7 +790,6 @@ function repairInfoboxRow(document, row) {
 
   if (term) {
     const emptyValue = document.createElement("dd");
-    moveInfoboxRowImageExtras(document, row, imageExtras);
     extras.forEach(function (child) {
       appendInfoboxNodeAsInline(document, emptyValue, child);
     });
@@ -721,7 +803,6 @@ function repairInfoboxRow(document, row) {
   }
 
   if (value) {
-    moveInfoboxRowImageExtras(document, row, imageExtras);
     extras.forEach(function (child) {
       appendInfoboxNodeAsInline(document, value, child);
     });
@@ -894,6 +975,23 @@ function setInfoboxPart(element, part) {
   element.setAttribute("data-wiki-infobox-part", part);
 }
 
+const INFOBOX_CONTENT_BLOCK_TAGS = new Set(["blockquote", "div", "dl", "figure", "h1", "h2", "h3", "h4", "hr", "ol", "p", "pre", "table", "ul"]);
+
+function ensureInfoboxContentBlocks(document, element) {
+  const hasBlockChild = Array.from(element.children || []).some(function (child) {
+    return INFOBOX_CONTENT_BLOCK_TAGS.has(child.tagName.toLowerCase());
+  });
+  if (hasBlockChild || !Array.from(element.childNodes || []).some(hasVisibleInfoboxNode)) {
+    return;
+  }
+
+  const paragraph = document.createElement("p");
+  while (element.firstChild) {
+    paragraph.appendChild(element.firstChild);
+  }
+  element.appendChild(paragraph);
+}
+
 export function normalizeWikiInfoboxes(root) {
   root.querySelectorAll("aside.infobox, aside.wiki-infobox, aside[data-wiki-node='infobox']").forEach(function (element) {
     if (!isPluginOwnedInfoboxElement(element)) {
@@ -913,7 +1011,12 @@ export function normalizeWikiInfoboxes(root) {
     Array.from(element.children || []).forEach(function (child) {
       const part = getLegacyInfoboxPartFromElement(child, INFOBOX_DIRECT_LEGACY_PARTS);
       if (part) {
-        setInfoboxPart(child, part);
+        if (part === "rows" && child.tagName.toLowerCase() !== "dl") {
+          setInfoboxPart(child, "content");
+          ensureInfoboxContentBlocks(root.ownerDocument, child);
+        } else {
+          setInfoboxPart(child, part);
+        }
       }
     });
 

@@ -303,6 +303,15 @@ function getFigureImageMediaElement(element) {
     return null;
   }
 
+  const children = Array.from(element.children);
+  return children.length === 1 && children[0].tagName && children[0].tagName.toLowerCase() === "img" ? children[0] : null;
+}
+
+function getAnyFigureImageMediaElement(element) {
+  if (!element || !element.children || element.tagName.toLowerCase() !== "figure") {
+    return null;
+  }
+
   const directImage = Array.from(element.children).find(function (child) {
     return child.tagName && child.tagName.toLowerCase() === "img";
   });
@@ -335,9 +344,33 @@ function getImageMediaElement(node) {
   return null;
 }
 
+function isContentFigureMediaElement(node) {
+  return !!(
+    node &&
+    node.nodeType === 1 &&
+    node.tagName &&
+    node.tagName.toLowerCase() === "figure" &&
+    node.classList &&
+    node.classList.contains("image") &&
+    getAnyFigureImageMediaElement(node) &&
+    !getImageMediaElement(node)
+  );
+}
+
 function getTopLevelImageMedia(nodes) {
   const media = Array.from(nodes || []).filter(function (node) {
     return !!getImageMediaElement(node);
+  });
+  return media.filter(function (node) {
+    return !media.some(function (other) {
+      return other !== node && other.contains && other.contains(node);
+    });
+  });
+}
+
+function getTopLevelContentFigureMedia(nodes) {
+  const media = Array.from(nodes || []).filter(function (node) {
+    return isContentFigureMediaElement(node);
   });
   return media.filter(function (node) {
     return !media.some(function (other) {
@@ -359,6 +392,30 @@ function createImageHelperElement(document, source) {
   return helper;
 }
 
+function createContentHelperElement(document, source) {
+  const helper = document.createElement("div");
+  helper.className = "wiki-infobox__content";
+  helper.setAttribute("data-wiki-infobox-part", "content");
+  helper.appendChild(source.cloneNode(true));
+  return helper;
+}
+
+function isParseFallbackHelperElement(node) {
+  if (!node || node.nodeType !== 1) {
+    return false;
+  }
+  const part = node.getAttribute("data-wiki-infobox-part");
+  return part === "image" || part === "content";
+}
+
+function getParseFallbackReference(rows) {
+  let reference = rows.nextSibling;
+  while (isParseFallbackHelperElement(reference)) {
+    reference = reference.nextSibling;
+  }
+  return reference;
+}
+
 function moveInfoboxRowMediaForParse(element) {
   const clone = element.cloneNode(true);
   Array.from(clone.querySelectorAll('dl[data-wiki-infobox-part="rows"], dl.wiki-infobox__rows')).forEach(function (rows) {
@@ -368,21 +425,38 @@ function moveInfoboxRowMediaForParse(element) {
       const directMedia = getTopLevelImageMedia(Array.from(row.childNodes || []).filter(function (child) {
         return child !== term && child !== value;
       }));
+      const directContentMedia = getTopLevelContentFigureMedia(Array.from(row.childNodes || []).filter(function (child) {
+        return child !== term && child !== value;
+      }));
       const cellMedia = getTopLevelImageMedia([
         ...(term ? Array.from(term.querySelectorAll("img, figure")) : []),
         ...(value ? Array.from(value.querySelectorAll("img, figure")) : [])
       ]);
-      const media = directMedia.concat(cellMedia);
-      if (!media.length || !rows.parentNode) {
+      const cellContentMedia = getTopLevelContentFigureMedia([
+        ...(term ? Array.from(term.querySelectorAll("figure")) : []),
+        ...(value ? Array.from(value.querySelectorAll("figure")) : [])
+      ]);
+      const imageMedia = directMedia.concat(cellMedia.filter(function (node) {
+        const contentFigure = node.closest && node.closest("figure.image");
+        return !(contentFigure && contentFigure !== node && isContentFigureMediaElement(contentFigure));
+      }));
+      const contentMedia = directContentMedia.concat(cellContentMedia);
+      if ((!imageMedia.length && !contentMedia.length) || !rows.parentNode) {
         return;
       }
 
-      const reference = rows.nextSibling;
-      media.forEach(function (node) {
+      imageMedia.forEach(function (node) {
         const helper = createImageHelperElement(clone.ownerDocument, node);
         if (helper) {
-          rows.parentNode.insertBefore(helper, reference);
+          rows.parentNode.insertBefore(helper, getParseFallbackReference(rows));
         }
+        if (node.parentNode) {
+          node.parentNode.removeChild(node);
+        }
+      });
+      contentMedia.forEach(function (node) {
+        const helper = createContentHelperElement(clone.ownerDocument, node);
+        rows.parentNode.insertBefore(helper, getParseFallbackReference(rows));
         if (node.parentNode) {
           node.parentNode.removeChild(node);
         }
