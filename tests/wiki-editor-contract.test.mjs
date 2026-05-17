@@ -2185,6 +2185,7 @@ await test("wikiInfobox parses and renders saved infobox helper structure", func
     "wikiInfoboxTitle",
     "wikiInfoboxSubtitle",
     "wikiInfoboxImage",
+    "wikiInfoboxSection",
     "wikiInfoboxRows",
     "wikiInfoboxRow",
     "wikiInfoboxTerm",
