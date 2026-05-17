@@ -335,12 +335,27 @@ function isSupportedInfoboxImageFigure(element) {
     return false;
   }
 
-  const directChildren = Array.from(element.children || []);
-  if (directChildren.length === 0) {
-    return true;
+  let imageCount = 0;
+  for (const child of Array.from(element.childNodes || [])) {
+    if (child.nodeType === 8) {
+      continue;
+    }
+    if (child.nodeType === 3) {
+      if ((child.nodeValue || "").trim()) {
+        return false;
+      }
+      continue;
+    }
+    if (child.nodeType !== 1 || child.tagName.toLowerCase() !== "img") {
+      return false;
+    }
+    imageCount += 1;
+    if (imageCount > 1) {
+      return false;
+    }
   }
 
-  return directChildren.length === 1 && directChildren[0].tagName.toLowerCase() === "img";
+  return true;
 }
 
 const INFOBOX_PART_CLASS_MAP = new Map([
@@ -1015,8 +1030,14 @@ export function detectUnsupportedContent(html) {
       return `Legacy HTML uses <${tag}>, which this Tiptap surface does not preserve safely yet.`;
     }
 
-    if (tag === "figure" && !isSupportedImageFigure(element) && !isPoetryQuoteFigure(element) && !isSupportedInfoboxImageFigure(element)) {
-      return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
+    if (tag === "figure") {
+      if (isInfoboxImageFigureElement(element)) {
+        if (!isSupportedInfoboxImageFigure(element)) {
+          return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
+        }
+      } else if (!isSupportedImageFigure(element) && !isPoetryQuoteFigure(element)) {
+        return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
+      }
     }
 
     if (tag === "figcaption") {

@@ -413,6 +413,14 @@ await test("detectUnsupportedContent rejects schema-incompatible infobox image h
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/one.png" alt="One"><img src="/two.png" alt="Two"></figure></aside>'),
     /figure layout/
   );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image">Caption</figure></aside>'),
+    /figure layout/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/one.png" alt="One"> Caption</figure></aside>'),
+    /figure layout/
+  );
 });
 
 await test("getNormalizationNotice reports when legacy html changes materially", function () {
