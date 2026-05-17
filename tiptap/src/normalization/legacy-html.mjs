@@ -448,11 +448,7 @@ function hasUnsupportedInfoboxRowExtra(node) {
     return false;
   }
 
-  if (["a", "code", "em", "mark", "s", "span", "strong", "sub", "sup", "u"].includes(tag)) {
-    return false;
-  }
-
-  if (["address", "p"].includes(tag)) {
+  if (["a", "address", "code", "em", "mark", "p", "s", "span", "strong", "sub", "sup", "u"].includes(tag)) {
     return Array.from(element.childNodes || []).some(hasUnsupportedInfoboxRowExtra);
   }
 
