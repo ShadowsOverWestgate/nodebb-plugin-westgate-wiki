@@ -2,6 +2,8 @@ import { mergeAttributes, Node } from "@tiptap/core";
 import { DOMParser, Fragment } from "@tiptap/pm/model";
 import { NodeSelection, Selection } from "@tiptap/pm/state";
 
+import { getMergedAttrsForElement } from "../shared/preserved-attrs.mjs";
+
 const INFOBOX_NODE_NAME = "wikiInfobox";
 const INFOBOX_CONTENT_EXPRESSION = "wikiInfoboxPart*";
 const INFOBOX_HELPER_NODE_NAMES = new Set([
@@ -807,9 +809,13 @@ function createParsedInfoboxRow(schema, termElement, valueElement, fallbackTermE
   }
 
   return rowType.create(null, [
-    termType.create(null, termElement || fallbackTermElement ? parseInlineContent(termElement || fallbackTermElement, schema) : Fragment.empty),
-    valueType.create(null, parseInlineContentWithExtras(schema, valueElement, extraValueNodes))
+    termType.create(getInfoboxCellAttrs(termElement), termElement || fallbackTermElement ? parseInlineContent(termElement || fallbackTermElement, schema) : Fragment.empty),
+    valueType.create(getInfoboxCellAttrs(valueElement), parseInlineContentWithExtras(schema, valueElement, extraValueNodes))
   ]);
+}
+
+function getInfoboxCellAttrs(element) {
+  return element && element.nodeType === 1 ? getMergedAttrsForElement(element) : null;
 }
 
 function findDirectInfoboxCell(element, tagName) {
@@ -1062,8 +1068,8 @@ export const WikiInfoboxTerm = Node.create({
       }
     ];
   },
-  renderHTML() {
-    return ["dt", 0];
+  renderHTML({ HTMLAttributes }) {
+    return ["dt", HTMLAttributes, 0];
   }
 });
 
@@ -1082,8 +1088,8 @@ export const WikiInfoboxValue = Node.create({
       }
     ];
   },
-  renderHTML() {
-    return ["dd", 0];
+  renderHTML({ HTMLAttributes }) {
+    return ["dd", HTMLAttributes, 0];
   }
 });
 

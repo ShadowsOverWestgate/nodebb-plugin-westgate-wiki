@@ -4034,7 +4034,7 @@ export async function createWikiEditor(element, options) {
       Subscript,
       Superscript,
       TextAlign.configure({
-        types: ["heading", "paragraph"]
+        types: ["heading", "paragraph", "wikiInfoboxTitle", "wikiInfoboxSubtitle", "wikiInfoboxSection", "wikiInfoboxTerm", "wikiInfoboxValue"]
       }),
       SlashCommand.configure({
         getItems: function () {

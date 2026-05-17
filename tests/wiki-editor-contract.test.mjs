@@ -821,6 +821,21 @@ await test("block background command auto-selects a legible foreground for custo
   editor.destroy();
 });
 
+await test("infobox key-value cells preserve and accept block text styling", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt style="text-align: center">House</dt><dd>Voss</dd></div></dl></aside>');
+
+  assert.match(editor.getHTML(), /<dt style="text-align: center;">House<\/dt>/);
+
+  editor.commands.setTextSelection(findTextRange(editor, "Voss").from + 1);
+  assert.equal(editor.commands.setWikiBlockBackground({ backgroundColor: "#111827" }), true);
+  assert.match(editor.getHTML(), /<dd style="background-color: rgb\(17, 24, 39\); color: rgb\(249, 250, 251\);?">Voss<\/dd>/);
+
+  editor.commands.setTextSelection(findTextRange(editor, "House").from + 1);
+  assert.equal(editor.commands.setWikiBlockBackground({ backgroundColor: "#fef08a" }), true);
+  assert.match(editor.getHTML(), /<dt style="text-align: center; background-color: rgb\(254, 240, 138\); color: rgb\(17, 24, 39\);?">House<\/dt>/);
+  editor.destroy();
+});
+
 await test("editor color contrast helpers normalize custom hex colors and choose readable text", function () {
   assert.equal(normalizeHexColor("abc"), "#aabbcc");
   assert.equal(normalizeHexColor("#3B0764"), "#3b0764");
@@ -839,6 +854,8 @@ await test("editor toolbar exposes highlight and text block background color pal
   assert.match(editorBundleSource, /const BLOCK_BACKGROUND_COLOR_OPTIONS = \[/);
   assert.match(editorBundleSource, /setWikiBlockBackground\(\{ backgroundColor, textColor \}\)/);
   assert.match(editorBundleSource, /unsetWikiBlockBackground\(\)/);
+  assert.match(editorBundleSource, /TextAlign\.configure\(\{[\s\S]*types:\s*\[[^\]]*"wikiInfoboxTerm"[\s\S]*"wikiInfoboxValue"/);
+  assert.match(vendoredEditorBundleSource, /types:\["heading","paragraph","wikiInfoboxTitle","wikiInfoboxSubtitle","wikiInfoboxSection","wikiInfoboxTerm","wikiInfoboxValue"\]/);
   assert.match(editorCss, /\.wiki-editor-color-menu\s*\{/);
   assert.match(editorCss, /\.wiki-editor-color-swatch\s*\{/);
   assert.match(editorCss, /\.wiki-editor-color-custom\s*\{/);
