@@ -459,6 +459,18 @@ await test("detectUnsupportedContent rejects lossy infobox row media", function 
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><span><input type="checkbox" checked></span></div></dl></aside>'),
     /definition rows/
   );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss <img src="/seal.png" alt="Seal"></dd></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss <hr></dd></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House <input type="checkbox" checked></dt><dd>Voss</dd></div></dl></aside>'),
+    /definition rows/
+  );
 });
 
 await test("getNormalizationNotice reports when legacy html changes materially", function () {

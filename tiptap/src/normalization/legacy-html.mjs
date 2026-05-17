@@ -444,11 +444,7 @@ function hasUnsupportedInfoboxRowExtra(node) {
 
   const element = node;
   const tag = element.tagName.toLowerCase();
-  if (["dt", "dd"].includes(tag)) {
-    return false;
-  }
-
-  if (["a", "address", "code", "em", "mark", "p", "s", "span", "strong", "sub", "sup", "u"].includes(tag)) {
+  if (["a", "address", "code", "dd", "dt", "em", "mark", "p", "s", "span", "strong", "sub", "sup", "u"].includes(tag)) {
     return Array.from(element.childNodes || []).some(hasUnsupportedInfoboxRowExtra);
   }
 
