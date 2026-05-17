@@ -443,6 +443,14 @@ await test("detectUnsupportedContent accepts infobox row media normalized into i
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><img src="/seal.png" alt="Seal"></figure></div></dl></aside>'),
     ""
   );
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><img src="/term.png" alt="Term">House</dt><dd>Voss</dd></div></dl></aside>'),
+    ""
+  );
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd><figure class="image"><img src="/value.png" alt="Value"></figure>Voss</dd></div></dl></aside>'),
+    ""
+  );
 });
 
 await test("detectUnsupportedContent rejects noncanonical infobox rows helper tags", function () {
@@ -500,15 +508,15 @@ await test("detectUnsupportedContent rejects lossy infobox row media", function 
     /definition rows/
   );
   assert.match(
-    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss <img src="/seal.png" alt="Seal"></dd></div></dl></aside>'),
-    /definition rows/
-  );
-  assert.match(
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss <hr></dd></div></dl></aside>'),
     /definition rows/
   );
   assert.match(
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House <input type="checkbox" checked></dt><dd>Voss</dd></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd><figure class="image"><a href="/seal-full.png"><img src="/seal.png" alt="Seal"></a><figcaption>Seal</figcaption></figure>Voss</dd></div></dl></aside>'),
     /definition rows/
   );
 });

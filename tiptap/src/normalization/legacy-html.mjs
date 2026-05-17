@@ -460,6 +460,30 @@ function isInfoboxContentFigureExtraElement(node) {
   );
 }
 
+function hasUnsupportedInfoboxRowCellChild(node) {
+  if (!node) {
+    return false;
+  }
+
+  if (node.nodeType === 8) {
+    return false;
+  }
+
+  if (node.nodeType === 3) {
+    return false;
+  }
+
+  if (node.nodeType !== 1) {
+    return true;
+  }
+
+  if (getInfoboxImageExtraElement(node)) {
+    return false;
+  }
+
+  return hasUnsupportedInfoboxRowExtra(node);
+}
+
 function hasUnsupportedInfoboxRowExtra(node) {
   if (!node) {
     return false;
@@ -479,6 +503,10 @@ function hasUnsupportedInfoboxRowExtra(node) {
 
   const element = node;
   const tag = element.tagName.toLowerCase();
+  if (tag === "dt" || tag === "dd") {
+    return Array.from(element.childNodes || []).some(hasUnsupportedInfoboxRowCellChild);
+  }
+
   if ([
     "a",
     "abbr",
@@ -489,10 +517,8 @@ function hasUnsupportedInfoboxRowExtra(node) {
     "br",
     "cite",
     "code",
-    "dd",
     "del",
     "dfn",
-    "dt",
     "em",
     "font",
     "i",
