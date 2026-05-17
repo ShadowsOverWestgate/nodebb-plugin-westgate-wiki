@@ -402,6 +402,104 @@ function isSupportedInfoboxImageFigure(element) {
   return true;
 }
 
+function isSupportedInfoboxRowsStructure(element) {
+  if (!isInfoboxRowsElement(element)) {
+    return false;
+  }
+
+  const rows = Array.from(element.children || []);
+  if (!rows.length) {
+    return false;
+  }
+
+  return rows.every(function (row) {
+    if (!isInfoboxRowElement(row)) {
+      return false;
+    }
+    const cells = Array.from(row.children || []);
+    return (
+      cells.length === 2 &&
+      cells[0].tagName.toLowerCase() === "dt" &&
+      cells[1].tagName.toLowerCase() === "dd"
+    );
+  });
+}
+
+function appendInfoboxInlineChildren(document, target, source) {
+  Array.from(source.childNodes || []).forEach(function (child) {
+    if (child.nodeType === 1) {
+      const tag = child.tagName.toLowerCase();
+      if (["address", "article", "blockquote", "div", "dl", "figure", "h1", "h2", "h3", "h4", "hr", "ol", "p", "pre", "section", "table", "ul"].includes(tag)) {
+        appendInfoboxInlineChildren(document, target, child);
+        return;
+      }
+    }
+    target.appendChild(child);
+  });
+}
+
+function createInfoboxCell(document, tagName, source) {
+  const cell = document.createElement(tagName);
+  if (source) {
+    appendInfoboxInlineChildren(document, cell, source);
+  }
+  return cell;
+}
+
+function repairInfoboxRow(document, row) {
+  const children = Array.from(row.children || []);
+  const term = children.find(function (child) {
+    return child.tagName && child.tagName.toLowerCase() === "dt";
+  }) || null;
+  const value = children.find(function (child) {
+    return child.tagName && child.tagName.toLowerCase() === "dd";
+  }) || null;
+
+  if (term && value) {
+    Array.from(row.childNodes || []).forEach(function (child) {
+      if (child !== term && child !== value) {
+        row.removeChild(child);
+      }
+    });
+    if (term.nextSibling !== value) {
+      row.insertBefore(value, term.nextSibling);
+    }
+    return true;
+  }
+
+  if (term) {
+    Array.from(row.childNodes || []).forEach(function (child) {
+      if (child !== term) {
+        row.removeChild(child);
+      }
+    });
+    row.appendChild(document.createElement("dd"));
+    return true;
+  }
+
+  if (value) {
+    Array.from(row.childNodes || []).forEach(function (child) {
+      if (child !== value) {
+        row.removeChild(child);
+      }
+    });
+    row.insertBefore(document.createElement("dt"), value);
+    return true;
+  }
+
+  if (!String(row.textContent || "").trim()) {
+    return false;
+  }
+
+  const termFromContent = createInfoboxCell(document, "dt", row);
+  while (row.firstChild) {
+    row.removeChild(row.firstChild);
+  }
+  row.appendChild(termFromContent);
+  row.appendChild(document.createElement("dd"));
+  return true;
+}
+
 function normalizeInfoboxRows(document, root) {
   root.querySelectorAll('[data-wiki-infobox-part="rows"], .wiki-infobox__rows').forEach(function (rows) {
     if (!isInfoboxRowsElement(rows)) {
@@ -411,7 +509,14 @@ function normalizeInfoboxRows(document, root) {
     const children = Array.from(rows.children || []);
     for (let index = 0; index < children.length; index += 1) {
       const child = children[index];
-      if (!child || child.tagName.toLowerCase() !== "dt" || child.parentElement !== rows) {
+      const tagName = child && child.tagName ? child.tagName.toLowerCase() : "";
+
+      if (isInfoboxRowElement(child)) {
+        repairInfoboxRow(document, child);
+        continue;
+      }
+
+      if (!child || !["dt", "dd"].includes(tagName) || child.parentElement !== rows) {
         continue;
       }
 
@@ -419,10 +524,15 @@ function normalizeInfoboxRows(document, root) {
       const row = document.createElement("div");
       setInfoboxPart(row, "row");
       rows.insertBefore(row, child);
+      if (tagName === "dd") {
+        row.appendChild(document.createElement("dt"));
+      }
       row.appendChild(child);
-      if (next && next.tagName.toLowerCase() === "dd" && next.parentElement === rows) {
+      if (tagName === "dt" && next && next.tagName.toLowerCase() === "dd" && next.parentElement === rows) {
         row.appendChild(next);
         index += 1;
+      } else if (tagName === "dt") {
+        row.appendChild(document.createElement("dd"));
       }
     }
   });
@@ -1110,6 +1220,10 @@ export function detectUnsupportedContent(html) {
       } else if (!isSupportedImageFigure(element) && !isPoetryQuoteFigure(element)) {
         return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
       }
+    }
+
+    if (isInfoboxRowsElement(element) && !isSupportedInfoboxRowsStructure(element)) {
+      return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
     }
 
     if (tag === "figcaption") {

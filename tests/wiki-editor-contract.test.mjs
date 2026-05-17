@@ -957,6 +957,25 @@ await test("normalizeLegacyHtmlForTiptap only preserves canonical infobox defini
   assert.match(malformedRows, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Loose<\/dt><dd>Value<\/dd><\/div><\/dl>/);
 });
 
+await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without dropping visible text", function () {
+  const valueOnly = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><dd>Value</dd></dl></aside>'
+  );
+  const rowWithProse = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><p>Text</p></div></dl></aside>'
+  );
+
+  assert.match(valueOnly, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd>Value<\/dd><\/div>/);
+  assert.match(rowWithProse, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Text<\/dt><dd><\/dd><\/div>/);
+});
+
+await test("detectUnsupportedContent rejects empty infobox rows helpers", function () {
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"></dl></aside>'),
+    /definition rows/
+  );
+});
+
 await test("normalizeLegacyHtmlForTiptap upgrades simple pasted infobox class names", function () {
   const normalized = normalizeLegacyHtmlForTiptap(
     '<aside class="infobox"><div class="title">Selene</div><div class="subtitle">Vampire Noble</div><div class="section">Details</div><div class="content"><p>Notes</p></div></aside>'
@@ -2329,6 +2348,19 @@ await test("malformed raw infobox rows parse as repaired row helpers", function 
   editor.destroy();
 });
 
+await test("malformed raw infobox rows preserve visible content instead of empty rows", function () {
+  const valueOnlyEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><dd>Value</dd></dl></aside>');
+  const emptyRowsEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"></dl></aside>');
+  const proseRowEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><p>Text</p></div></dl></aside>');
+
+  assert.match(valueOnlyEditor.getHTML(), /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd>Value<\/dd><\/div>/);
+  assert.doesNotMatch(emptyRowsEditor.getHTML(), /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd><\/dd><\/div>/);
+  assert.match(proseRowEditor.getHTML(), /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Text<\/dt><dd><\/dd><\/div>/);
+  valueOnlyEditor.destroy();
+  emptyRowsEditor.destroy();
+  proseRowEditor.destroy();
+});
+
 await test("wikiInfobox insert command creates starter infobox HTML", function () {
   const editor = createEditor("<p>Start</p>");
 
@@ -2428,6 +2460,21 @@ await test("wikiInfobox unwrap preserves image helper content", function () {
   assert.match(rendered, /House/);
   assert.match(rendered, /Voss/);
   assert.match(rendered, /<img[^>]+src="\/uploads\/selene\.png"[^>]+alt="Selene portrait"[^>]*>/);
+  assert.match(rendered, /<p>After<\/p>/);
+  editor.destroy();
+});
+
+await test("wikiInfobox unwrap preserves inline marks from helper text", function () {
+  const editor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title"><strong>Selene</strong></div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd><em>Voss</em></dd></div></dl></aside><p>After</p>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.unwrapWikiInfobox(), true);
+  const rendered = editor.getHTML();
+
+  assert.doesNotMatch(rendered, /<aside class="wiki-infobox"/);
+  assert.match(rendered, /<p>Before<\/p>/);
+  assert.match(rendered, /<p><strong>Selene<\/strong><\/p>/);
+  assert.match(rendered, /<em>Voss<\/em>/);
   assert.match(rendered, /<p>After<\/p>/);
   editor.destroy();
 });

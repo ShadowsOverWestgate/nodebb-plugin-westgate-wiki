@@ -110,6 +110,37 @@ function appendTextParagraph(state, blocks, text) {
   }
 }
 
+function createParagraphFromInlineContent(state, content) {
+  const paragraphType = state.schema.nodes.paragraph;
+  if (!paragraphType || !content || !content.size) {
+    return null;
+  }
+  return paragraphType.create(null, content);
+}
+
+function appendInlineParagraph(state, blocks, content) {
+  const paragraph = createParagraphFromInlineContent(state, content);
+  if (paragraph) {
+    blocks.push(paragraph);
+  }
+}
+
+function appendRowParagraph(state, blocks, row) {
+  const inlineNodes = [];
+  row.forEach(function (cell) {
+    if (!cell.content.size) {
+      return;
+    }
+    if (inlineNodes.length) {
+      inlineNodes.push(state.schema.text(" "));
+    }
+    cell.content.forEach(function (inlineNode) {
+      inlineNodes.push(inlineNode);
+    });
+  });
+  appendInlineParagraph(state, blocks, Fragment.fromArray(inlineNodes));
+}
+
 function flattenInfoboxContentForUnwrap(state, infoboxNode) {
   const blocks = [];
 
@@ -123,13 +154,7 @@ function flattenInfoboxContentForUnwrap(state, infoboxNode) {
 
     if (child.type.name === "wikiInfoboxRows") {
       child.forEach(function (row) {
-        const text = [];
-        row.forEach(function (cell) {
-          if (cell.textContent) {
-            text.push(cell.textContent);
-          }
-        });
-        appendTextParagraph(state, blocks, text.join(" "));
+        appendRowParagraph(state, blocks, row);
       });
       return;
     }
@@ -141,8 +166,8 @@ function flattenInfoboxContentForUnwrap(state, infoboxNode) {
       return;
     }
 
-    if (child.textContent) {
-      appendTextParagraph(state, blocks, child.textContent);
+    if (child.content && child.content.size) {
+      appendInlineParagraph(state, blocks, child.content);
     }
   });
 
@@ -238,25 +263,36 @@ function parseInfoboxPartRules(partName, tagName, className) {
   ];
 }
 
+function appendInlineDomChildren(target, source) {
+  Array.from(source.childNodes || []).forEach(function (child) {
+    if (child.nodeType === 1) {
+      const tagName = child.tagName.toLowerCase();
+      if (["address", "article", "blockquote", "div", "dl", "figure", "h1", "h2", "h3", "h4", "hr", "ol", "p", "pre", "section", "table", "ul"].includes(tagName)) {
+        appendInlineDomChildren(target, child);
+        return;
+      }
+    }
+    target.appendChild(child.cloneNode(true));
+  });
+}
+
 function parseInlineContent(element, schema) {
   const container = element.ownerDocument.createElement("p");
-  Array.from(element.childNodes).forEach(function (child) {
-    container.appendChild(child.cloneNode(true));
-  });
+  appendInlineDomChildren(container, element);
   const parsed = DOMParser.fromSchema(schema).parse(container);
   return parsed.firstChild ? parsed.firstChild.content : Fragment.empty;
 }
 
-function createParsedInfoboxRow(schema, termElement, valueElement) {
+function createParsedInfoboxRow(schema, termElement, valueElement, fallbackTermElement) {
   const rowType = schema.nodes.wikiInfoboxRow;
   const termType = schema.nodes.wikiInfoboxTerm;
   const valueType = schema.nodes.wikiInfoboxValue;
-  if (!rowType || !termType || !valueType || !termElement) {
+  if (!rowType || !termType || !valueType || (!termElement && !valueElement && !fallbackTermElement)) {
     return null;
   }
 
   return rowType.create(null, [
-    termType.create(null, parseInlineContent(termElement, schema)),
+    termType.create(null, termElement || fallbackTermElement ? parseInlineContent(termElement || fallbackTermElement, schema) : Fragment.empty),
     valueType.create(null, valueElement ? parseInlineContent(valueElement, schema) : Fragment.empty)
   ]);
 }
@@ -279,7 +315,8 @@ function parseInfoboxRowsContent(element, schema) {
       const row = createParsedInfoboxRow(
         schema,
         findDirectInfoboxCell(child, "dt"),
-        findDirectInfoboxCell(child, "dd")
+        findDirectInfoboxCell(child, "dd"),
+        String(child.textContent || "").trim() ? child : null
       );
       if (row) {
         rows.push(row);
@@ -296,6 +333,14 @@ function parseInfoboxRowsContent(element, schema) {
       }
       if (valueElement) {
         index += 1;
+      }
+      continue;
+    }
+
+    if (tagName === "dd") {
+      const row = createParsedInfoboxRow(schema, null, child);
+      if (row) {
+        rows.push(row);
       }
     }
   }
@@ -375,7 +420,7 @@ export const WikiInfoboxRows = Node.create({
   name: "wikiInfoboxRows",
   priority: 1000,
   group: "wikiInfoboxPart",
-  content: "wikiInfoboxRow+",
+  content: "wikiInfoboxRow*",
   defining: true,
   parseHTML() {
     return [
