@@ -2761,6 +2761,40 @@ await test("wikiInfobox delete helper command removes only the active helper blo
   editor.destroy();
 });
 
+await test("wikiInfobox delete helper keeps selection active after deleting the last helper block", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Subtitle").from);
+  assert.equal(editor.commands.deleteWikiInfoboxHelper(), true);
+  let rendered = editor.getHTML();
+  assert.match(rendered, /Title/);
+  assert.doesNotMatch(rendered, /Subtitle/);
+  assert.equal(editor.isActive("wikiInfobox"), true);
+
+  assert.equal(editor.commands.addWikiInfoboxSubtitle(), true);
+  rendered = editor.getHTML();
+  assert.match(rendered, /Title/);
+  assert.match(rendered, /Subtitle/);
+  editor.destroy();
+});
+
+await test("wikiInfobox delete helper keeps an empty infobox selectable after deleting its only helper block", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Title").from);
+  assert.equal(editor.commands.deleteWikiInfoboxHelper(), true);
+  let rendered = editor.getHTML();
+  assert.match(rendered, /wiki-infobox/);
+  assert.doesNotMatch(rendered, /Title/);
+  assert.equal(editor.isActive("wikiInfobox"), true);
+
+  assert.equal(editor.commands.addWikiInfoboxTitle(), true);
+  rendered = editor.getHTML();
+  assert.match(rendered, /Title/);
+  assert.match(rendered, /wiki-infobox/);
+  editor.destroy();
+});
+
 await test("wikiInfobox helper commands support whole helper node selections", function () {
   const moveEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
   const subtitlePos = findNodePositions(moveEditor, "wikiInfoboxSubtitle")[0];

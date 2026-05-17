@@ -1,6 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { DOMParser, Fragment } from "@tiptap/pm/model";
-import { Selection } from "@tiptap/pm/state";
+import { NodeSelection, Selection } from "@tiptap/pm/state";
 
 const INFOBOX_NODE_NAME = "wikiInfobox";
 const INFOBOX_CONTENT_EXPRESSION = "wikiInfoboxPart*";
@@ -158,7 +158,14 @@ function deleteActiveInfoboxHelper(state, dispatch) {
 
   if (dispatch) {
     const tr = state.tr.delete(context.helper.pos, context.helper.pos + context.helper.node.nodeSize);
-    dispatch(setSelectionNear(tr, context.helper.pos).scrollIntoView());
+    const updatedInfobox = tr.doc.nodeAt(context.infobox.pos);
+    if (updatedInfobox && updatedInfobox.type.name === INFOBOX_NODE_NAME && updatedInfobox.childCount === 0) {
+      tr.setSelection(NodeSelection.create(tr.doc, context.infobox.pos));
+    } else {
+      const deletingLastHelper = context.helper.index >= context.infobox.node.childCount - 1;
+      setSelectionNear(tr, context.helper.pos, deletingLastHelper ? -1 : 1);
+    }
+    dispatch(tr.scrollIntoView());
   }
   return true;
 }
