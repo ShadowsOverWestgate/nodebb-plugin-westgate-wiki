@@ -612,6 +612,33 @@ function repairInfoboxRow(document, row) {
   return true;
 }
 
+function isIgnorableInfoboxSibling(node) {
+  if (!node) {
+    return true;
+  }
+  if (node.nodeType === 8) {
+    return true;
+  }
+  return node.nodeType === 3 && !String(node.nodeValue || "").trim();
+}
+
+function getNextSignificantInfoboxSibling(nodes, index, parent) {
+  for (let nextIndex = index + 1; nextIndex < nodes.length; nextIndex += 1) {
+    const next = nodes[nextIndex];
+    if (!next || next.parentElement !== parent) {
+      continue;
+    }
+    if (isIgnorableInfoboxSibling(next)) {
+      continue;
+    }
+    return {
+      index: nextIndex,
+      node: next
+    };
+  }
+  return null;
+}
+
 function normalizeInfoboxRows(document, root) {
   root.querySelectorAll('[data-wiki-infobox-part="rows"], .wiki-infobox__rows').forEach(function (rows) {
     if (!isInfoboxRowsElement(rows)) {
@@ -644,7 +671,7 @@ function normalizeInfoboxRows(document, root) {
         continue;
       }
 
-      const next = children[index + 1];
+      const next = getNextSignificantInfoboxSibling(children, index, rows);
       const row = document.createElement("div");
       setInfoboxPart(row, "row");
       rows.insertBefore(row, child);
@@ -652,9 +679,9 @@ function normalizeInfoboxRows(document, root) {
         row.appendChild(document.createElement("dt"));
       }
       row.appendChild(child);
-      if (tagName === "dt" && next && next.tagName.toLowerCase() === "dd" && next.parentElement === rows) {
-        row.appendChild(next);
-        index += 1;
+      if (tagName === "dt" && next && next.node.tagName && next.node.tagName.toLowerCase() === "dd") {
+        row.appendChild(next.node);
+        index = next.index;
       } else if (tagName === "dt") {
         row.appendChild(document.createElement("dd"));
       }

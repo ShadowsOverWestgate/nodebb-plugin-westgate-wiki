@@ -1026,6 +1026,15 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   const valueOnlyWithExtraContent = normalizeLegacyHtmlForTiptap(
     '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dd>Value</dd><p>Lost note</p></div></dl></aside>'
   );
+  const prettyPrintedDirectRows = [
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
+    '  <dt>House</dt>',
+    '  <dd>Voss</dd>',
+    '</dl>',
+    '</aside>'
+  ].join("\n");
+  const prettyPrintedRows = normalizeLegacyHtmlForTiptap(prettyPrintedDirectRows);
 
   assert.match(valueOnly, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd>Value<\/dd><\/div>/);
   assert.match(rowWithProse, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Text<\/dt><dd><\/dd><\/div>/);
@@ -1033,6 +1042,8 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   assert.match(rowsWithDirectText, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Loose text<\/dt><dd><\/dd><\/div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
   assert.match(termOnlyWithExtraContent, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Lost note<\/dd><\/div>/);
   assert.match(valueOnlyWithExtraContent, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd>Value Lost note<\/dd><\/div>/);
+  assert.match(prettyPrintedRows, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt>\s*<dd>Voss<\/dd><\/div>/);
+  assert.equal(detectUnsupportedContent(prettyPrintedDirectRows), "");
 });
 
 await test("detectUnsupportedContent rejects empty infobox rows helpers", function () {
@@ -2405,13 +2416,25 @@ await test("direct infobox prose is preserved through content helpers", function
 
 await test("malformed raw infobox rows parse as repaired row helpers", function () {
   const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><dt>Loose</dt><dd>Value</dd></dl></aside>');
+  const prettyPrintedEditor = createEditor([
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
+    '  <dt>House</dt>',
+    '  <dd>Voss</dd>',
+    '</dl>',
+    '</aside>'
+  ].join("\n"));
   const rendered = editor.getHTML();
+  const prettyPrintedRendered = prettyPrintedEditor.getHTML();
 
   assert.match(rendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Loose<\/dt><dd>Value<\/dd><\/div><\/dl>/);
   assert.doesNotMatch(rendered, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd><\/dd><\/div>/);
   assert.doesNotMatch(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title">Loose<\/div>/);
   assert.doesNotMatch(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title">Value<\/div>/);
+  assert.match(prettyPrintedRendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl>/);
+  assert.equal((prettyPrintedRendered.match(/class="wiki-infobox__row"/g) || []).length, 1);
   editor.destroy();
+  prettyPrintedEditor.destroy();
 });
 
 await test("malformed raw infobox rows preserve visible content instead of empty rows", function () {

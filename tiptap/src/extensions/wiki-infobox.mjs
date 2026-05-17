@@ -356,6 +356,30 @@ function findDirectInfoboxCell(element, tagName) {
   }) || null;
 }
 
+function isIgnorableInfoboxSibling(node) {
+  if (!node) {
+    return true;
+  }
+  if (node.nodeType === 8) {
+    return true;
+  }
+  return node.nodeType === 3 && !String(node.nodeValue || "").trim();
+}
+
+function getNextSignificantInfoboxSibling(nodes, index) {
+  for (let nextIndex = index + 1; nextIndex < nodes.length; nextIndex += 1) {
+    const next = nodes[nextIndex];
+    if (isIgnorableInfoboxSibling(next)) {
+      continue;
+    }
+    return {
+      index: nextIndex,
+      node: next
+    };
+  }
+  return null;
+}
+
 function parseInfoboxRowsContent(element, schema) {
   const rows = [];
   const children = Array.from(element.childNodes || []);
@@ -396,14 +420,14 @@ function parseInfoboxRowsContent(element, schema) {
     }
 
     if (tagName === "dt") {
-      const next = children[index + 1];
-      const valueElement = next && next.tagName && next.tagName.toLowerCase() === "dd" ? next : null;
+      const next = getNextSignificantInfoboxSibling(children, index);
+      const valueElement = next && next.node.tagName && next.node.tagName.toLowerCase() === "dd" ? next.node : null;
       const row = createParsedInfoboxRow(schema, child, valueElement);
       if (row) {
         rows.push(row);
       }
       if (valueElement) {
-        index += 1;
+        index = next.index;
       }
       continue;
     }
