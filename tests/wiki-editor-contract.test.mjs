@@ -870,10 +870,11 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(articleBodyCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*float:\s*none/);
   assert.match(articleBodyCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*100%/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__title\s*\{/);
-  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__image\s*\{[^}]*box-sizing:\s*border-box/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__image\s*\{[^}]*box-sizing:\s*border-box[^}]*padding:\s*0\.75rem\s+0\.75rem\s+0[^}]*width:\s*100%/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row\s*\{/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row > dt,\s*\.wiki-article-prose \.wiki-infobox__row > dd\s*\{[^}]*overflow-wrap:\s*anywhere/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row > dd\s*\{[^}]*min-width:\s*0/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__content\s*\{[^}]*padding:\s*0\.75rem\s+0\.85rem/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*float:\s*right[^}]*clear:\s*right[^}]*width:\s*min\(22rem,\s*42%\)/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__surface\s*\{[^}]*container-type:\s*inline-size/);
@@ -886,11 +887,12 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*clear:\s*both/);
   assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*width:\s*100%/);
   assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*margin:\s*1rem\s+0/);
-  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image\s*\{[^}]*background:\s*transparent[^}]*border:\s*0[^}]*box-shadow:\s*none[^}]*box-sizing:\s*border-box[^}]*max-width:\s*100%[^}]*width:\s*100%/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image\s*\{[^}]*background:\s*transparent[^}]*border:\s*0[^}]*box-shadow:\s*none[^}]*box-sizing:\s*border-box[^}]*max-width:\s*100%[^}]*padding:\s*0\.75rem\s+0\.75rem\s+0[^}]*width:\s*100%/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image img\s*\{[^}]*display:\s*block[^}]*max-width:\s*100%[^}]*margin:\s*0 auto/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__section\s*\{[^}]*letter-spacing:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dt,\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[^}]*overflow-wrap:\s*anywhere/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[^}]*min-width:\s*0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content\s*\{[^}]*padding:\s*0\.75rem\s+0\.85rem/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :first-child\s*\{[^}]*margin-top:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :last-child\s*\{[^}]*margin-bottom:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*position:\s*absolute/);
