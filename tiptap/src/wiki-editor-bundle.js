@@ -2910,6 +2910,17 @@ function createInfoboxContextToolbar(surface, editor) {
     addRailButton({ id: "infobox-unwrap", title: "Unwrap infobox", action: function () { editor.chain().focus().unwrapWikiInfobox().run(); } }),
     addRailButton({ id: "infobox-delete", title: "Delete infobox", action: function () { editor.chain().focus().deleteWikiInfobox().run(); } })
   ];
+  const helperAvailability = {
+    "infobox-move-helper-up": function () {
+      return editor.can().moveWikiInfoboxHelperUp();
+    },
+    "infobox-move-helper-down": function () {
+      return editor.can().moveWikiInfoboxHelperDown();
+    },
+    "infobox-delete-helper": function () {
+      return editor.can().deleteWikiInfoboxHelper();
+    }
+  };
 
   function syncInfoboxTools() {
     const infobox = editor.isActive("wikiInfobox") ? getActiveInfoboxElement(editor, surface) : null;
@@ -2918,7 +2929,8 @@ function createInfoboxContextToolbar(surface, editor) {
       return;
     }
     buttons.forEach(function (button) {
-      button.disabled = false;
+      const availability = helperAvailability[button.getAttribute("data-toolbar-id")];
+      button.disabled = availability ? !availability() : false;
     });
     positionInfoboxRail(panel, infobox, surface);
   }

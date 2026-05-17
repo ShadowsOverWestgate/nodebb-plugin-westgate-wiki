@@ -61,13 +61,24 @@ function findInfoboxHelperChild(context, childPos) {
   return result;
 }
 
+function findDirectInfoboxHelperAtResolvedPos(context, $pos) {
+  for (let depth = $pos.depth; depth > 0; depth -= 1) {
+    const ancestor = $pos.node(depth);
+    const parent = depth > 0 ? $pos.node(depth - 1) : null;
+    if (isInfoboxHelperNode(ancestor) && parent && parent.type.name === INFOBOX_NODE_NAME) {
+      return findInfoboxHelperChild(context, $pos.before(depth));
+    }
+  }
+  return null;
+}
+
 function findActiveInfoboxHelper(state) {
   const context = findActiveInfobox(state);
   if (!context) {
     return null;
   }
 
-  const { $from, from, node } = state.selection;
+  const { $from, $to, from, node } = state.selection;
   if (isInfoboxHelperNode(node) && $from.parent.type.name === INFOBOX_NODE_NAME) {
     const directChild = findInfoboxHelperChild(context, from);
     if (directChild) {
@@ -78,21 +89,16 @@ function findActiveInfoboxHelper(state) {
     }
   }
 
-  for (let depth = $from.depth; depth > 0; depth -= 1) {
-    const ancestor = $from.node(depth);
-    const parent = depth > 0 ? $from.node(depth - 1) : null;
-    if (isInfoboxHelperNode(ancestor) && parent && parent.type.name === INFOBOX_NODE_NAME) {
-      const directChild = findInfoboxHelperChild(context, $from.before(depth));
-      if (directChild) {
-        return {
-          infobox: context,
-          helper: directChild
-        };
-      }
-    }
+  const fromHelper = findDirectInfoboxHelperAtResolvedPos(context, $from);
+  const toHelper = findDirectInfoboxHelperAtResolvedPos(context, $to);
+  if (!fromHelper || !toHelper || fromHelper.pos !== toHelper.pos) {
+    return null;
   }
 
-  return null;
+  return {
+    infobox: context,
+    helper: fromHelper
+  };
 }
 
 function setSelectionNear(tr, pos, bias) {

@@ -2783,6 +2783,31 @@ await test("wikiInfobox helper commands support whole helper node selections", f
   deleteEditor.destroy();
 });
 
+await test("wikiInfobox helper commands reject text selections spanning multiple helper blocks", function () {
+  const deleteEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+  const deleteTitle = findTextRange(deleteEditor, "Title");
+  const deleteSubtitle = findTextRange(deleteEditor, "Subtitle");
+
+  deleteEditor.commands.setTextSelection({ from: deleteTitle.from, to: deleteSubtitle.to });
+  const beforeDelete = deleteEditor.getHTML();
+  assert.equal(deleteEditor.commands.deleteWikiInfoboxHelper(), false);
+  assert.equal(deleteEditor.getHTML(), beforeDelete);
+  assert.match(deleteEditor.getHTML(), /Title/);
+  assert.match(deleteEditor.getHTML(), /Subtitle/);
+  deleteEditor.destroy();
+
+  const moveEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+  const moveTitle = findTextRange(moveEditor, "Title");
+  const moveSubtitle = findTextRange(moveEditor, "Subtitle");
+
+  moveEditor.commands.setTextSelection({ from: moveTitle.from, to: moveSubtitle.to });
+  const beforeMove = moveEditor.getHTML();
+  assert.equal(moveEditor.commands.moveWikiInfoboxHelperDown(), false);
+  assert.equal(moveEditor.getHTML(), beforeMove);
+  assert.ok(moveEditor.getHTML().indexOf("Title") < moveEditor.getHTML().indexOf("Subtitle"));
+  moveEditor.destroy();
+});
+
 await test("wikiInfobox commands return false outside an active infobox", function () {
   const editor = createEditor("<p>Outside</p>");
 
@@ -3060,6 +3085,9 @@ await test("infobox vertical rail source exposes all internal helper actions", f
   ].forEach(function (id) {
     assert.match(editorBundleSource, new RegExp(id));
   });
+  assert.match(editorBundleSource, /editor\.can\(\)\.moveWikiInfoboxHelperUp\(\)/);
+  assert.match(editorBundleSource, /editor\.can\(\)\.moveWikiInfoboxHelperDown\(\)/);
+  assert.match(editorBundleSource, /editor\.can\(\)\.deleteWikiInfoboxHelper\(\)/);
 });
 
 await test("poetry quote floating toolbar exposes container toggle and unwrap actions", function () {
