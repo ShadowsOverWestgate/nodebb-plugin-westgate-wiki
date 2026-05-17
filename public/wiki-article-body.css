@@ -419,10 +419,16 @@
   --bs-table-border-color: var(--wiki-prose-table-border, var(--bs-border-color-translucent, var(--bs-border-color, #dee2e6)));
   --bs-table-hover-bg: var(--wiki-prose-table-hover-bg, var(--bs-secondary-bg, rgba(0, 0, 0, 0.04)));
   --bs-table-hover-color: var(--wiki-prose-table-hover-color, var(--bs-emphasis-color, inherit));
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   margin: 1rem 0;
   color: var(--wiki-prose-color, var(--bs-body-color, inherit));
   border-collapse: collapse;
+}
+
+.wiki-article-prose table[style*="width:100%"],
+.wiki-article-prose table[style*="width: 100%"] {
+  width: auto !important;
 }
 
 .wiki-article-prose table.wiki-table-layout-auto {

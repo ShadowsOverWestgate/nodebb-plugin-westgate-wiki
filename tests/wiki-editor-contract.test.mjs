@@ -996,6 +996,13 @@ await test("table cell paragraphs have no margins in article and editor prose", 
   });
 });
 
+await test("article tables can shrink beside floated infoboxes", function () {
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*width:\s*auto/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*max-width:\s*100%/s);
+  assert.doesNotMatch(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*\n\s*width:\s*100%/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+table\[style\*="width:100%"\],\s*\.wiki-article-prose\s+table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*auto\s*!important/s);
+});
+
 await test("saved table colgroup widths reload into Tiptap column width attrs", function () {
   const savedHtml = '<table class="wiki-table-borderless wiki-table-layout-fixed" style="width:100%"><colgroup><col style="width:82px"><col style="width:94px"><col></colgroup><tbody><tr><td style="width:64px" colspan="1" rowspan="1"><p>Icon</p></td><td class="wiki-table-cell-valign-top" style="text-align:right" colspan="1" rowspan="1"><p><strong>Bull Rush:</strong></p></td><td class="wiki-table-cell-valign-top" colspan="1" rowspan="1"><p>pushes the enemy away.</p></td></tr></tbody></table>';
   const normalized = normalizeLegacyHtmlForTiptap(savedHtml);
