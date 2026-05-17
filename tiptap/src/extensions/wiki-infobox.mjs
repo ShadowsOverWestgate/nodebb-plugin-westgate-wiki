@@ -1,4 +1,5 @@
 import { mergeAttributes, Node } from "@tiptap/core";
+import { DOMParser, Fragment } from "@tiptap/pm/model";
 import { Selection } from "@tiptap/pm/state";
 
 const INFOBOX_NODE_NAME = "wikiInfobox";
@@ -237,6 +238,71 @@ function parseInfoboxPartRules(partName, tagName, className) {
   ];
 }
 
+function parseInlineContent(element, schema) {
+  const container = element.ownerDocument.createElement("p");
+  Array.from(element.childNodes).forEach(function (child) {
+    container.appendChild(child.cloneNode(true));
+  });
+  const parsed = DOMParser.fromSchema(schema).parse(container);
+  return parsed.firstChild ? parsed.firstChild.content : Fragment.empty;
+}
+
+function createParsedInfoboxRow(schema, termElement, valueElement) {
+  const rowType = schema.nodes.wikiInfoboxRow;
+  const termType = schema.nodes.wikiInfoboxTerm;
+  const valueType = schema.nodes.wikiInfoboxValue;
+  if (!rowType || !termType || !valueType || !termElement) {
+    return null;
+  }
+
+  return rowType.create(null, [
+    termType.create(null, parseInlineContent(termElement, schema)),
+    valueType.create(null, valueElement ? parseInlineContent(valueElement, schema) : Fragment.empty)
+  ]);
+}
+
+function findDirectInfoboxCell(element, tagName) {
+  return Array.from(element.children || []).find(function (child) {
+    return child.tagName && child.tagName.toLowerCase() === tagName;
+  }) || null;
+}
+
+function parseInfoboxRowsContent(element, schema) {
+  const rows = [];
+  const children = Array.from(element.children || []);
+
+  for (let index = 0; index < children.length; index += 1) {
+    const child = children[index];
+    const tagName = child.tagName ? child.tagName.toLowerCase() : "";
+
+    if (child.matches && child.matches('[data-wiki-infobox-part="row"], div.wiki-infobox__row')) {
+      const row = createParsedInfoboxRow(
+        schema,
+        findDirectInfoboxCell(child, "dt"),
+        findDirectInfoboxCell(child, "dd")
+      );
+      if (row) {
+        rows.push(row);
+      }
+      continue;
+    }
+
+    if (tagName === "dt") {
+      const next = children[index + 1];
+      const valueElement = next && next.tagName && next.tagName.toLowerCase() === "dd" ? next : null;
+      const row = createParsedInfoboxRow(schema, child, valueElement);
+      if (row) {
+        rows.push(row);
+      }
+      if (valueElement) {
+        index += 1;
+      }
+    }
+  }
+
+  return Fragment.fromArray(rows);
+}
+
 function hasStarterInfoboxSchema(state) {
   return [
     "wikiInfoboxTitle",
@@ -312,7 +378,22 @@ export const WikiInfoboxRows = Node.create({
   content: "wikiInfoboxRow+",
   defining: true,
   parseHTML() {
-    return parseInfoboxPartRules("rows", "dl", "wiki-infobox__rows");
+    return [
+      {
+        tag: '[data-wiki-infobox-part="rows"]',
+        getAttrs: function (element) {
+          return isInsideInfoboxElement(element) ? null : false;
+        },
+        getContent: parseInfoboxRowsContent
+      },
+      {
+        tag: "dl.wiki-infobox__rows",
+        getAttrs: function (element) {
+          return isInsideInfoboxElement(element) ? null : false;
+        },
+        getContent: parseInfoboxRowsContent
+      }
+    ];
   },
   renderHTML({ HTMLAttributes }) {
     return renderInfoboxPart("dl", "wiki-infobox__rows", "rows", HTMLAttributes);

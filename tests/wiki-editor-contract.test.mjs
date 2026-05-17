@@ -2318,6 +2318,17 @@ await test("direct infobox prose is preserved through content helpers", function
   editor.destroy();
 });
 
+await test("malformed raw infobox rows parse as repaired row helpers", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><dt>Loose</dt><dd>Value</dd></dl></aside>');
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Loose<\/dt><dd>Value<\/dd><\/div><\/dl>/);
+  assert.doesNotMatch(rendered, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd><\/dd><\/div>/);
+  assert.doesNotMatch(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title">Loose<\/div>/);
+  assert.doesNotMatch(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title">Value<\/div>/);
+  editor.destroy();
+});
+
 await test("wikiInfobox insert command creates starter infobox HTML", function () {
   const editor = createEditor("<p>Start</p>");
 
