@@ -425,18 +425,38 @@ function isSupportedInfoboxRowsStructure(element) {
   });
 }
 
-function hasUnsupportedInfoboxRowMedia(node) {
-  if (!node || node.nodeType !== 1) {
+function hasUnsupportedInfoboxRowExtra(node) {
+  if (!node) {
     return false;
+  }
+
+  if (node.nodeType === 8) {
+    return false;
+  }
+
+  if (node.nodeType === 3) {
+    return false;
+  }
+
+  if (node.nodeType !== 1) {
+    return true;
   }
 
   const element = node;
   const tag = element.tagName.toLowerCase();
-  if (["audio", "canvas", "embed", "figure", "iframe", "img", "object", "picture", "svg", "table", "video"].includes(tag)) {
-    return true;
+  if (["dt", "dd"].includes(tag)) {
+    return false;
   }
 
-  return !!element.querySelector("audio, canvas, embed, figure, iframe, img, object, picture, svg, table, video");
+  if (["a", "code", "em", "mark", "s", "span", "strong", "sub", "sup", "u"].includes(tag)) {
+    return false;
+  }
+
+  if (["address", "p"].includes(tag)) {
+    return Array.from(element.childNodes || []).some(hasUnsupportedInfoboxRowExtra);
+  }
+
+  return true;
 }
 
 function detectUnsupportedInfoboxRowsBeforeNormalization(html) {
@@ -455,14 +475,14 @@ function detectUnsupportedInfoboxRowsBeforeNormalization(html) {
     }
 
     for (const child of Array.from(rows.childNodes || [])) {
-      if (hasUnsupportedInfoboxRowMedia(child)) {
+      if (hasUnsupportedInfoboxRowExtra(child)) {
         return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
       }
     }
 
     for (const row of Array.from(rows.querySelectorAll(':scope > [data-wiki-infobox-part="row"], :scope > .wiki-infobox__row'))) {
       for (const child of Array.from(row.childNodes || [])) {
-        if (hasUnsupportedInfoboxRowMedia(child)) {
+        if (hasUnsupportedInfoboxRowExtra(child)) {
           return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
         }
       }

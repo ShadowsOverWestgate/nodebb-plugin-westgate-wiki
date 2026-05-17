@@ -436,6 +436,14 @@ await test("detectUnsupportedContent rejects lossy infobox row media", function 
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><img src="/seal.png" alt="Seal"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>'),
     /definition rows/
   );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><hr></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><input type="checkbox" checked></div></dl></aside>'),
+    /definition rows/
+  );
 });
 
 await test("getNormalizationNotice reports when legacy html changes materially", function () {
