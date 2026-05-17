@@ -438,6 +438,43 @@ function appendInfoboxInlineChildren(document, target, source) {
   });
 }
 
+function hasVisibleInfoboxNode(node) {
+  if (!node) {
+    return false;
+  }
+  if (node.nodeType === 3) {
+    return !!String(node.nodeValue || "").trim();
+  }
+  if (node.nodeType === 1) {
+    return !!String(node.textContent || "").trim();
+  }
+  return false;
+}
+
+function appendInfoboxCellSeparator(document, target) {
+  if (String(target.textContent || "").trim()) {
+    target.appendChild(document.createTextNode(" "));
+  }
+}
+
+function appendInfoboxNodeAsInline(document, target, node) {
+  if (!hasVisibleInfoboxNode(node)) {
+    return;
+  }
+
+  appendInfoboxCellSeparator(document, target);
+  if (node.nodeType === 3) {
+    target.appendChild(document.createTextNode(String(node.nodeValue || "").replace(/\s+/g, " ").trim()));
+    return;
+  }
+  if (node.nodeType === 1) {
+    appendInfoboxInlineChildren(document, target, node);
+    if (node.parentNode) {
+      node.parentNode.removeChild(node);
+    }
+  }
+}
+
 function createInfoboxCell(document, tagName, source) {
   const cell = document.createElement(tagName);
   if (source) {
@@ -454,10 +491,16 @@ function repairInfoboxRow(document, row) {
   const value = children.find(function (child) {
     return child.tagName && child.tagName.toLowerCase() === "dd";
   }) || null;
+  const extras = Array.from(row.childNodes || []).filter(function (child) {
+    return child !== term && child !== value && hasVisibleInfoboxNode(child);
+  });
 
   if (term && value) {
+    extras.forEach(function (child) {
+      appendInfoboxNodeAsInline(document, value, child);
+    });
     Array.from(row.childNodes || []).forEach(function (child) {
-      if (child !== term && child !== value) {
+      if (child !== term && child !== value && child.parentNode === row) {
         row.removeChild(child);
       }
     });
@@ -506,10 +549,22 @@ function normalizeInfoboxRows(document, root) {
       return;
     }
 
-    const children = Array.from(rows.children || []);
+    const children = Array.from(rows.childNodes || []);
     for (let index = 0; index < children.length; index += 1) {
       const child = children[index];
       const tagName = child && child.tagName ? child.tagName.toLowerCase() : "";
+
+      if (child.nodeType === 3 && hasVisibleInfoboxNode(child) && child.parentNode === rows) {
+        const row = document.createElement("div");
+        const term = document.createElement("dt");
+        setInfoboxPart(row, "row");
+        term.textContent = String(child.nodeValue || "").replace(/\s+/g, " ").trim();
+        row.appendChild(term);
+        row.appendChild(document.createElement("dd"));
+        rows.insertBefore(row, child);
+        rows.removeChild(child);
+        continue;
+      }
 
       if (isInfoboxRowElement(child)) {
         repairInfoboxRow(document, child);

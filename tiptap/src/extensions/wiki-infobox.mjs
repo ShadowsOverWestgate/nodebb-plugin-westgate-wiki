@@ -276,6 +276,40 @@ function appendInlineDomChildren(target, source) {
   });
 }
 
+function hasVisibleDomNode(node) {
+  if (!node) {
+    return false;
+  }
+  if (node.nodeType === 3) {
+    return !!String(node.nodeValue || "").trim();
+  }
+  if (node.nodeType === 1) {
+    return !!String(node.textContent || "").trim();
+  }
+  return false;
+}
+
+function appendDomInlineSeparator(target) {
+  if (String(target.textContent || "").trim()) {
+    target.appendChild(target.ownerDocument.createTextNode(" "));
+  }
+}
+
+function appendDomNodeAsInline(target, node) {
+  if (!hasVisibleDomNode(node)) {
+    return;
+  }
+
+  appendDomInlineSeparator(target);
+  if (node.nodeType === 3) {
+    target.appendChild(target.ownerDocument.createTextNode(String(node.nodeValue || "").replace(/\s+/g, " ").trim()));
+    return;
+  }
+  if (node.nodeType === 1) {
+    appendInlineDomChildren(target, node);
+  }
+}
+
 function parseInlineContent(element, schema) {
   const container = element.ownerDocument.createElement("p");
   appendInlineDomChildren(container, element);
@@ -283,7 +317,26 @@ function parseInlineContent(element, schema) {
   return parsed.firstChild ? parsed.firstChild.content : Fragment.empty;
 }
 
-function createParsedInfoboxRow(schema, termElement, valueElement, fallbackTermElement) {
+function parseInlineContentWithExtras(schema, valueElement, extraValueNodes) {
+  if (!valueElement && !(extraValueNodes && extraValueNodes.length)) {
+    return Fragment.empty;
+  }
+
+  const sourceDocument = (valueElement || extraValueNodes.find(function (node) {
+    return !!node.ownerDocument;
+  })).ownerDocument;
+  const container = sourceDocument.createElement("p");
+  if (valueElement) {
+    appendInlineDomChildren(container, valueElement);
+  }
+  (extraValueNodes || []).forEach(function (node) {
+    appendDomNodeAsInline(container, node);
+  });
+  const parsed = DOMParser.fromSchema(schema).parse(container);
+  return parsed.firstChild ? parsed.firstChild.content : Fragment.empty;
+}
+
+function createParsedInfoboxRow(schema, termElement, valueElement, fallbackTermElement, extraValueNodes) {
   const rowType = schema.nodes.wikiInfoboxRow;
   const termType = schema.nodes.wikiInfoboxTerm;
   const valueType = schema.nodes.wikiInfoboxValue;
@@ -293,7 +346,7 @@ function createParsedInfoboxRow(schema, termElement, valueElement, fallbackTermE
 
   return rowType.create(null, [
     termType.create(null, termElement || fallbackTermElement ? parseInlineContent(termElement || fallbackTermElement, schema) : Fragment.empty),
-    valueType.create(null, valueElement ? parseInlineContent(valueElement, schema) : Fragment.empty)
+    valueType.create(null, parseInlineContentWithExtras(schema, valueElement, extraValueNodes))
   ]);
 }
 
@@ -305,18 +358,36 @@ function findDirectInfoboxCell(element, tagName) {
 
 function parseInfoboxRowsContent(element, schema) {
   const rows = [];
-  const children = Array.from(element.children || []);
+  const children = Array.from(element.childNodes || []);
 
   for (let index = 0; index < children.length; index += 1) {
     const child = children[index];
     const tagName = child.tagName ? child.tagName.toLowerCase() : "";
 
+    if (child.nodeType === 3 && hasVisibleDomNode(child)) {
+      const term = element.ownerDocument.createElement("span");
+      term.textContent = String(child.nodeValue || "").replace(/\s+/g, " ").trim();
+      const row = createParsedInfoboxRow(schema, null, null, term);
+      if (row) {
+        rows.push(row);
+      }
+      continue;
+    }
+
     if (child.matches && child.matches('[data-wiki-infobox-part="row"], div.wiki-infobox__row')) {
+      const termElement = findDirectInfoboxCell(child, "dt");
+      const valueElement = findDirectInfoboxCell(child, "dd");
+      const extraValueNodes = termElement || valueElement
+        ? Array.from(child.childNodes || []).filter(function (node) {
+          return node !== termElement && node !== valueElement && hasVisibleDomNode(node);
+        })
+        : [];
       const row = createParsedInfoboxRow(
         schema,
-        findDirectInfoboxCell(child, "dt"),
-        findDirectInfoboxCell(child, "dd"),
-        String(child.textContent || "").trim() ? child : null
+        termElement,
+        valueElement,
+        String(child.textContent || "").trim() ? child : null,
+        extraValueNodes
       );
       if (row) {
         rows.push(row);
