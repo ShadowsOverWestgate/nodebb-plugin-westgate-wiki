@@ -4,6 +4,14 @@ import { Selection } from "@tiptap/pm/state";
 
 const INFOBOX_NODE_NAME = "wikiInfobox";
 const INFOBOX_CONTENT_EXPRESSION = "wikiInfoboxPart*";
+const INFOBOX_HELPER_NODE_NAMES = new Set([
+  "wikiInfoboxTitle",
+  "wikiInfoboxSubtitle",
+  "wikiInfoboxImage",
+  "wikiInfoboxSection",
+  "wikiInfoboxRows",
+  "wikiInfoboxContent"
+]);
 
 function textContent(state, text) {
   const value = String(text || "");
@@ -31,9 +39,122 @@ function findActiveInfobox(state) {
   return null;
 }
 
+function isInfoboxHelperNode(node) {
+  return !!(node && INFOBOX_HELPER_NODE_NAMES.has(node.type.name));
+}
+
+function findInfoboxHelperChild(context, childPos) {
+  let result = null;
+  context.node.forEach(function (child, offset, index) {
+    if (result) {
+      return;
+    }
+    const pos = context.pos + 1 + offset;
+    if (pos === childPos) {
+      result = {
+        index,
+        node: child,
+        pos
+      };
+    }
+  });
+  return result;
+}
+
+function findActiveInfoboxHelper(state) {
+  const context = findActiveInfobox(state);
+  if (!context) {
+    return null;
+  }
+
+  const { $from, from, node } = state.selection;
+  if (isInfoboxHelperNode(node) && $from.parent.type.name === INFOBOX_NODE_NAME) {
+    const directChild = findInfoboxHelperChild(context, from);
+    if (directChild) {
+      return {
+        infobox: context,
+        helper: directChild
+      };
+    }
+  }
+
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    const ancestor = $from.node(depth);
+    const parent = depth > 0 ? $from.node(depth - 1) : null;
+    if (isInfoboxHelperNode(ancestor) && parent && parent.type.name === INFOBOX_NODE_NAME) {
+      const directChild = findInfoboxHelperChild(context, $from.before(depth));
+      if (directChild) {
+        return {
+          infobox: context,
+          helper: directChild
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
 function setSelectionNear(tr, pos, bias) {
   const selectionPos = Math.max(0, Math.min(pos, tr.doc.content.size));
   return tr.setSelection(Selection.near(tr.doc.resolve(selectionPos), bias || 1));
+}
+
+function getInfoboxChildNodes(infoboxNode) {
+  const children = [];
+  infoboxNode.forEach(function (child) {
+    children.push(child);
+  });
+  return children;
+}
+
+function getInfoboxChildPos(infoboxContext, children, index) {
+  let pos = infoboxContext.pos + 1;
+  for (let childIndex = 0; childIndex < index; childIndex += 1) {
+    pos += children[childIndex].nodeSize;
+  }
+  return pos;
+}
+
+function moveActiveInfoboxHelper(state, dispatch, direction) {
+  const context = findActiveInfoboxHelper(state);
+  if (!context) {
+    return false;
+  }
+
+  const fromIndex = context.helper.index;
+  const toIndex = fromIndex + direction;
+  const children = getInfoboxChildNodes(context.infobox.node);
+  const target = children[toIndex];
+  if (!isInfoboxHelperNode(target)) {
+    return false;
+  }
+
+  if (dispatch) {
+    const moved = children[fromIndex];
+    children[fromIndex] = target;
+    children[toIndex] = moved;
+    const tr = state.tr.replaceWith(
+      context.infobox.pos + 1,
+      context.infobox.pos + context.infobox.node.nodeSize - 1,
+      Fragment.fromArray(children)
+    );
+    dispatch(setSelectionNear(tr, getInfoboxChildPos(context.infobox, children, toIndex) + 1).scrollIntoView());
+  }
+  return true;
+}
+
+function deleteActiveInfoboxHelper(state, dispatch) {
+  const context = findActiveInfoboxHelper(state);
+  if (!context) {
+    return false;
+  }
+
+  if (dispatch) {
+    const tr = state.tr.delete(context.helper.pos, context.helper.pos + context.helper.node.nodeSize);
+    dispatch(setSelectionNear(tr, context.helper.pos).scrollIntoView());
+  }
+  return true;
 }
 
 function appendNodeToActiveInfobox(state, dispatch, node) {
@@ -987,6 +1108,15 @@ const WikiInfobox = Node.create({
       addWikiInfoboxContent:
         () =>
         ({ state, dispatch }) => appendNodeToActiveInfobox(state, dispatch, createContentHelper(state)),
+      moveWikiInfoboxHelperUp:
+        () =>
+        ({ state, dispatch }) => moveActiveInfoboxHelper(state, dispatch, -1),
+      moveWikiInfoboxHelperDown:
+        () =>
+        ({ state, dispatch }) => moveActiveInfoboxHelper(state, dispatch, 1),
+      deleteWikiInfoboxHelper:
+        () =>
+        ({ state, dispatch }) => deleteActiveInfoboxHelper(state, dispatch),
       unwrapWikiInfobox:
         () =>
         ({ state, tr, dispatch }) => {

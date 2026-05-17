@@ -74,7 +74,7 @@ import { sanitizeHtml } from "./shared/sanitizer-contract.mjs";
 import { createTableAuthoring } from "./table/table-authoring-ui.mjs";
 import { WestgateTableView } from "./table/table-view.mjs";
 import { buildHeadingToc, flattenHeadingToc, navigateToHeading } from "./toolbar/editor-toc.mjs";
-import { IMAGE_CONTEXT_BUTTON_IDS, TOP_TOOLBAR_BUTTON_IDS, TOP_TOOLBAR_GROUPS } from "./toolbar/toolbar-schema.mjs";
+import { IMAGE_CONTEXT_BUTTON_IDS, INFOBOX_CONTEXT_BUTTON_IDS, TOP_TOOLBAR_BUTTON_IDS, TOP_TOOLBAR_GROUPS } from "./toolbar/toolbar-schema.mjs";
 
 const markdownIt = new MarkdownIt({ html: true, linkify: true, typographer: true });
 
@@ -141,6 +141,17 @@ const BUTTON_ICONS = {
   "code-block": "fa-file-code-o",
   "horizontal-rule": "fa-minus",
   "infobox-insert": "fa-info-circle",
+  "infobox-add-title": "fa-header",
+  "infobox-add-subtitle": "fa-text-height",
+  "infobox-add-image": "fa-image",
+  "infobox-add-section": "fa-bookmark",
+  "infobox-add-row": "fa-list-alt",
+  "infobox-add-content": "fa-paragraph",
+  "infobox-move-helper-up": "fa-arrow-up",
+  "infobox-move-helper-down": "fa-arrow-down",
+  "infobox-delete-helper": "fa-minus",
+  "infobox-unwrap": "fa-outdent",
+  "infobox-delete": "fa-trash",
   "callout-info": "fa-info-circle",
   "callout-success": "fa-check-circle",
   "callout-warning": "fa-exclamation-triangle",
@@ -2291,6 +2302,28 @@ function getActiveMediaCellElement(editor, surface) {
   return cell && surface.contains(cell) ? cell : null;
 }
 
+function getActiveInfoboxElement(editor, surface) {
+  const selectedDom = editor.view.nodeDOM(editor.state.selection.from);
+  if (selectedDom && selectedDom.nodeType === 1 && selectedDom.matches('[data-wiki-node="infobox"]') && surface.contains(selectedDom)) {
+    return selectedDom;
+  }
+  const selectionElement = getSelectionElement(editor);
+  const infobox = selectionElement && typeof selectionElement.closest === "function" ? selectionElement.closest('[data-wiki-node="infobox"]') : null;
+  return infobox && surface.contains(infobox) ? infobox : null;
+}
+
+function positionInfoboxRail(panel, infobox, surface) {
+  const surfaceRect = surface.getBoundingClientRect();
+  const boxRect = infobox.getBoundingClientRect();
+  const panelWidth = panel.offsetWidth || 38;
+  const left = Math.max(8, boxRect.left - surfaceRect.left - panelWidth - 8);
+  const visibleTop = Math.max(boxRect.top, surfaceRect.top + 8);
+  const visibleBottom = Math.min(boxRect.bottom, window.innerHeight - 12);
+  const top = Math.max(8, visibleTop - surfaceRect.top + Math.max(0, Math.min(48, (visibleBottom - visibleTop) / 4)));
+  panel.style.left = `${left}px`;
+  panel.style.top = `${top}px`;
+}
+
 function selectPoetryQuote(editor, target, surface) {
   const element = target && typeof target.closest === "function" ? target.closest('[data-wiki-node="poetry-quote"], figure.wiki-poetry-quote') : null;
   if (!element || !surface.contains(element)) {
@@ -2841,6 +2874,69 @@ function createMediaRowContextToolbar(surface, editor) {
   return {
     destroy: function () {
       window.removeEventListener("resize", syncMediaRowTools);
+      if (panel.parentNode) {
+        panel.parentNode.removeChild(panel);
+      }
+    }
+  };
+}
+
+function createInfoboxContextToolbar(surface, editor) {
+  const panel = document.createElement("div");
+  panel.className = "wiki-editor-context-tools wiki-editor-infobox-rail";
+  panel.setAttribute("role", "toolbar");
+  panel.setAttribute("aria-label", "Infobox tools");
+  panel.hidden = true;
+
+  function addRailButton(def) {
+    if (!INFOBOX_CONTEXT_BUTTON_IDS.includes(def.id)) {
+      throw new Error(`Unknown infobox context button: ${def.id}`);
+    }
+    const button = createButton(def);
+    panel.appendChild(button);
+    return button;
+  }
+
+  const buttons = [
+    addRailButton({ id: "infobox-add-title", title: "Add infobox title", action: function () { editor.chain().focus().addWikiInfoboxTitle().run(); } }),
+    addRailButton({ id: "infobox-add-subtitle", title: "Add infobox subtitle", action: function () { editor.chain().focus().addWikiInfoboxSubtitle().run(); } }),
+    addRailButton({ id: "infobox-add-image", title: "Add infobox image slot", action: function () { editor.chain().focus().addWikiInfoboxImage().run(); } }),
+    addRailButton({ id: "infobox-add-section", title: "Add infobox section", action: function () { editor.chain().focus().addWikiInfoboxSection().run(); } }),
+    addRailButton({ id: "infobox-add-row", title: "Add infobox row", action: function () { editor.chain().focus().addWikiInfoboxRow().run(); } }),
+    addRailButton({ id: "infobox-add-content", title: "Add infobox content block", action: function () { editor.chain().focus().addWikiInfoboxContent().run(); } }),
+    addRailButton({ id: "infobox-move-helper-up", title: "Move infobox block up", action: function () { editor.chain().focus().moveWikiInfoboxHelperUp().run(); } }),
+    addRailButton({ id: "infobox-move-helper-down", title: "Move infobox block down", action: function () { editor.chain().focus().moveWikiInfoboxHelperDown().run(); } }),
+    addRailButton({ id: "infobox-delete-helper", title: "Delete infobox block", action: function () { editor.chain().focus().deleteWikiInfoboxHelper().run(); } }),
+    addRailButton({ id: "infobox-unwrap", title: "Unwrap infobox", action: function () { editor.chain().focus().unwrapWikiInfobox().run(); } }),
+    addRailButton({ id: "infobox-delete", title: "Delete infobox", action: function () { editor.chain().focus().deleteWikiInfobox().run(); } })
+  ];
+
+  function syncInfoboxTools() {
+    const infobox = editor.isActive("wikiInfobox") ? getActiveInfoboxElement(editor, surface) : null;
+    panel.hidden = !infobox;
+    if (!infobox) {
+      return;
+    }
+    buttons.forEach(function (button) {
+      button.disabled = false;
+    });
+    positionInfoboxRail(panel, infobox, surface);
+  }
+
+  editor.on("create", syncInfoboxTools);
+  editor.on("selectionUpdate", syncInfoboxTools);
+  editor.on("transaction", syncInfoboxTools);
+  editor.on("focus", syncInfoboxTools);
+  editor.on("blur", syncInfoboxTools);
+  window.addEventListener("resize", syncInfoboxTools);
+  window.addEventListener("scroll", syncInfoboxTools, true);
+  surface.appendChild(panel);
+  syncInfoboxTools();
+
+  return {
+    destroy: function () {
+      window.removeEventListener("resize", syncInfoboxTools);
+      window.removeEventListener("scroll", syncInfoboxTools, true);
       if (panel.parentNode) {
         panel.parentNode.removeChild(panel);
       }
@@ -4076,6 +4172,7 @@ export async function createWikiEditor(element, options) {
   const alignmentTableContextToolbar = createAlignmentTableContextToolbar(editorMount, editor);
   const poetryQuoteContextToolbar = createPoetryQuoteContextToolbar(editorMount, editor);
   const mediaRowContextToolbar = createMediaRowContextToolbar(editorMount, editor);
+  const infoboxContextToolbar = createInfoboxContextToolbar(editorMount, editor);
   linkContextToolbar = createLinkContextToolbar(editorMount, editor);
   const destroyLinkNavigationGuard = installEditorLinkNavigationGuard({
     editorMount,
@@ -4131,6 +4228,7 @@ export async function createWikiEditor(element, options) {
       alignmentTableContextToolbar.destroy();
       poetryQuoteContextToolbar.destroy();
       mediaRowContextToolbar.destroy();
+      infoboxContextToolbar.destroy();
       linkContextToolbar.destroy();
       editorToc.destroy();
       return editor.destroy();

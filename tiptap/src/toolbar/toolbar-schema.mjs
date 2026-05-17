@@ -70,6 +70,20 @@ export const IMAGE_CONTEXT_BUTTON_IDS = [
   "image-convert-figure"
 ];
 
+export const INFOBOX_CONTEXT_BUTTON_IDS = [
+  "infobox-add-title",
+  "infobox-add-subtitle",
+  "infobox-add-image",
+  "infobox-add-section",
+  "infobox-add-row",
+  "infobox-add-content",
+  "infobox-move-helper-up",
+  "infobox-move-helper-down",
+  "infobox-delete-helper",
+  "infobox-unwrap",
+  "infobox-delete"
+];
+
 export const TABLE_CONTEXT_BUTTON_IDS = TABLE_STICKY_COMMAND_IDS;
 
 export function isImageContextButton(id) {

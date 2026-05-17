@@ -2734,6 +2734,55 @@ await test("wikiInfobox command-authored HTML passes unsupported content detecti
   editor.destroy();
 });
 
+await test("wikiInfobox helper movement commands reorder helper blocks", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Title").from);
+  assert.equal(editor.commands.moveWikiInfoboxHelperDown(), true);
+  let rendered = editor.getHTML();
+  assert.ok(rendered.indexOf("Subtitle") < rendered.indexOf("Title"));
+
+  editor.commands.setTextSelection(findTextRange(editor, "Title").from);
+  assert.equal(editor.commands.moveWikiInfoboxHelperUp(), true);
+  rendered = editor.getHTML();
+  assert.ok(rendered.indexOf("Title") < rendered.indexOf("Subtitle"));
+  editor.destroy();
+});
+
+await test("wikiInfobox delete helper command removes only the active helper block", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Title").from);
+  assert.equal(editor.commands.deleteWikiInfoboxHelper(), true);
+  const rendered = editor.getHTML();
+  assert.doesNotMatch(rendered, /Title/);
+  assert.match(rendered, /Subtitle/);
+  assert.match(rendered, /wiki-infobox/);
+  editor.destroy();
+});
+
+await test("wikiInfobox helper commands support whole helper node selections", function () {
+  const moveEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+  const subtitlePos = findNodePositions(moveEditor, "wikiInfoboxSubtitle")[0];
+  moveEditor.view.dispatch(moveEditor.state.tr.setSelection(NodeSelection.create(moveEditor.state.doc, subtitlePos)));
+
+  assert.equal(moveEditor.commands.moveWikiInfoboxHelperUp(), true);
+  const moved = moveEditor.getHTML();
+  assert.ok(moved.indexOf("Subtitle") < moved.indexOf("Title"));
+  moveEditor.destroy();
+
+  const deleteEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+  const titlePos = findNodePositions(deleteEditor, "wikiInfoboxTitle")[0];
+  deleteEditor.view.dispatch(deleteEditor.state.tr.setSelection(NodeSelection.create(deleteEditor.state.doc, titlePos)));
+
+  assert.equal(deleteEditor.commands.deleteWikiInfoboxHelper(), true);
+  const deleted = deleteEditor.getHTML();
+  assert.doesNotMatch(deleted, /Title/);
+  assert.match(deleted, /Subtitle/);
+  assert.match(deleted, /wiki-infobox/);
+  deleteEditor.destroy();
+});
+
 await test("wikiInfobox commands return false outside an active infobox", function () {
   const editor = createEditor("<p>Outside</p>");
 
@@ -2745,6 +2794,9 @@ await test("wikiInfobox commands return false outside an active infobox", functi
     "addWikiInfoboxSection",
     "addWikiInfoboxRow",
     "addWikiInfoboxContent",
+    "moveWikiInfoboxHelperUp",
+    "moveWikiInfoboxHelperDown",
+    "deleteWikiInfoboxHelper",
     "unwrapWikiInfobox",
     "deleteWikiInfobox"
   ].forEach(function (commandName) {
@@ -2988,6 +3040,26 @@ await test("production editor bundle wires infobox insertion into schema toolbar
   assert.match(editorBundleSource, /id:\s*"infobox-insert"[\s\S]*title:\s*"Insert infobox"[\s\S]*insertWikiInfobox\(\)/);
   assert.match(editorBundleSource, /\{\s*id:\s*"infobox-insert",\s*label:\s*"Infobox",\s*aliases:\s*\["info box",\s*"sidebar",\s*"wiki box"\]\s*\}/);
   assert.match(editorBundleSource, /"infobox-insert":\s*function\s*\(\)\s*\{[\s\S]*insertWikiInfobox\(\)\.run\(\);[\s\S]*\}/);
+});
+
+await test("infobox vertical rail source exposes all internal helper actions", function () {
+  assert.match(editorBundleSource, /function\s+createInfoboxContextToolbar\s*\(/);
+  assert.match(editorBundleSource, /wiki-editor-infobox-rail/);
+  [
+    "infobox-add-title",
+    "infobox-add-subtitle",
+    "infobox-add-image",
+    "infobox-add-section",
+    "infobox-add-row",
+    "infobox-add-content",
+    "infobox-move-helper-up",
+    "infobox-move-helper-down",
+    "infobox-delete-helper",
+    "infobox-unwrap",
+    "infobox-delete"
+  ].forEach(function (id) {
+    assert.match(editorBundleSource, new RegExp(id));
+  });
 });
 
 await test("poetry quote floating toolbar exposes container toggle and unwrap actions", function () {
