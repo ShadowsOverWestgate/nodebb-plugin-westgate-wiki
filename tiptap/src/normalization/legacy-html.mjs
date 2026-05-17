@@ -614,7 +614,28 @@ function getInfoboxCellImageExtras(cell) {
   if (!cell) {
     return [];
   }
-  return Array.from(cell.querySelectorAll("img"));
+  const media = Array.from(cell.querySelectorAll("img, figure")).filter(function (node) {
+    return getInfoboxImageExtraElement(node);
+  });
+  return media.filter(function (node) {
+    return !media.some(function (other) {
+      return other !== node && other.contains && other.contains(node);
+    });
+  });
+}
+
+function getInfoboxImageExtraElement(node) {
+  if (!node || node.nodeType !== 1) {
+    return null;
+  }
+  const tagName = node.tagName.toLowerCase();
+  if (tagName === "img") {
+    return node;
+  }
+  if (isSupportedImageFigure(node)) {
+    return getFigureImageElement(node);
+  }
+  return null;
 }
 
 function moveInfoboxRowImageExtras(document, row, extras) {
@@ -630,12 +651,13 @@ function moveInfoboxRowImageExtras(document, row, extras) {
 
   const reference = rows.nextSibling;
   extras.forEach(function (node) {
-    if (!node.parentNode || node.nodeType !== 1 || node.tagName.toLowerCase() !== "img") {
+    const imageNode = getInfoboxImageExtraElement(node);
+    if (!imageNode || !imageNode.parentNode) {
       return;
     }
     const image = document.createElement("figure");
     setInfoboxPart(image, "image");
-    image.appendChild(node);
+    image.appendChild(imageNode);
     parent.insertBefore(image, reference);
   });
 }
@@ -664,7 +686,7 @@ function repairInfoboxRow(document, row) {
     return hasVisibleInfoboxNode(child);
   });
   const imageExtras = extraNodes.filter(function (child) {
-    return child.nodeType === 1 && child.tagName.toLowerCase() === "img";
+    return !!getInfoboxImageExtraElement(child);
   }).concat(cellImageExtras);
 
   if (term && value) {

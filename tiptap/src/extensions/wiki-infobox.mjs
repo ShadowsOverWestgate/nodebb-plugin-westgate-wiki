@@ -293,9 +293,114 @@ function hasVisibleDomNode(node) {
     return !!String(node.nodeValue || "").trim();
   }
   if (node.nodeType === 1) {
-    return !!String(node.textContent || "").trim();
+    return !!String(node.textContent || "").trim() || !!getImageMediaElement(node);
   }
   return false;
+}
+
+function getFigureImageMediaElement(element) {
+  if (!element || !element.children || element.tagName.toLowerCase() !== "figure") {
+    return null;
+  }
+
+  const directImage = Array.from(element.children).find(function (child) {
+    return child.tagName && child.tagName.toLowerCase() === "img";
+  });
+  if (directImage) {
+    return directImage;
+  }
+
+  const link = Array.from(element.children).find(function (child) {
+    if (!child.tagName || child.tagName.toLowerCase() !== "a") {
+      return false;
+    }
+    const children = Array.from(child.children || []);
+    return children.length === 1 && children[0].tagName && children[0].tagName.toLowerCase() === "img";
+  });
+  return link ? link.querySelector("img") : null;
+}
+
+function getImageMediaElement(node) {
+  if (!node || node.nodeType !== 1 || !node.tagName) {
+    return null;
+  }
+
+  const tagName = node.tagName.toLowerCase();
+  if (tagName === "img") {
+    return node;
+  }
+  if (tagName === "figure" && node.classList && node.classList.contains("image")) {
+    return getFigureImageMediaElement(node);
+  }
+  return null;
+}
+
+function getTopLevelImageMedia(nodes) {
+  const media = Array.from(nodes || []).filter(function (node) {
+    return !!getImageMediaElement(node);
+  });
+  return media.filter(function (node) {
+    return !media.some(function (other) {
+      return other !== node && other.contains && other.contains(node);
+    });
+  });
+}
+
+function createImageHelperElement(document, source) {
+  const image = getImageMediaElement(source);
+  if (!image) {
+    return null;
+  }
+
+  const helper = document.createElement("figure");
+  helper.className = "wiki-infobox__image";
+  helper.setAttribute("data-wiki-infobox-part", "image");
+  helper.appendChild(image.cloneNode(true));
+  return helper;
+}
+
+function moveInfoboxRowMediaForParse(element) {
+  const clone = element.cloneNode(true);
+  Array.from(clone.querySelectorAll('dl[data-wiki-infobox-part="rows"], dl.wiki-infobox__rows')).forEach(function (rows) {
+    Array.from(rows.querySelectorAll(':scope > [data-wiki-infobox-part="row"], :scope > div.wiki-infobox__row')).forEach(function (row) {
+      const term = findDirectInfoboxCell(row, "dt");
+      const value = findDirectInfoboxCell(row, "dd");
+      const directMedia = getTopLevelImageMedia(Array.from(row.childNodes || []).filter(function (child) {
+        return child !== term && child !== value;
+      }));
+      const cellMedia = getTopLevelImageMedia([
+        ...(term ? Array.from(term.querySelectorAll("img, figure")) : []),
+        ...(value ? Array.from(value.querySelectorAll("img, figure")) : [])
+      ]);
+      const media = directMedia.concat(cellMedia);
+      if (!media.length || !rows.parentNode) {
+        return;
+      }
+
+      const reference = rows.nextSibling;
+      media.forEach(function (node) {
+        const helper = createImageHelperElement(clone.ownerDocument, node);
+        if (helper) {
+          rows.parentNode.insertBefore(helper, reference);
+        }
+        if (node.parentNode) {
+          node.parentNode.removeChild(node);
+        }
+      });
+    });
+  });
+  return clone;
+}
+
+function parseInfoboxContent(element, schema) {
+  const type = schema.nodes[INFOBOX_NODE_NAME];
+  if (!type) {
+    return Fragment.empty;
+  }
+  const prepared = moveInfoboxRowMediaForParse(element);
+  return DOMParser.fromSchema(schema).parse(prepared, {
+    topNode: type.create()
+  }).content;
 }
 
 function appendDomInlineSeparator(target) {
@@ -659,8 +764,14 @@ const WikiInfobox = Node.create({
   draggable: true,
   parseHTML() {
     return [
-      { tag: '[data-wiki-node="infobox"]' },
-      { tag: "aside.wiki-infobox" }
+      {
+        tag: '[data-wiki-node="infobox"]',
+        getContent: parseInfoboxContent
+      },
+      {
+        tag: "aside.wiki-infobox",
+        getContent: parseInfoboxContent
+      }
     ];
   },
   renderHTML({ HTMLAttributes }) {

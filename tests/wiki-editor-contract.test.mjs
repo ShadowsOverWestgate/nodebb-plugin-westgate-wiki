@@ -1062,6 +1062,9 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   const rowWithExtraImage = normalizeLegacyHtmlForTiptap(
     '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"></div></dl></aside>'
   );
+  const rowWithExtraImageFigure = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><img src="/seal.png" alt="Seal"></figure></div></dl></aside>'
+  );
   const prettyPrintedDirectRows = [
     '<aside class="wiki-infobox" data-wiki-node="infobox">',
     '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
@@ -1080,6 +1083,8 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   assert.match(valueOnlyWithExtraContent, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd>Value Lost note<\/dd><\/div>/);
   assert.match(rowWithExtraImage, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
   assert.match(rowWithExtraImage, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
+  assert.match(rowWithExtraImageFigure, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
+  assert.match(rowWithExtraImageFigure, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
   assert.match(prettyPrintedRows, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt>\s*<dd>Voss<\/dd><\/div>/);
   assert.equal(detectUnsupportedContent(prettyPrintedDirectRows), "");
 });
@@ -2523,6 +2528,16 @@ await test("malformed raw infobox rows preserve visible content instead of empty
   directTextEditor.destroy();
   termOnlyExtraEditor.destroy();
   valueOnlyExtraEditor.destroy();
+});
+
+await test("raw infobox rows preserve image figure media extras", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><img src="/seal.png" alt="Seal"></figure></div></dl></aside>');
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl>/);
+  assert.match(rendered, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img[^>]+src="\/seal\.png"[^>]*alt="Seal"[^>]*><\/figure>/);
+  assert.doesNotMatch(rendered, /<figure class="image">/);
+  editor.destroy();
 });
 
 await test("wikiInfobox insert command creates starter infobox HTML", function () {
