@@ -9,12 +9,19 @@ function textContent(state, text) {
 }
 
 function findActiveInfobox(state) {
-  const { $from } = state.selection;
+  const { $from, from, node } = state.selection;
+  if (node && node.type.name === INFOBOX_NODE_NAME) {
+    return {
+      node,
+      pos: from
+    };
+  }
+
   for (let depth = $from.depth; depth > 0; depth -= 1) {
-    const node = $from.node(depth);
-    if (node.type.name === INFOBOX_NODE_NAME) {
+    const ancestor = $from.node(depth);
+    if (ancestor.type.name === INFOBOX_NODE_NAME) {
       return {
-        node,
+        node: ancestor,
         pos: $from.before(depth)
       };
     }
@@ -36,7 +43,7 @@ function appendNodeToActiveInfobox(state, dispatch, node) {
   const insertPos = context.pos + context.node.nodeSize - 1;
   if (dispatch) {
     const tr = state.tr.insert(insertPos, node);
-    dispatch(setSelectionNear(tr, insertPos + 1).scrollIntoView());
+    dispatch(tr.scrollIntoView());
   }
   return true;
 }
@@ -60,11 +67,7 @@ function createContentHelper(state) {
 
 function createImageHelper(state) {
   const type = state.schema.nodes.wikiInfoboxImage;
-  const paragraphType = state.schema.nodes.paragraph;
-  if (!type || !paragraphType) {
-    return null;
-  }
-  return type.create(null, paragraphType.create());
+  return type ? type.create() : null;
 }
 
 function createRow(state) {
@@ -133,6 +136,18 @@ function renderInfoboxPart(tagName, className, partName, HTMLAttributes) {
   ];
 }
 
+function hasStarterInfoboxSchema(state) {
+  return [
+    "wikiInfoboxTitle",
+    "wikiInfoboxRows",
+    "wikiInfoboxRow",
+    "wikiInfoboxTerm",
+    "wikiInfoboxValue"
+  ].every(function (typeName) {
+    return !!state.schema.nodes[typeName];
+  });
+}
+
 export const WikiInfoboxTitle = Node.create({
   name: "wikiInfoboxTitle",
   priority: 1000,
@@ -171,7 +186,7 @@ export const WikiInfoboxImage = Node.create({
   name: "wikiInfoboxImage",
   priority: 1000,
   group: "block",
-  content: "block*",
+  content: "image?",
   defining: true,
   parseHTML() {
     return [
@@ -305,33 +320,39 @@ const WikiInfobox = Node.create({
     return {
       insertWikiInfobox:
         () =>
-        ({ commands }) => commands.insertContent({
-          type: this.name,
-          content: [
-            {
-              type: "wikiInfoboxTitle",
-              content: [{ type: "text", text: "Untitled Infobox" }]
-            },
-            {
-              type: "wikiInfoboxRows",
-              content: [
-                {
-                  type: "wikiInfoboxRow",
-                  content: [
-                    {
-                      type: "wikiInfoboxTerm",
-                      content: [{ type: "text", text: "Label" }]
-                    },
-                    {
-                      type: "wikiInfoboxValue",
-                      content: [{ type: "text", text: "Value" }]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }),
+        ({ commands, state }) => {
+          if (!hasStarterInfoboxSchema(state)) {
+            return false;
+          }
+
+          return commands.insertContent({
+            type: this.name,
+            content: [
+              {
+                type: "wikiInfoboxTitle",
+                content: [{ type: "text", text: "Untitled Infobox" }]
+              },
+              {
+                type: "wikiInfoboxRows",
+                content: [
+                  {
+                    type: "wikiInfoboxRow",
+                    content: [
+                      {
+                        type: "wikiInfoboxTerm",
+                        content: [{ type: "text", text: "Label" }]
+                      },
+                      {
+                        type: "wikiInfoboxValue",
+                        content: [{ type: "text", text: "Value" }]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          });
+        },
       addWikiInfoboxTitle:
         () =>
         ({ state, dispatch }) => appendNodeToActiveInfobox(state, dispatch, createInlineHelper(state, "wikiInfoboxTitle", "Title")),

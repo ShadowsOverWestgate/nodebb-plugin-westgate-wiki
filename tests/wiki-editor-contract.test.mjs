@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { NodeSelection } from "@tiptap/pm/state";
 
 import { installJsdomGlobals } from "./helpers/jsdom-setup.mjs";
 
@@ -217,6 +218,23 @@ function createEditor(content) {
       TableRow,
       TableHeader,
       TableCell
+    ],
+    content: content || ""
+  });
+}
+
+function createDefaultOnlyInfoboxEditor(content) {
+  const mount = document.createElement("div");
+  document.body.appendChild(mount);
+
+  return new Editor({
+    element: mount,
+    extensions: [
+      StarterKit.configure({
+        codeBlock: false,
+        link: false
+      }),
+      WikiInfobox
     ],
     content: content || ""
   });
@@ -2253,9 +2271,37 @@ await test("wikiInfobox helper commands insert supported helper blocks inside th
 
   assert.match(rendered, /class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle"/);
   assert.match(rendered, /class="wiki-infobox__image" data-wiki-infobox-part="image"/);
+  assert.doesNotMatch(rendered, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><p>/);
   assert.match(rendered, /class="wiki-infobox__section" data-wiki-infobox-part="section"/);
   assert.match(rendered, /class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Label<\/dt><dd>Value<\/dd><\/div>/);
   assert.match(rendered, /class="wiki-infobox__content" data-wiki-infobox-part="content"/);
+  editor.destroy();
+});
+
+await test("wikiInfobox commands return false outside an active infobox", function () {
+  const editor = createEditor("<p>Outside</p>");
+
+  editor.commands.setTextSelection(3);
+  [
+    "addWikiInfoboxSubtitle",
+    "addWikiInfoboxImage",
+    "addWikiInfoboxSection",
+    "addWikiInfoboxRow",
+    "addWikiInfoboxContent",
+    "unwrapWikiInfobox",
+    "deleteWikiInfobox"
+  ].forEach(function (commandName) {
+    assert.equal(editor.commands[commandName](), false, `${commandName} should return false outside an infobox`);
+  });
+  assert.equal(editor.getHTML(), "<p>Outside</p>");
+  editor.destroy();
+});
+
+await test("wikiInfobox insert command returns false when helper schema nodes are not registered", function () {
+  const editor = createDefaultOnlyInfoboxEditor("<p>Start</p>");
+
+  assert.equal(editor.commands.insertWikiInfobox(), false);
+  assert.equal(editor.getHTML(), "<p>Start</p>");
   editor.destroy();
 });
 
@@ -2281,6 +2327,46 @@ await test("wikiInfobox unwrap and delete commands only affect the active infobo
   assert.match(deleted, /<p>Before<\/p>/);
   assert.match(deleted, /<p>After<\/p>/);
   deleteEditor.destroy();
+});
+
+await test("wikiInfobox unwrap and delete commands support whole-node selections", function () {
+  const unwrapEditor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside><p>After</p>');
+  const unwrapPos = findNodePositions(unwrapEditor, "wikiInfobox")[0];
+  unwrapEditor.view.dispatch(unwrapEditor.state.tr.setSelection(NodeSelection.create(unwrapEditor.state.doc, unwrapPos)));
+
+  assert.equal(unwrapEditor.commands.unwrapWikiInfobox(), true);
+  const unwrapped = unwrapEditor.getHTML();
+  assert.doesNotMatch(unwrapped, /<aside class="wiki-infobox"/);
+  assert.match(unwrapped, /<p>Before<\/p>/);
+  assert.match(unwrapped, /Selene/);
+  assert.match(unwrapped, /<p>After<\/p>/);
+  unwrapEditor.destroy();
+
+  const deleteEditor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside><p>After</p>');
+  const deletePos = findNodePositions(deleteEditor, "wikiInfobox")[0];
+  deleteEditor.view.dispatch(deleteEditor.state.tr.setSelection(NodeSelection.create(deleteEditor.state.doc, deletePos)));
+
+  assert.equal(deleteEditor.commands.deleteWikiInfobox(), true);
+  const deleted = deleteEditor.getHTML();
+  assert.doesNotMatch(deleted, /<aside class="wiki-infobox"/);
+  assert.doesNotMatch(deleted, /Selene/);
+  assert.match(deleted, /<p>Before<\/p>/);
+  assert.match(deleted, /<p>After<\/p>/);
+  deleteEditor.destroy();
+});
+
+await test("wikiInfobox delete command removes only the active infobox", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">First</div></aside><p>Between</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Second</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Second").from);
+  assert.equal(editor.commands.deleteWikiInfobox(), true);
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /First/);
+  assert.match(rendered, /<p>Between<\/p>/);
+  assert.doesNotMatch(rendered, /Second/);
+  assert.equal((rendered.match(/<aside class="wiki-infobox"/g) || []).length, 1);
+  editor.destroy();
 });
 
 await test("wikiPoetryQuote insert command creates an attributed quote", function () {
