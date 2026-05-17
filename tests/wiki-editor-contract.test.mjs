@@ -698,11 +698,12 @@ await test("table styles preserve flexible size and border controls", function (
   assert.match(sanitizeHtml(rendered), /border-color: rgb\(202, 165, 90\)/);
   [editorCss, vendoredEditorCss].forEach(function (css) {
     assert.match(css, /\.westgate-wiki-compose\s+\.wiki-editor__content\s+table\.wiki-table-layout-fixed\s*\{[^}]*table-layout:\s*fixed/s);
-    assert.match(css, /\.westgate-wiki-compose\s+\.wiki-editor__content\s+table\[style\*=(?:"border-color"|border-color)\]\s+:where\(th,\s*td\)\s*\{[^}]*border-color:\s*inherit/s);
+    assert.match(css, /\.westgate-wiki-compose\s+\.wiki-editor__content\s+table\[style\*=(?:"border-color"|border-color)\]\s+:where\(thead,\s*tbody,\s*tfoot,\s*tr,\s*th,\s*td\)\s*\{[^}]*border-color:\s*inherit/s);
     assert.match(css, /\.westgate-wiki-compose\s+\.wiki-editor__content\s+\.column-resize-handle\s*\{[^}]*cursor:\s*col-resize/s);
     assert.match(css, /\.westgate-wiki-compose\s+\.wiki-editor-table-resize-handle--width\s*\{[^}]*cursor:\s*ew-resize/s);
     assert.match(css, /\.westgate-wiki-compose\s+\.wiki-editor-table-resize-handle--row\s*\{[^}]*cursor:\s*ns-resize/s);
   });
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+table\[style\*=(?:"border-color"|border-color)\]\s+:where\(thead,\s*tbody,\s*tfoot,\s*tr,\s*th,\s*td\)\s*\{[^}]*border-color:\s*inherit/s);
   assert.match(editorBundleSource, /import\s+\{\s*createTableAuthoring\s*\}\s+from\s+["']\.\/table\/table-authoring-ui\.mjs["']/);
   assert.match(editorBundleSource, /import\s+\{\s*WestgateTableView\s*\}\s+from\s+["']\.\/table\/table-view\.mjs["']/);
   assert.match(editorBundleSource, /View:\s*WestgateTableView/);

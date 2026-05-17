@@ -774,7 +774,7 @@
   table-layout: auto;
 }
 
-.westgate-wiki-compose .wiki-editor__content table[style*="border-color"] :where(th, td) {
+.westgate-wiki-compose .wiki-editor__content table[style*="border-color"] :where(thead, tbody, tfoot, tr, th, td) {
   border-color: inherit;
 }
 

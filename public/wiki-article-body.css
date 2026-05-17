@@ -456,7 +456,7 @@
   max-width: 100%;
 }
 
-.wiki-article-prose table[style*="border-color"] :where(th, td) {
+.wiki-article-prose table[style*="border-color"] :where(thead, tbody, tfoot, tr, th, td) {
   border-color: inherit;
 }
 

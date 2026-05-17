@@ -799,7 +799,7 @@ await test("applyActiveTableProperties clears border color when borders are hidd
 });
 
 await test("table-properties dialog hides size fields and conditionally shows fixed-only controls", function () {
-  const editor = createTableEditor("<table class=\"wiki-table-layout-auto wiki-table-borderless\" style=\"width: 50%; border-color: rgb(202, 165, 90);\"><tbody><tr style=\"height: 48px;\"><td><p>A1</p></td><td colwidth=\"180\"><p>B1</p></td></tr></tbody></table>");
+  const editor = createTableEditor("<table class=\"wiki-table-layout-auto wiki-table-borderless\" style=\"width: 50%; border-color: rgb(34, 23, 45);\"><tbody><tr style=\"height: 48px;\"><td><p>A1</p></td><td colwidth=\"180\"><p>B1</p></td></tr></tbody></table>");
   const positions = findCellPositions(editor);
   editor.commands.setTextSelection(positions[1] + 2);
   const context = deriveTableContext(editor, editor.view.dom);
@@ -809,6 +809,7 @@ await test("table-properties dialog hides size fields and conditionally shows fi
   const dialog = document.querySelector(".wiki-editor-table-dialog");
   const tableWidthField = getDialogFieldByLabel(dialog, "Table width");
   const borderColorField = getDialogFieldByLabel(dialog, "Border color");
+  const borderColorInput = borderColorField.querySelector("input[type='color']");
   const layout = getDialogFieldByLabel(dialog, "Layout").querySelector("select");
   const borderMode = getDialogFieldByLabel(dialog, "Show borders").querySelector("select");
   const fieldLabels = Array.from(dialog.querySelectorAll(".wiki-editor-dialog__field > span")).map(function (label) {
@@ -820,6 +821,7 @@ await test("table-properties dialog hides size fields and conditionally shows fi
   assert.equal(getDialogFieldByLabel(dialog, "Current row height"), null);
   assert.equal(tableWidthField.hidden, true);
   assert.equal(borderColorField.hidden, true);
+  assert.equal(borderColorInput.value, "#22172d");
 
   layout.value = "fixed";
   layout.dispatchEvent(new window.Event("change", { bubbles: true }));
