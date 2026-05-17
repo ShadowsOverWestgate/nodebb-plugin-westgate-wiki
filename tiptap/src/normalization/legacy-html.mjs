@@ -317,6 +317,19 @@ function isInsideInfobox(element) {
   return !!(element && element.closest && element.closest('[data-wiki-node="infobox"], .wiki-infobox, aside.infobox'));
 }
 
+function isInfoboxImageFigure(element) {
+  return !!(
+    element &&
+    element.tagName &&
+    element.tagName.toLowerCase() === "figure" &&
+    isInsideInfobox(element) &&
+    (
+      element.getAttribute("data-wiki-infobox-part") === "image" ||
+      (element.classList && element.classList.contains("wiki-infobox__image"))
+    )
+  );
+}
+
 const INFOBOX_PART_CLASS_MAP = new Map([
   ["title", "wiki-infobox__title"],
   ["subtitle", "wiki-infobox__subtitle"],
@@ -809,6 +822,10 @@ export function getFigureImageLinkElement(figure) {
 
 export function normalizeSupportedFigures(root) {
   root.querySelectorAll("figure").forEach(function (figure) {
+    if (isInfoboxImageFigure(figure)) {
+      return;
+    }
+
     if (!isSupportedImageFigure(figure)) {
       return;
     }
@@ -913,7 +930,7 @@ export function normalizeLegacyHtmlForTiptap(html) {
   });
 
   root.querySelectorAll("figure").forEach(function (element) {
-    if (!isSupportedImageFigure(element) && !isPoetryQuoteFigure(element)) {
+    if (!isSupportedImageFigure(element) && !isPoetryQuoteFigure(element) && !isInfoboxImageFigure(element)) {
       unwrapElement(element);
     }
   });

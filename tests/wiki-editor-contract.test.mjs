@@ -846,6 +846,15 @@ await test("normalizeLegacyHtmlForTiptap preserves saved infoboxes as plugin-own
   assert.match(normalized, /<dt>House<\/dt><dd>Voss<\/dd>/);
 });
 
+await test("normalizeLegacyHtmlForTiptap preserves saved infobox image helpers", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/selene.png" alt="Selene"></figure></aside>'
+  );
+
+  assert.match(normalized, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/selene\.png" alt="Selene"><\/figure>/);
+  assert.doesNotMatch(normalized, /<figure class="image"/);
+});
+
 await test("normalizeLegacyHtmlForTiptap upgrades simple pasted infobox class names", function () {
   const normalized = normalizeLegacyHtmlForTiptap(
     '<aside class="infobox"><div class="title">Selene</div><div class="subtitle">Vampire Noble</div><div class="section">Details</div><div class="content"><p>Notes</p></div></aside>'

@@ -61,6 +61,21 @@ test("extractHeadingToc ignores headings inside wiki infoboxes", function () {
   ]);
 });
 
+test("extractHeadingToc ignores headings inside legacy infobox wrappers", function () {
+  const headings = wikiPageToc.extractHeadingToc(`
+    <h2>Overview</h2>
+    <aside class="infobox">
+      <h2>Legacy Infobox Heading</h2>
+    </aside>
+    <h2>History</h2>
+  `);
+
+  assert.deepStrictEqual(headings, [
+    { id: "overview", text: "Overview", level: 2 },
+    { id: "history", text: "History", level: 2 }
+  ]);
+});
+
 test("page ToC API is registered and passed to the editor payload", function () {
   const libraryJs = fs.readFileSync(path.join(root, "library.js"), "utf8");
   const composeController = fs.readFileSync(path.join(root, "lib/controllers/compose.js"), "utf8");
