@@ -938,6 +938,25 @@ await test("normalizeLegacyHtmlForTiptap preserves saved infobox image helpers",
   assert.doesNotMatch(normalized, /<figure class="image"/);
 });
 
+await test("normalizeLegacyHtmlForTiptap only preserves canonical infobox definition rows", function () {
+  const canonical = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>'
+  );
+  const genericContent = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__content" data-wiki-infobox-part="content"><dl><dt>Loose</dt><dd>Value</dd></dl></div></aside>'
+  );
+  const malformedRows = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><dt>Loose</dt><dd>Value</dd></dl></aside>'
+  );
+
+  assert.match(canonical, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl>/);
+  assert.doesNotMatch(genericContent, /<dl/);
+  assert.doesNotMatch(genericContent, /<dt/);
+  assert.doesNotMatch(genericContent, /<dd/);
+  assert.match(genericContent, /<p><strong>Loose<\/strong><\/p><p>Value<\/p>/);
+  assert.match(malformedRows, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Loose<\/dt><dd>Value<\/dd><\/div><\/dl>/);
+});
+
 await test("normalizeLegacyHtmlForTiptap upgrades simple pasted infobox class names", function () {
   const normalized = normalizeLegacyHtmlForTiptap(
     '<aside class="infobox"><div class="title">Selene</div><div class="subtitle">Vampire Noble</div><div class="section">Details</div><div class="content"><p>Notes</p></div></aside>'
@@ -2337,6 +2356,7 @@ await test("wikiInfobox commands return false outside an active infobox", functi
 
   editor.commands.setTextSelection(3);
   [
+    "addWikiInfoboxTitle",
     "addWikiInfoboxSubtitle",
     "addWikiInfoboxImage",
     "addWikiInfoboxSection",
@@ -2382,6 +2402,23 @@ await test("wikiInfobox unwrap and delete commands only affect the active infobo
   assert.match(deleted, /<p>Before<\/p>/);
   assert.match(deleted, /<p>After<\/p>/);
   deleteEditor.destroy();
+});
+
+await test("wikiInfobox unwrap preserves image helper content", function () {
+  const editor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/uploads/selene.png" alt="Selene portrait"></figure><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside><p>After</p>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.unwrapWikiInfobox(), true);
+  const rendered = editor.getHTML();
+
+  assert.doesNotMatch(rendered, /<aside class="wiki-infobox"/);
+  assert.match(rendered, /<p>Before<\/p>/);
+  assert.match(rendered, /Selene/);
+  assert.match(rendered, /House/);
+  assert.match(rendered, /Voss/);
+  assert.match(rendered, /<img[^>]+src="\/uploads\/selene\.png"[^>]+alt="Selene portrait"[^>]*>/);
+  assert.match(rendered, /<p>After<\/p>/);
+  editor.destroy();
 });
 
 await test("wikiInfobox unwrap and delete commands support whole-node selections", function () {

@@ -317,6 +317,50 @@ function isInsideInfobox(element) {
   return !!(element && element.closest && element.closest('[data-wiki-node="infobox"], .wiki-infobox, aside.infobox'));
 }
 
+function isInfoboxRowsElement(element) {
+  return !!(
+    element &&
+    element.tagName &&
+    element.tagName.toLowerCase() === "dl" &&
+    isInsideInfobox(element) &&
+    (
+      element.getAttribute("data-wiki-infobox-part") === "rows" ||
+      (element.classList && element.classList.contains("wiki-infobox__rows"))
+    )
+  );
+}
+
+function isInfoboxRowElement(element) {
+  return !!(
+    element &&
+    element.tagName &&
+    element.tagName.toLowerCase() === "div" &&
+    isInfoboxRowsElement(element.parentElement) &&
+    (
+      element.getAttribute("data-wiki-infobox-part") === "row" ||
+      (element.classList && element.classList.contains("wiki-infobox__row"))
+    )
+  );
+}
+
+function isInfoboxTermElement(element) {
+  return !!(
+    element &&
+    element.tagName &&
+    element.tagName.toLowerCase() === "dt" &&
+    isInfoboxRowElement(element.parentElement)
+  );
+}
+
+function isInfoboxValueElement(element) {
+  return !!(
+    element &&
+    element.tagName &&
+    element.tagName.toLowerCase() === "dd" &&
+    isInfoboxRowElement(element.parentElement)
+  );
+}
+
 function isInfoboxImageFigureElement(element) {
   return !!(
     element &&
@@ -356,6 +400,32 @@ function isSupportedInfoboxImageFigure(element) {
   }
 
   return true;
+}
+
+function normalizeInfoboxRows(document, root) {
+  root.querySelectorAll('[data-wiki-infobox-part="rows"], .wiki-infobox__rows').forEach(function (rows) {
+    if (!isInfoboxRowsElement(rows)) {
+      return;
+    }
+
+    const children = Array.from(rows.children || []);
+    for (let index = 0; index < children.length; index += 1) {
+      const child = children[index];
+      if (!child || child.tagName.toLowerCase() !== "dt" || child.parentElement !== rows) {
+        continue;
+      }
+
+      const next = children[index + 1];
+      const row = document.createElement("div");
+      setInfoboxPart(row, "row");
+      rows.insertBefore(row, child);
+      row.appendChild(child);
+      if (next && next.tagName.toLowerCase() === "dd" && next.parentElement === rows) {
+        row.appendChild(next);
+        index += 1;
+      }
+    }
+  });
 }
 
 const INFOBOX_PART_CLASS_MAP = new Map([
@@ -963,8 +1033,10 @@ export function normalizeLegacyHtmlForTiptap(html) {
     }
   });
 
+  normalizeInfoboxRows(doc, root);
+
   root.querySelectorAll("dt").forEach(function (element) {
-    if (isInsideInfobox(element)) {
+    if (isInfoboxTermElement(element)) {
       return;
     }
 
@@ -978,7 +1050,7 @@ export function normalizeLegacyHtmlForTiptap(html) {
   });
 
   root.querySelectorAll("dd").forEach(function (element) {
-    if (isInsideInfobox(element)) {
+    if (isInfoboxValueElement(element)) {
       return;
     }
 
@@ -986,7 +1058,7 @@ export function normalizeLegacyHtmlForTiptap(html) {
   });
 
   root.querySelectorAll("dl").forEach(function (element) {
-    if (isInsideInfobox(element)) {
+    if (isInfoboxRowsElement(element)) {
       return;
     }
 

@@ -133,6 +133,13 @@ function flattenInfoboxContentForUnwrap(state, infoboxNode) {
       return;
     }
 
+    if (child.type.name === "wikiInfoboxImage") {
+      child.content.forEach(function (contentChild) {
+        blocks.push(contentChild);
+      });
+      return;
+    }
+
     if (child.textContent) {
       appendTextParagraph(state, blocks, child.textContent);
     }
@@ -194,6 +201,23 @@ function renderInfoboxPart(tagName, className, partName, HTMLAttributes) {
 
 function isInsideInfoboxElement(element) {
   return !!(element && element.closest && element.closest('[data-wiki-node="infobox"], aside.wiki-infobox'));
+}
+
+function isInfoboxRowsElement(element) {
+  return !!(element && element.matches && element.matches('[data-wiki-infobox-part="rows"], dl.wiki-infobox__rows') && isInsideInfoboxElement(element));
+}
+
+function isInsideInfoboxRowsElement(element) {
+  return !!(element && element.parentElement && isInfoboxRowsElement(element.parentElement));
+}
+
+function isInsideInfoboxRowElement(element) {
+  return !!(
+    element &&
+    element.parentElement &&
+    element.parentElement.matches('[data-wiki-infobox-part="row"], div.wiki-infobox__row') &&
+    isInsideInfoboxRowsElement(element.parentElement)
+  );
 }
 
 function parseInfoboxPartRules(partName, tagName, className) {
@@ -301,7 +325,20 @@ export const WikiInfoboxRow = Node.create({
   content: "wikiInfoboxTerm wikiInfoboxValue",
   defining: true,
   parseHTML() {
-    return parseInfoboxPartRules("row", "div", "wiki-infobox__row");
+    return [
+      {
+        tag: '[data-wiki-infobox-part="row"]',
+        getAttrs: function (element) {
+          return isInsideInfoboxRowsElement(element) ? null : false;
+        }
+      },
+      {
+        tag: "div.wiki-infobox__row",
+        getAttrs: function (element) {
+          return isInsideInfoboxRowsElement(element) ? null : false;
+        }
+      }
+    ];
   },
   renderHTML({ HTMLAttributes }) {
     return renderInfoboxPart("div", "wiki-infobox__row", "row", HTMLAttributes);
@@ -314,7 +351,14 @@ export const WikiInfoboxTerm = Node.create({
   content: "inline*",
   defining: true,
   parseHTML() {
-    return [{ tag: "dt" }];
+    return [
+      {
+        tag: "dt",
+        getAttrs: function (element) {
+          return isInsideInfoboxRowElement(element) ? null : false;
+        }
+      }
+    ];
   },
   renderHTML() {
     return ["dt", 0];
@@ -327,7 +371,14 @@ export const WikiInfoboxValue = Node.create({
   content: "inline*",
   defining: true,
   parseHTML() {
-    return [{ tag: "dd" }];
+    return [
+      {
+        tag: "dd",
+        getAttrs: function (element) {
+          return isInsideInfoboxRowElement(element) ? null : false;
+        }
+      }
+    ];
   },
   renderHTML() {
     return ["dd", 0];
