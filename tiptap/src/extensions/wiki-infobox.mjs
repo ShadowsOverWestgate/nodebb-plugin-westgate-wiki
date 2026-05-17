@@ -103,13 +103,6 @@ function createParagraphFromText(state, text) {
   return paragraphType.create(null, textContent(state, text));
 }
 
-function appendTextParagraph(state, blocks, text) {
-  const paragraph = createParagraphFromText(state, String(text || "").replace(/\s+/g, " ").trim());
-  if (paragraph) {
-    blocks.push(paragraph);
-  }
-}
-
 function createParagraphFromInlineContent(state, content) {
   const paragraphType = state.schema.nodes.paragraph;
   if (!paragraphType || !content || !content.size) {
@@ -380,6 +373,25 @@ function getNextSignificantInfoboxSibling(nodes, index) {
   return null;
 }
 
+function hasParseableInfoboxRowsContent(element) {
+  return Array.from(element.childNodes || []).some(function (child) {
+    if (child.nodeType === 3) {
+      return !!String(child.nodeValue || "").trim();
+    }
+    if (child.nodeType !== 1) {
+      return false;
+    }
+    const tagName = child.tagName.toLowerCase();
+    if (["dt", "dd"].includes(tagName)) {
+      return true;
+    }
+    if (child.matches && child.matches('[data-wiki-infobox-part="row"], div.wiki-infobox__row')) {
+      return !!String(child.textContent || "").trim() || !!findDirectInfoboxCell(child, "dt") || !!findDirectInfoboxCell(child, "dd");
+    }
+    return false;
+  });
+}
+
 function parseInfoboxRowsContent(element, schema) {
   const rows = [];
   const children = Array.from(element.childNodes || []);
@@ -515,21 +527,21 @@ export const WikiInfoboxRows = Node.create({
   name: "wikiInfoboxRows",
   priority: 1000,
   group: "wikiInfoboxPart",
-  content: "wikiInfoboxRow*",
+  content: "wikiInfoboxRow+",
   defining: true,
   parseHTML() {
     return [
       {
         tag: '[data-wiki-infobox-part="rows"]',
         getAttrs: function (element) {
-          return isInsideInfoboxElement(element) ? null : false;
+          return isInsideInfoboxElement(element) && hasParseableInfoboxRowsContent(element) ? null : false;
         },
         getContent: parseInfoboxRowsContent
       },
       {
         tag: "dl.wiki-infobox__rows",
         getAttrs: function (element) {
-          return isInsideInfoboxElement(element) ? null : false;
+          return isInsideInfoboxElement(element) && hasParseableInfoboxRowsContent(element) ? null : false;
         },
         getContent: parseInfoboxRowsContent
       }

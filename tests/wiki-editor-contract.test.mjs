@@ -430,6 +430,18 @@ await test("detectUnsupportedContent accepts canonical infobox rows", function (
   );
 });
 
+await test("detectUnsupportedContent accepts safe legacy inline formatting in infobox rows", function () {
+  const html = '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><b>House</b></dt><dd><i>Voss</i> <font color="#caa55a">Gold</font> Line<br>Break</dd></div></dl></aside>';
+  const normalized = normalizeLegacyHtmlForTiptap(html);
+
+  assert.equal(detectUnsupportedContent(html), "");
+  assert.match(normalized, /<dt><strong>House<\/strong><\/dt>/);
+  assert.match(normalized, /<em>Voss<\/em>/);
+  assert.match(normalized, /Gold/);
+  assert.match(normalized, /Line<br>Break/);
+  assert.doesNotMatch(normalized, /<b>|<i>|<font/);
+});
+
 await test("detectUnsupportedContent rejects lossy infobox row media", function () {
   assert.match(
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"></div></dl></aside>'),
@@ -2492,6 +2504,20 @@ await test("wikiInfobox helper commands insert supported helper blocks inside th
   assert.match(rendered, /class="wiki-infobox__section" data-wiki-infobox-part="section"/);
   assert.match(rendered, /class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Label<\/dt><dd>Value<\/dd><\/div>/);
   assert.match(rendered, /class="wiki-infobox__content" data-wiki-infobox-part="content"/);
+  editor.destroy();
+});
+
+await test("wikiInfobox command-authored HTML passes unsupported content detection", function () {
+  const editor = createEditor("<p>Start</p>");
+
+  assert.equal(editor.commands.insertWikiInfobox(), true);
+  editor.commands.setTextSelection(findTextRange(editor, "Untitled Infobox").from);
+  assert.equal(editor.commands.addWikiInfoboxSubtitle(), true);
+  assert.equal(editor.commands.addWikiInfoboxImage(), true);
+  assert.equal(editor.commands.addWikiInfoboxSection(), true);
+  assert.equal(editor.commands.addWikiInfoboxRow(), true);
+  assert.equal(editor.commands.addWikiInfoboxContent(), true);
+  assert.equal(detectUnsupportedContent(editor.getHTML()), "");
   editor.destroy();
 });
 
