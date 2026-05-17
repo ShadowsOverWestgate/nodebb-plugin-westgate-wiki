@@ -352,12 +352,12 @@
 
 .wiki-breadcrumb-trail__text--current {
   color: var(--wiki-chrome-heading-color, var(--bs-heading-color, var(--bs-emphasis-color, inherit)));
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .wiki-breadcrumb-trail__action {
   color: var(--wiki-chrome-heading-color, var(--bs-heading-color, var(--bs-emphasis-color, inherit)));
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: normal;
   text-transform: none;
 }

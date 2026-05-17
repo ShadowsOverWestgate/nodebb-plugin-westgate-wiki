@@ -133,6 +133,17 @@ test("sanitizeWikiHtml preserves safe table alignment styles", function () {
   assert.doesNotMatch(sanitized, /position:/);
 });
 
+test("sanitizeWikiHtml preserves safe table border colors", function () {
+  const html = '<table style="width: 50%; border-color: rgb(202, 165, 90); position: fixed"><tbody><tr><td>Gold</td></tr></tbody></table>';
+  const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);
+  const rendered = wikiHtmlSanitizer.renderReadOnlyWikiHtml(sanitized);
+
+  assert.match(sanitized, /style="[^"]*width:50%;?[^"]*"/);
+  assert.match(sanitized, /style="[^"]*border-color:rgb\(202, 165, 90\);?[^"]*"/);
+  assert.match(rendered, /style="[^"]*border-color:rgb\(202, 165, 90\);?[^"]*"/);
+  assert.doesNotMatch(sanitized, /position:/);
+});
+
 test("sanitizeWikiHtml preserves safe table cell vertical alignment styles", function () {
   const html = '<table><tbody><tr><td style="vertical-align: middle; position: fixed">Middle</td><td style="vertical-align: bottom">Bottom</td></tr></tbody></table>';
   const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);

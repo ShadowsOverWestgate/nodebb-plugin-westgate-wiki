@@ -25,22 +25,41 @@ function defaultItems() {
 }
 
 function isSlashTriggerAtSelection(state) {
+  return getSlashQuery(state) !== null;
+}
+
+function getSlashQuery(state) {
   const { $from } = state.selection;
   if (!state.selection.empty || $from.parent.type.name !== "paragraph") {
-    return false;
+    return null;
   }
   const textBefore = $from.parent.textBetween(0, $from.parentOffset, "\n", "\0");
-  return /(?:^|\s)\/$/.test(textBefore);
+  const match = textBefore.match(/(?:^|\s)\/([^\s]*)$/);
+  return match ? match[1].toLowerCase() : null;
 }
 
 function removeSlashTrigger(editor) {
   const { state } = editor;
   const { $from } = state.selection;
-  if ($from.parentOffset <= 0) {
+  const query = getSlashQuery(state);
+  if (query === null || $from.parentOffset <= 0) {
     return;
   }
-  const from = $from.pos - 1;
-  editor.commands.deleteRange({ from, to: $from.pos });
+  const from = $from.pos - query.length - 1;
+  editor.view.dispatch(state.tr.delete(from, $from.pos).setMeta("addToHistory", false));
+}
+
+function itemMatchesQuery(item, query) {
+  const needle = String(query || "").trim().toLowerCase();
+  if (!needle) {
+    return true;
+  }
+  const haystack = [
+    item.id,
+    item.label,
+    ...(item.aliases || [])
+  ].join(" ").toLowerCase();
+  return haystack.includes(needle);
 }
 
 function updateMenuPosition(editor, menu) {
@@ -54,6 +73,13 @@ function updateMenuPosition(editor, menu) {
   const rootRect = (editor.options.element || document.body).getBoundingClientRect();
   menu.style.left = `${Math.max(0, coords.left - rootRect.left)}px`;
   menu.style.top = `${Math.max(0, coords.bottom - rootRect.top + 6)}px`;
+}
+
+function scrollActiveMenuItemIntoView(menu) {
+  const active = menu && menu.querySelector('.wiki-tiptap-slash-menu__item[aria-selected="true"]');
+  if (active && typeof active.scrollIntoView === "function") {
+    active.scrollIntoView({ block: "nearest" });
+  }
 }
 
 const SlashCommand = Extension.create({
@@ -110,16 +136,22 @@ const SlashCommand = Extension.create({
     const extension = this;
     let menu = null;
 
-    function items() {
-      return extension.options.getItems();
+    function items(editor) {
+      const query = getSlashQuery(editor.state) || "";
+      return extension.options.getItems({ editor, query }).filter(function (item) {
+        return itemMatchesQuery(item, query);
+      });
     }
 
-    function render(editor) {
+    function render(editor, options = {}) {
       if (!menu || !editor.storage.slashCommand.isOpen) {
         return;
       }
 
-      const allItems = items();
+      const allItems = items(editor);
+      if (editor.storage.slashCommand.activeIndex >= allItems.length) {
+        editor.storage.slashCommand.activeIndex = 0;
+      }
       menu.innerHTML = "";
       allItems.forEach(function (item, index) {
         const button = document.createElement("button");
@@ -127,17 +159,22 @@ const SlashCommand = Extension.create({
         button.className = "wiki-tiptap-slash-menu__item";
         button.setAttribute("role", "option");
         button.setAttribute("aria-selected", index === editor.storage.slashCommand.activeIndex ? "true" : "false");
+        button.setAttribute("data-slash-command-id", item.id);
+        button.setAttribute("data-slash-command-index", String(index));
         button.textContent = item.label;
         button.addEventListener("mousedown", function (event) {
           event.preventDefault();
           editor.storage.slashCommand.activeIndex = index;
           removeSlashTrigger(editor);
           editor.commands.closeWikiSlashMenu();
-          item.run({ editor });
+          item.run({ editor, button });
         });
         menu.appendChild(button);
       });
       updateMenuPosition(editor, menu);
+      if (options.scrollActiveItem) {
+        scrollActiveMenuItemIntoView(menu);
+      }
     }
 
     return [
@@ -166,10 +203,7 @@ const SlashCommand = Extension.create({
                 editor.storage.slashCommand.isOpen = true;
               }
               if (!shouldOpen && editor.storage.slashCommand.isOpen) {
-                const textBefore = editor.state.selection.$from.parent.textBetween(0, editor.state.selection.$from.parentOffset, "\n", "\0");
-                if (!/(?:^|\s)\/\S*$/.test(textBefore)) {
-                  editor.storage.slashCommand.isOpen = false;
-                }
+                editor.storage.slashCommand.isOpen = false;
               }
               menu.hidden = !editor.storage.slashCommand.isOpen;
               render(editor);
@@ -189,17 +223,28 @@ const SlashCommand = Extension.create({
               return false;
             }
 
-            const allItems = items();
+            const allItems = items(editor);
+            if (!allItems.length) {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                editor.commands.closeWikiSlashMenu();
+                if (menu) {
+                  menu.hidden = true;
+                }
+                return true;
+              }
+              return false;
+            }
             if (event.key === "ArrowDown") {
               event.preventDefault();
               editor.storage.slashCommand.activeIndex = (editor.storage.slashCommand.activeIndex + 1) % allItems.length;
-              render(editor);
+              render(editor, { scrollActiveItem: true });
               return true;
             }
             if (event.key === "ArrowUp") {
               event.preventDefault();
               editor.storage.slashCommand.activeIndex = (editor.storage.slashCommand.activeIndex + allItems.length - 1) % allItems.length;
-              render(editor);
+              render(editor, { scrollActiveItem: true });
               return true;
             }
             if (event.key === "Escape") {
@@ -213,12 +258,13 @@ const SlashCommand = Extension.create({
             if (event.key === "Enter") {
               event.preventDefault();
               const item = allItems[editor.storage.slashCommand.activeIndex] || allItems[0];
+              const button = menu && menu.querySelector(`[data-slash-command-index="${editor.storage.slashCommand.activeIndex}"]`);
               removeSlashTrigger(editor);
               editor.commands.closeWikiSlashMenu();
               if (menu) {
                 menu.hidden = true;
               }
-              item.run({ editor });
+              item.run({ editor, button });
               return true;
             }
             return false;

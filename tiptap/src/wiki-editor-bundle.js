@@ -101,6 +101,7 @@ const BUTTON_ICONS = {
   strike: "fa-strikethrough",
   "inline-code": "fa-code",
   highlight: "fa-paint-brush",
+  "strip-span-styling": "fa-eraser",
   "block-background": "fa-square",
   subscript: "fa-subscript",
   superscript: "fa-superscript",
@@ -185,6 +186,97 @@ const BLOCK_BACKGROUND_COLOR_OPTIONS = [
   { id: "magenta", label: "Magenta", backgroundColor: "#fae8ff" },
   { id: "cyan", label: "Cyan", backgroundColor: "#cffafe" }
 ];
+
+let activeSlashColorMenu = null;
+
+function closeSlashColorMenu() {
+  if (activeSlashColorMenu && activeSlashColorMenu.parentNode) {
+    activeSlashColorMenu.parentNode.removeChild(activeSlashColorMenu);
+  }
+  activeSlashColorMenu = null;
+  document.removeEventListener("mousedown", closeSlashColorMenu);
+}
+
+function openSlashColorMenu({ button, title, options, onSelect, onClear }) {
+  closeSlashColorMenu();
+
+  const menu = document.createElement("div");
+  menu.className = "wiki-editor-color-menu";
+  menu.setAttribute("role", "menu");
+  menu.setAttribute("aria-label", title);
+  menu.addEventListener("mousedown", function (event) {
+    event.stopPropagation();
+  });
+
+  options.forEach(function (option) {
+    const swatch = document.createElement("button");
+    swatch.type = "button";
+    swatch.className = "wiki-editor-color-swatch";
+    swatch.setAttribute("role", "menuitem");
+    swatch.setAttribute("title", option.label);
+    swatch.setAttribute("aria-label", option.label);
+    swatch.style.setProperty("--wiki-editor-swatch-color", option.backgroundColor);
+    swatch.addEventListener("click", function (event) {
+      event.preventDefault();
+      onSelect(option);
+      closeSlashColorMenu();
+    });
+    menu.appendChild(swatch);
+  });
+
+  const custom = document.createElement("label");
+  custom.className = "wiki-editor-color-custom";
+  custom.setAttribute("title", "Custom color");
+  custom.setAttribute("aria-label", "Custom color");
+
+  const customIcon = document.createElement("span");
+  customIcon.className = "wiki-editor-color-custom__icon";
+  customIcon.setAttribute("aria-hidden", "true");
+  customIcon.textContent = "+";
+  custom.appendChild(customIcon);
+
+  const customColor = document.createElement("input");
+  customColor.type = "color";
+  customColor.value = (options[0] && normalizeHexColor(options[0].backgroundColor)) || "#fef08a";
+  customColor.addEventListener("input", function () {
+    const backgroundColor = normalizeHexColor(customColor.value);
+    if (!backgroundColor) {
+      return;
+    }
+    onSelect({
+      id: "custom",
+      label: "Custom",
+      backgroundColor
+    });
+    closeSlashColorMenu();
+  });
+  custom.appendChild(customColor);
+  menu.appendChild(custom);
+
+  const clear = document.createElement("button");
+  clear.type = "button";
+  clear.className = "wiki-editor-color-clear";
+  clear.setAttribute("role", "menuitem");
+  clear.textContent = "Clear";
+  clear.addEventListener("click", function (event) {
+    event.preventDefault();
+    onClear();
+    closeSlashColorMenu();
+  });
+  menu.appendChild(clear);
+
+  document.body.appendChild(menu);
+  activeSlashColorMenu = menu;
+
+  const rect = button && typeof button.getBoundingClientRect === "function" ?
+    button.getBoundingClientRect() :
+    { left: 8, bottom: 8 };
+  menu.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8))}px`;
+  menu.style.top = `${Math.min(rect.bottom + 6, window.innerHeight - menu.offsetHeight - 8)}px`;
+  window.setTimeout(function () {
+    document.addEventListener("mousedown", closeSlashColorMenu);
+  }, 0);
+}
 
 function createButton(def) {
   const button = document.createElement("button");
@@ -771,6 +863,53 @@ export function applyExternalLinkEdit(editor, attrs) {
   }).run();
 }
 
+export function selectionHasStyledSpan(editor) {
+  const markType = editor && editor.state && editor.state.schema && editor.state.schema.marks.styledSpan;
+  const selection = editor && editor.state && editor.state.selection;
+  if (!markType || !selection) {
+    return false;
+  }
+  if (selection.empty) {
+    return !!getMarkRange(selection.$from, markType);
+  }
+
+  let found = false;
+  editor.state.doc.nodesBetween(selection.from, selection.to, function (node) {
+    if (found) {
+      return false;
+    }
+    if (!node.isText) {
+      return true;
+    }
+    found = !!markType.isInSet(node.marks);
+    return !found;
+  });
+  return found;
+}
+
+export function stripStyledSpanSelection(editor) {
+  if (!selectionHasStyledSpan(editor)) {
+    return false;
+  }
+  const selection = editor.state.selection;
+  if (!selection.empty) {
+    return editor.chain().focus().unsetMark("styledSpan").run();
+  }
+
+  const markType = editor.state.schema.marks.styledSpan;
+  const range = getMarkRange(selection.$from, markType);
+  if (!range) {
+    return false;
+  }
+
+  return editor.chain()
+    .focus()
+    .setTextSelection(range)
+    .unsetMark("styledSpan")
+    .setTextSelection(selection.from)
+    .run();
+}
+
 function openExternalLinkDialog({ editor, onSave } = {}) {
   closeEditorDialogShells();
 
@@ -982,6 +1121,223 @@ function openAlignmentTableDialog({ editor }) {
   if (first) {
     first.focus();
   }
+}
+
+const WIKI_SLASH_ITEM_DEFS = [
+  { id: "paragraph", label: "Paragraph", aliases: ["p", "text", "normal"] },
+  { id: "heading-1", label: "Heading 1", aliases: ["h1", "title"] },
+  { id: "heading-2", label: "Heading 2", aliases: ["h2", "section"] },
+  { id: "heading-3", label: "Heading 3", aliases: ["h3", "subheading"] },
+  { id: "heading-4", label: "Heading 4", aliases: ["h4"] },
+  { id: "bold", label: "Bold", aliases: ["strong", "b"] },
+  { id: "italic", label: "Italic", aliases: ["emphasis", "em", "i"] },
+  { id: "underline", label: "Underline", aliases: ["u"] },
+  { id: "strike", label: "Strike", aliases: ["strikethrough", "s"] },
+  { id: "inline-code", label: "Inline code", aliases: ["code"] },
+  { id: "highlight", label: "Highlight", aliases: ["mark", "color"] },
+  { id: "strip-span-styling", label: "Strip span", aliases: ["span", "style", "unstyled", "clear style", "strip style"] },
+  { id: "subscript", label: "Subscript", aliases: ["sub"] },
+  { id: "superscript", label: "Superscript", aliases: ["sup"] },
+  { id: "link", label: "External link", aliases: ["url", "href"] },
+  { id: "wiki-page-link", label: "Wiki page link", aliases: ["wiki", "page", "internal link"] },
+  { id: "wiki-user-mention", label: "Forum user", aliases: ["user", "mention", "@"] },
+  { id: "wiki-footnote", label: "Footnote", aliases: ["note", "citation"] },
+  { id: "image-upload", label: "Upload image", aliases: ["image", "img", "picture", "upload"] },
+  { id: "media-row-2", label: "Two-column media row", aliases: ["2", "two up", "two column", "media"] },
+  { id: "media-row-3", label: "Three-column media row", aliases: ["3", "three up", "three column", "gallery"] },
+  { id: "bullet-list", label: "Bullet list", aliases: ["ul", "unordered list"] },
+  { id: "ordered-list", label: "Ordered list", aliases: ["ol", "numbered list"] },
+  { id: "task-list", label: "Task list", aliases: ["todo", "checklist"] },
+  { id: "blockquote", label: "Poetry quote", aliases: ["quote", "blockquote"] },
+  { id: "code-block", label: "Code block", aliases: ["pre", "fenced code"] },
+  { id: "block-background", label: "Text block background", aliases: ["background", "block color"] },
+  { id: "horizontal-rule", label: "Horizontal rule", aliases: ["hr", "divider", "rule"] },
+  { id: "callout-info", label: "Info callout", aliases: ["info", "note box"] },
+  { id: "callout-success", label: "Success callout", aliases: ["success", "remember"] },
+  { id: "callout-warning", label: "Warning callout", aliases: ["warning", "caution"] },
+  { id: "callout-danger", label: "Danger callout", aliases: ["danger", "error"] },
+  { id: "align-left", label: "Align left", aliases: ["left"] },
+  { id: "align-center", label: "Align center", aliases: ["center", "centre"] },
+  { id: "align-right", label: "Align right", aliases: ["right"] },
+  { id: "align-justify", label: "Justify", aliases: ["justify"] },
+  { id: "table-insert", label: "Table", aliases: ["table", "grid"] },
+  { id: "dnd-alignment-table", label: "D&D alignment table", aliases: ["dnd", "alignment", "alignment table", "dungeons dragons"] }
+];
+
+export function createWikiSlashItems({ root, editor, uploadImage } = {}) {
+  function getEditorOptions() {
+    return (root && root.__wikiEditorOptions) || {};
+  }
+
+  const actions = {
+    paragraph: function () {
+      editor.chain().focus().setParagraph().run();
+    },
+    "heading-1": function () {
+      editor.chain().focus().toggleHeading({ level: 1 }).run();
+    },
+    "heading-2": function () {
+      editor.chain().focus().toggleHeading({ level: 2 }).run();
+    },
+    "heading-3": function () {
+      editor.chain().focus().toggleHeading({ level: 3 }).run();
+    },
+    "heading-4": function () {
+      editor.chain().focus().toggleHeading({ level: 4 }).run();
+    },
+    bold: function () {
+      editor.chain().focus().toggleBold().run();
+    },
+    italic: function () {
+      editor.chain().focus().toggleItalic().run();
+    },
+    underline: function () {
+      editor.chain().focus().toggleUnderline().run();
+    },
+    strike: function () {
+      editor.chain().focus().toggleStrike().run();
+    },
+    "inline-code": function () {
+      editor.chain().focus().toggleCode().run();
+    },
+    highlight: function ({ button }) {
+      openSlashColorMenu({
+        button,
+        title: "Highlight color",
+        options: HIGHLIGHT_COLOR_OPTIONS,
+        onSelect: function (option) {
+          const backgroundColor = option.backgroundColor;
+          const textColor = getReadableTextColor(backgroundColor);
+          editor.chain().focus().toggleHighlight({ color: backgroundColor, textColor }).run();
+        },
+        onClear: function () {
+          editor.chain().focus().unsetHighlight().run();
+        }
+      });
+    },
+    "strip-span-styling": function () {
+      stripStyledSpanSelection(editor);
+    },
+    subscript: function () {
+      editor.chain().focus().toggleSubscript().run();
+    },
+    superscript: function () {
+      editor.chain().focus().toggleSuperscript().run();
+    },
+    link: function () {
+      openExternalLinkDialog({ editor });
+    },
+    "wiki-page-link": function () {
+      openWikiEntityDialog({ editor, type: "page", options: getEditorOptions() });
+    },
+    "wiki-user-mention": function () {
+      openWikiEntityDialog({ editor, type: "user", options: getEditorOptions() });
+    },
+    "wiki-footnote": function () {
+      openWikiEntityDialog({ editor, type: "footnote", options: getEditorOptions() });
+    },
+    "image-upload": function () {
+      if (typeof uploadImage === "function") {
+        uploadImage();
+      }
+    },
+    "media-row-2": function () {
+      editor.chain().focus().insertMediaRow(2).run();
+    },
+    "media-row-3": function () {
+      editor.chain().focus().insertMediaRow(3).run();
+    },
+    "bullet-list": function () {
+      editor.chain().focus().toggleBulletList().run();
+    },
+    "ordered-list": function () {
+      editor.chain().focus().toggleOrderedList().run();
+    },
+    "task-list": function () {
+      editor.chain().focus().toggleTaskList().run();
+    },
+    blockquote: function () {
+      editor.chain().focus().insertWikiPoetryQuote().run();
+    },
+    "code-block": function () {
+      editor.chain().focus().toggleCodeBlock().run();
+    },
+    "block-background": function ({ button }) {
+      openSlashColorMenu({
+        button,
+        title: "Text block background color",
+        options: BLOCK_BACKGROUND_COLOR_OPTIONS,
+        onSelect: function (option) {
+          const backgroundColor = option.backgroundColor;
+          const textColor = getReadableTextColor(backgroundColor);
+          editor.chain().focus().setWikiBlockBackground({ backgroundColor, textColor }).run();
+        },
+        onClear: function () {
+          editor.chain().focus().unsetWikiBlockBackground().run();
+        }
+      });
+    },
+    "horizontal-rule": function () {
+      editor.chain().focus().setHorizontalRule().run();
+    },
+    "callout-info": function () {
+      if (editor.isActive("wikiCallout", { type: "info" })) {
+        editor.chain().focus().unsetWikiCallout().run();
+        return;
+      }
+      editor.chain().focus().insertWikiCallout({ type: "info", title: "Info" }).run();
+    },
+    "callout-success": function () {
+      if (editor.isActive("wikiCallout", { type: "success" })) {
+        editor.chain().focus().unsetWikiCallout().run();
+        return;
+      }
+      editor.chain().focus().insertWikiCallout({ type: "success", title: "Remember" }).run();
+    },
+    "callout-warning": function () {
+      if (editor.isActive("wikiCallout", { type: "warning" })) {
+        editor.chain().focus().unsetWikiCallout().run();
+        return;
+      }
+      editor.chain().focus().insertWikiCallout({ type: "warning", title: "Warning" }).run();
+    },
+    "callout-danger": function () {
+      if (editor.isActive("wikiCallout", { type: "danger" })) {
+        editor.chain().focus().unsetWikiCallout().run();
+        return;
+      }
+      editor.chain().focus().insertWikiCallout({ type: "danger", title: "Danger" }).run();
+    },
+    "align-left": function () {
+      editor.chain().focus().setTextAlign("left").run();
+    },
+    "align-center": function () {
+      editor.chain().focus().setTextAlign("center").run();
+    },
+    "align-right": function () {
+      editor.chain().focus().setTextAlign("right").run();
+    },
+    "align-justify": function () {
+      editor.chain().focus().setTextAlign("justify").run();
+    },
+    "table-insert": function () {
+      editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    },
+    "dnd-alignment-table": function () {
+      openAlignmentTableDialog({ editor });
+    }
+  };
+
+  return WIKI_SLASH_ITEM_DEFS.map(function (def) {
+    return {
+      id: def.id,
+      label: def.label,
+      aliases: def.aliases,
+      run: function (context) {
+        actions[def.id](context || {});
+      }
+    };
+  });
 }
 
 function openWikiEntityDialogForElement(editor, element, options) {
@@ -1310,6 +1666,18 @@ function createToolbar(root, editor, uploadImage) {
       },
       applyState: function (button) {
         button.classList.toggle("active", editor.isActive("highlight"));
+      }
+    },
+    {
+      id: "strip-span-styling",
+      title: "Strip span",
+      action: function () {
+        stripStyledSpanSelection(editor);
+      },
+      applyState: function (button) {
+        const active = selectionHasStyledSpan(editor);
+        button.disabled = !active;
+        button.classList.toggle("active", active);
       }
     },
     {
@@ -3442,7 +3810,8 @@ export async function createWikiEditor(element, options) {
     return true;
   }
 
-  const editor = new Editor({
+  let editor;
+  editor = new Editor({
     element: editorMount,
     extensions: [
       StarterKit.configure({
@@ -3507,6 +3876,13 @@ export async function createWikiEditor(element, options) {
         types: ["heading", "paragraph"]
       }),
       SlashCommand.configure({
+        getItems: function () {
+          return createWikiSlashItems({
+            root: toolbarMount,
+            editor,
+            uploadImage: pickAndUploadImage
+          });
+        },
         requestImageUpload: function () {
           uploadInput.click();
         }

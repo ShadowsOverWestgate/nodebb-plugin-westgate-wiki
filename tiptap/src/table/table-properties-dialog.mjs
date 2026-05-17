@@ -96,6 +96,28 @@ function setBorderColorValue(style, value) {
   return (probe.getAttribute("style") || "").replace(/;\s*$/, "");
 }
 
+function colorValueToInputHex(value, fallback) {
+  const normalized = String(value || "").trim();
+  const hex = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hex) {
+    const raw = hex[1].toLowerCase();
+    return raw.length === 3
+      ? `#${raw.split("").map(function (part) { return part + part; }).join("")}`
+      : `#${raw}`;
+  }
+
+  const rgb = normalized.match(/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/i);
+  if (rgb) {
+    return `#${rgb.slice(1, 4).map(function (channel) {
+      return Math.max(0, Math.min(255, parseInt(channel, 10) || 0))
+        .toString(16)
+        .padStart(2, "0");
+    }).join("")}`;
+  }
+
+  return fallback;
+}
+
 export function applyActiveTableProperties(editor, context, values) {
   const table = context && context.activeTableElement;
   if (!editor || !table) {
@@ -208,7 +230,10 @@ export function openTablePropertiesDialog({ editor, context }) {
   const borderColor = document.createElement("input");
   borderColor.type = "color";
   borderColor.className = "form-control form-control-color";
-  borderColor.value = "#caa55a";
+  borderColor.value = colorValueToInputHex(
+    getStyleValue(attrs.style, "border-color") || getStyleValue(table.getAttribute("style"), "border-color"),
+    "#caa55a"
+  );
   const borderColorField = createDialogField("Border color", borderColor);
   form.appendChild(borderColorField);
 

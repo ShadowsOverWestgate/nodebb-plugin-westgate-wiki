@@ -1,4 +1,4 @@
-<div class="westgate-wiki py-4">
+<div class="westgate-wiki">
   <header class="wiki-page-header wiki-page-header--search mb-4">
     <!-- IMPORT partials/wiki/search-chrome.tpl -->
     <div class="wiki-page-heading">

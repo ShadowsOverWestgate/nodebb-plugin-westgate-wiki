@@ -20,7 +20,7 @@ export const TOP_TOOLBAR_GROUPS = [
   {
     id: "inline-formatting",
     label: "Inline formatting",
-    buttonIds: ["bold", "italic", "underline", "strike", "inline-code", "highlight", "subscript", "superscript"]
+    buttonIds: ["bold", "italic", "underline", "strike", "inline-code", "highlight", "strip-span-styling", "subscript", "superscript"]
   },
   {
     id: "links-media",
