@@ -2238,6 +2238,159 @@ await test("slash command extension exposes keyboard-selectable command state", 
   editor.destroy();
 });
 
+await test("slash command arrow navigation scrolls the selected menu item into view", function () {
+  const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
+  const scrolledItems = [];
+  const mount = document.createElement("div");
+  document.body.appendChild(mount);
+  window.HTMLElement.prototype.scrollIntoView = function (options) {
+    if (this.classList && this.classList.contains("wiki-tiptap-slash-menu__item")) {
+      scrolledItems.push({
+        id: this.getAttribute("data-slash-command-id"),
+        options
+      });
+    }
+  };
+
+  const editor = new Editor({
+    element: mount,
+    extensions: [
+      StarterKit,
+      SlashCommand.configure({
+        getItems: function () {
+          return Array.from({ length: 12 }, function (_value, index) {
+            return {
+              id: `item-${index}`,
+              label: `Item ${index}`,
+              run: function () {}
+            };
+          });
+        }
+      })
+    ],
+    content: "<p>/</p>"
+  });
+
+  try {
+    editor.chain().setTextSelection(2).run();
+    editor.view.dom.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true }));
+
+    assert.equal(editor.storage.slashCommand.activeIndex, 1);
+    assert.equal(scrolledItems.at(-1).id, "item-1");
+    assert.deepEqual(scrolledItems.at(-1).options, { block: "nearest" });
+  } finally {
+    editor.destroy();
+    mount.remove();
+    window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  }
+});
+
+await test("main toolbar slash items are curated editor commands with aliases", async function () {
+  const { createWikiSlashItems } = await importEditorBundleForContract();
+  const editor = createEditor("<p>Slash menu</p>");
+  const root = document.createElement("div");
+  root.__wikiEditorOptions = {};
+  const items = createWikiSlashItems({
+    root,
+    editor,
+    uploadImage: function () {}
+  });
+  const ids = items.map(function (item) { return item.id; });
+  const expectedIds = TOP_TOOLBAR_GROUPS
+    .filter(function (group) { return !["history", "view"].includes(group.id); })
+    .flatMap(function (group) { return group.buttonIds; });
+
+  assert.deepEqual(ids, expectedIds);
+  assert.equal(ids.includes("undo"), false);
+  assert.equal(ids.includes("redo"), false);
+  assert.equal(ids.includes("fullscreen-source"), false);
+  assert.deepEqual(items.find(function (item) { return item.id === "dnd-alignment-table"; }).aliases, ["dnd", "alignment", "alignment table", "dungeons dragons"]);
+  assert.equal(items.every(function (item) { return item.label && typeof item.run === "function"; }), true);
+  editor.destroy();
+});
+
+await test("slash command menu filters by shorthand aliases and removes the full slash query", function () {
+  let ran = false;
+  const mount = document.createElement("div");
+  document.body.appendChild(mount);
+  const editor = new Editor({
+    element: mount,
+    extensions: [
+      StarterKit,
+      SlashCommand.configure({
+        getItems: function () {
+          return [
+            {
+              id: "paragraph",
+              label: "Paragraph",
+              run: function () {}
+            },
+            {
+              id: "dnd-alignment-table",
+              label: "D&D alignment table",
+              aliases: ["dnd", "alignment table"],
+              run: function () {
+                ran = true;
+              }
+            }
+          ];
+        }
+      })
+    ],
+    content: "<p>/dnd</p>"
+  });
+
+  editor.chain().setTextSelection(5).run();
+  const menu = mount.querySelector(".wiki-tiptap-slash-menu");
+  assert.equal(menu.querySelectorAll(".wiki-tiptap-slash-menu__item").length, 1);
+  assert.equal(menu.querySelector(".wiki-tiptap-slash-menu__item").getAttribute("data-slash-command-id"), "dnd-alignment-table");
+
+  const event = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+  editor.view.dom.dispatchEvent(event);
+
+  assert.equal(ran, true);
+  assert.equal(editor.getHTML(), "<p></p>");
+  editor.destroy();
+  mount.remove();
+});
+
+await test("slash command actions receive the active menu button as context", function () {
+  let receivedButton = null;
+  const mount = document.createElement("div");
+  document.body.appendChild(mount);
+  const editor = new Editor({
+    element: mount,
+    extensions: [
+      StarterKit,
+      SlashCommand.configure({
+        getItems: function () {
+          return [
+            {
+              id: "probe",
+              label: "Probe",
+              run: function ({ button }) {
+                receivedButton = button;
+              }
+            }
+          ];
+        }
+      })
+    ],
+    content: "<p>/</p>"
+  });
+
+  editor.chain().setTextSelection(2).run();
+  editor.commands.insertContent(" ");
+  editor.commands.deleteRange({ from: 2, to: 3 });
+  const event = new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true });
+  editor.view.dom.dispatchEvent(event);
+
+  assert.ok(receivedButton, "expected slash command to receive its menu button");
+  assert.equal(receivedButton.classList.contains("wiki-tiptap-slash-menu__item"), true);
+  editor.destroy();
+  mount.remove();
+});
+
 await test("wiki code block preserves only supported syntax language classes", function () {
   const editor = createEditor([
     '<pre><code class="language-bash">echo "$HOME"</code></pre>',
