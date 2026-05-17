@@ -449,6 +449,20 @@ await test("detectUnsupportedContent accepts safe legacy inline formatting in in
   assert.doesNotMatch(normalized, /<b>|<i>|<font/);
 });
 
+await test("infobox row cell block children preserve text boundaries", function () {
+  const html = '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><p>House</p><p>Name</p></dt><dd><p>House</p><p>Voss</p></dd></div></dl></aside>';
+  const normalized = normalizeLegacyHtmlForTiptap(html);
+  const editor = createEditor(html);
+  const rendered = editor.getHTML();
+
+  assert.equal(detectUnsupportedContent(html), "");
+  assert.match(normalized, /<dt>House Name<\/dt><dd>House Voss<\/dd>/);
+  assert.doesNotMatch(normalized, /HouseName|HouseVoss/);
+  assert.match(rendered, /<dt>House Name<\/dt><dd>House Voss<\/dd>/);
+  assert.doesNotMatch(rendered, /HouseName|HouseVoss/);
+  editor.destroy();
+});
+
 await test("detectUnsupportedContent rejects lossy infobox row media", function () {
   assert.match(
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"></div></dl></aside>'),
@@ -1045,6 +1059,9 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   const valueOnlyWithExtraContent = normalizeLegacyHtmlForTiptap(
     '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dd>Value</dd><p>Lost note</p></div></dl></aside>'
   );
+  const rowWithExtraImage = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"></div></dl></aside>'
+  );
   const prettyPrintedDirectRows = [
     '<aside class="wiki-infobox" data-wiki-node="infobox">',
     '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
@@ -1061,6 +1078,8 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   assert.match(rowsWithDirectText, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Loose text<\/dt><dd><\/dd><\/div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
   assert.match(termOnlyWithExtraContent, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Lost note<\/dd><\/div>/);
   assert.match(valueOnlyWithExtraContent, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd>Value Lost note<\/dd><\/div>/);
+  assert.match(rowWithExtraImage, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
+  assert.match(rowWithExtraImage, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
   assert.match(prettyPrintedRows, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt>\s*<dd>Voss<\/dd><\/div>/);
   assert.equal(detectUnsupportedContent(prettyPrintedDirectRows), "");
 });

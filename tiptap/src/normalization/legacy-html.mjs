@@ -520,16 +520,32 @@ function detectUnsupportedInfoboxRowsBeforeNormalization(html) {
   return "";
 }
 
+const INFOBOX_INLINE_FLATTEN_BLOCK_TAGS = new Set(["address", "article", "blockquote", "div", "dl", "figure", "h1", "h2", "h3", "h4", "hr", "ol", "p", "pre", "section", "table", "ul"]);
+
 function appendInfoboxInlineChildren(document, target, source) {
+  let needsSeparator = false;
   Array.from(source.childNodes || []).forEach(function (child) {
     if (child.nodeType === 1) {
       const tag = child.tagName.toLowerCase();
-      if (["address", "article", "blockquote", "div", "dl", "figure", "h1", "h2", "h3", "h4", "hr", "ol", "p", "pre", "section", "table", "ul"].includes(tag)) {
+      if (INFOBOX_INLINE_FLATTEN_BLOCK_TAGS.has(tag)) {
+        const childHadVisibleContent = hasVisibleInfoboxNode(child);
+        if (childHadVisibleContent) {
+          appendInfoboxCellSeparator(document, target);
+        }
         appendInfoboxInlineChildren(document, target, child);
+        if (childHadVisibleContent) {
+          needsSeparator = true;
+        }
         return;
       }
     }
+    if (needsSeparator && hasVisibleInfoboxNode(child)) {
+      appendInfoboxCellSeparator(document, target);
+    }
     target.appendChild(child);
+    if (hasVisibleInfoboxNode(child)) {
+      needsSeparator = false;
+    }
   });
 }
 
@@ -547,7 +563,8 @@ function hasVisibleInfoboxNode(node) {
 }
 
 function appendInfoboxCellSeparator(document, target) {
-  if (String(target.textContent || "").trim()) {
+  const text = String(target.textContent || "");
+  if (text.trim() && !/\s$/.test(text)) {
     target.appendChild(document.createTextNode(" "));
   }
 }
@@ -578,6 +595,44 @@ function createInfoboxCell(document, tagName, source) {
   return cell;
 }
 
+function normalizeInfoboxCell(document, cell) {
+  if (!cell) {
+    return;
+  }
+
+  const normalized = document.createElement(cell.tagName.toLowerCase());
+  appendInfoboxInlineChildren(document, normalized, cell);
+  while (cell.firstChild) {
+    cell.removeChild(cell.firstChild);
+  }
+  while (normalized.firstChild) {
+    cell.appendChild(normalized.firstChild);
+  }
+}
+
+function moveInfoboxRowImageExtras(document, row, extras) {
+  if (!extras.length || !row.parentElement || !isInfoboxRowsElement(row.parentElement)) {
+    return;
+  }
+
+  const rows = row.parentElement;
+  const parent = rows.parentNode;
+  if (!parent) {
+    return;
+  }
+
+  const reference = rows.nextSibling;
+  extras.forEach(function (node) {
+    if (!node.parentNode || node.nodeType !== 1 || node.tagName.toLowerCase() !== "img") {
+      return;
+    }
+    const image = document.createElement("figure");
+    setInfoboxPart(image, "image");
+    image.appendChild(node);
+    parent.insertBefore(image, reference);
+  });
+}
+
 function repairInfoboxRow(document, row) {
   const children = Array.from(row.children || []);
   const term = children.find(function (child) {
@@ -586,11 +641,24 @@ function repairInfoboxRow(document, row) {
   const value = children.find(function (child) {
     return child.tagName && child.tagName.toLowerCase() === "dd";
   }) || null;
-  const extras = Array.from(row.childNodes || []).filter(function (child) {
-    return child !== term && child !== value && hasVisibleInfoboxNode(child);
+  if (term) {
+    normalizeInfoboxCell(document, term);
+  }
+  if (value) {
+    normalizeInfoboxCell(document, value);
+  }
+  const extraNodes = Array.from(row.childNodes || []).filter(function (child) {
+    return child !== term && child !== value && !isIgnorableInfoboxSibling(child);
+  });
+  const extras = extraNodes.filter(function (child) {
+    return hasVisibleInfoboxNode(child);
+  });
+  const imageExtras = extraNodes.filter(function (child) {
+    return child.nodeType === 1 && child.tagName.toLowerCase() === "img";
   });
 
   if (term && value) {
+    moveInfoboxRowImageExtras(document, row, imageExtras);
     extras.forEach(function (child) {
       appendInfoboxNodeAsInline(document, value, child);
     });
@@ -607,6 +675,7 @@ function repairInfoboxRow(document, row) {
 
   if (term) {
     const emptyValue = document.createElement("dd");
+    moveInfoboxRowImageExtras(document, row, imageExtras);
     extras.forEach(function (child) {
       appendInfoboxNodeAsInline(document, emptyValue, child);
     });
@@ -620,6 +689,7 @@ function repairInfoboxRow(document, row) {
   }
 
   if (value) {
+    moveInfoboxRowImageExtras(document, row, imageExtras);
     extras.forEach(function (child) {
       appendInfoboxNodeAsInline(document, value, child);
     });
@@ -718,6 +788,7 @@ function normalizeInfoboxRows(document, root) {
       } else if (tagName === "dt") {
         row.appendChild(document.createElement("dd"));
       }
+      repairInfoboxRow(document, row);
     }
   });
 }

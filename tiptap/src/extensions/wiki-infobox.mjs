@@ -256,16 +256,32 @@ function parseInfoboxPartRules(partName, tagName, className) {
   ];
 }
 
+const INLINE_FLATTEN_BLOCK_TAGS = new Set(["address", "article", "blockquote", "div", "dl", "figure", "h1", "h2", "h3", "h4", "hr", "ol", "p", "pre", "section", "table", "ul"]);
+
 function appendInlineDomChildren(target, source) {
+  let needsSeparator = false;
   Array.from(source.childNodes || []).forEach(function (child) {
     if (child.nodeType === 1) {
       const tagName = child.tagName.toLowerCase();
-      if (["address", "article", "blockquote", "div", "dl", "figure", "h1", "h2", "h3", "h4", "hr", "ol", "p", "pre", "section", "table", "ul"].includes(tagName)) {
+      if (INLINE_FLATTEN_BLOCK_TAGS.has(tagName)) {
+        const childHadVisibleContent = hasVisibleDomNode(child);
+        if (childHadVisibleContent) {
+          appendDomInlineSeparator(target);
+        }
         appendInlineDomChildren(target, child);
+        if (childHadVisibleContent) {
+          needsSeparator = true;
+        }
         return;
       }
     }
+    if (needsSeparator && hasVisibleDomNode(child)) {
+      appendDomInlineSeparator(target);
+    }
     target.appendChild(child.cloneNode(true));
+    if (hasVisibleDomNode(child)) {
+      needsSeparator = false;
+    }
   });
 }
 
@@ -283,7 +299,8 @@ function hasVisibleDomNode(node) {
 }
 
 function appendDomInlineSeparator(target) {
-  if (String(target.textContent || "").trim()) {
+  const text = String(target.textContent || "");
+  if (text.trim() && !/\s$/.test(text)) {
     target.appendChild(target.ownerDocument.createTextNode(" "));
   }
 }
