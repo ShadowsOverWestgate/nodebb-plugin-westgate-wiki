@@ -1088,7 +1088,7 @@ await test("alignment table full mode preserves full labels as secondary display
 });
 
 await test("alignment table command inserts inside an active infobox without splitting it", function () {
-  const editor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside><p>After</p>');
+  const editor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><div class="wiki-infobox__section" data-wiki-infobox-part="section">Powers</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside><p>After</p>');
 
   editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
   assert.equal(editor.commands.insertWikiAlignmentTable({ highlighted: ["tn"], mode: "full" }), true);
@@ -1097,7 +1097,7 @@ await test("alignment table command inserts inside an active infobox without spl
   assert.deepEqual(json.content.map(function (node) { return node.type; }), ["paragraph", "wikiInfobox", "paragraph"]);
   assert.equal(findJsonNodes(json, "wikiInfobox").length, 1);
   const infobox = findJsonNode(json, "wikiInfobox");
-  assert.deepEqual(infobox.content.map(function (node) { return node.type; }), ["wikiInfoboxTitle", "wikiInfoboxContent"]);
+  assert.deepEqual(infobox.content.map(function (node) { return node.type; }), ["wikiInfoboxTitle", "wikiInfoboxContent", "wikiInfoboxSection", "wikiInfoboxRows"]);
   const chart = findJsonNode(infobox, "wikiAlignmentTable");
   assert.ok(chart);
   assert.equal(chart.attrs.highlighted, "tn");

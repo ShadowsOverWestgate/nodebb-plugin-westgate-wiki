@@ -16,6 +16,14 @@ export const DND_ALIGNMENT_OPTIONS = [
 const ALIGNMENT_IDS = new Set(DND_ALIGNMENT_OPTIONS.map(function (option) {
   return option.id;
 }));
+const INFOBOX_HELPER_NODE_NAMES = new Set([
+  "wikiInfoboxTitle",
+  "wikiInfoboxSubtitle",
+  "wikiInfoboxImage",
+  "wikiInfoboxSection",
+  "wikiInfoboxRows",
+  "wikiInfoboxContent"
+]);
 
 export function normalizeAlignments(value) {
   const values = Array.isArray(value) ? value : String(value || "").split(/\s+/);
@@ -37,6 +45,10 @@ function getAlignmentTableAttrs(attributes) {
   };
 }
 
+function isInfoboxHelperNode(node) {
+  return !!(node && INFOBOX_HELPER_NODE_NAMES.has(node.type.name));
+}
+
 function findActiveInfobox(state) {
   const { $from, from, node } = state.selection;
   if (node && node.type.name === "wikiInfobox") {
@@ -56,6 +68,64 @@ function findActiveInfobox(state) {
     }
   }
   return null;
+}
+
+function findInfoboxHelperChild(context, childPos) {
+  let result = null;
+  context.node.forEach(function (child, offset, index) {
+    if (result) {
+      return;
+    }
+    const pos = context.pos + 1 + offset;
+    if (pos === childPos) {
+      result = {
+        index,
+        node: child,
+        pos
+      };
+    }
+  });
+  return result;
+}
+
+function findDirectInfoboxHelperAtResolvedPos(context, $pos) {
+  for (let depth = $pos.depth; depth > 0; depth -= 1) {
+    const ancestor = $pos.node(depth);
+    const parent = depth > 0 ? $pos.node(depth - 1) : null;
+    if (isInfoboxHelperNode(ancestor) && parent && parent.type.name === "wikiInfobox") {
+      return findInfoboxHelperChild(context, $pos.before(depth));
+    }
+  }
+  return null;
+}
+
+function findActiveInfoboxHelper(state, context) {
+  const infobox = context || findActiveInfobox(state);
+  if (!infobox) {
+    return null;
+  }
+
+  const { $from, $to, from, node } = state.selection;
+  if (isInfoboxHelperNode(node) && $from.parent.type.name === "wikiInfobox") {
+    const directChild = findInfoboxHelperChild(infobox, from);
+    if (directChild) {
+      return {
+        infobox,
+        helper: directChild
+      };
+    }
+  }
+
+  const fromHelper = findDirectInfoboxHelperAtResolvedPos(infobox, $from);
+  const toHelper = findDirectInfoboxHelperAtResolvedPos(infobox, $to);
+  if (!fromHelper || !toHelper || fromHelper.pos !== toHelper.pos) {
+    return null;
+  }
+
+  return {
+    infobox,
+    helper: fromHelper
+  };
 }
 
 function isInsideInfoboxContent(state) {
@@ -95,17 +165,25 @@ function insertAlignmentTableInActiveInfobox(state, dispatch, attrs) {
 
   const table = tableType.create(attrs);
   if (dispatch) {
-    const existingContent = findLastInfoboxContent(context);
-    if (existingContent) {
-      const insertPos = existingContent.pos + existingContent.node.nodeSize - 1;
-      const tr = state.tr.insert(insertPos, table);
-      tr.setSelection(NodeSelection.create(tr.doc, insertPos));
-      dispatch(tr.scrollIntoView());
-    } else {
-      const insertPos = context.pos + context.node.nodeSize - 1;
+    const activeHelper = findActiveInfoboxHelper(state, context);
+    if (activeHelper && activeHelper.helper.node.type.name !== "wikiInfoboxContent") {
+      const insertPos = activeHelper.helper.pos + activeHelper.helper.node.nodeSize;
       const tr = state.tr.insert(insertPos, contentType.create(null, table));
       tr.setSelection(NodeSelection.create(tr.doc, insertPos + 1));
       dispatch(tr.scrollIntoView());
+    } else {
+      const existingContent = findLastInfoboxContent(context);
+      if (existingContent) {
+        const insertPos = existingContent.pos + existingContent.node.nodeSize - 1;
+        const tr = state.tr.insert(insertPos, table);
+        tr.setSelection(NodeSelection.create(tr.doc, insertPos));
+        dispatch(tr.scrollIntoView());
+      } else {
+        const insertPos = context.pos + context.node.nodeSize - 1;
+        const tr = state.tr.insert(insertPos, contentType.create(null, table));
+        tr.setSelection(NodeSelection.create(tr.doc, insertPos + 1));
+        dispatch(tr.scrollIntoView());
+      }
     }
   }
   return true;
