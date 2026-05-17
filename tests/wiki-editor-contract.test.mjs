@@ -223,7 +223,7 @@ function createEditor(content) {
   });
 }
 
-function createDefaultOnlyInfoboxEditor(content) {
+function createPartialInfoboxEditor(content) {
   const mount = document.createElement("div");
   document.body.appendChild(mount);
 
@@ -234,6 +234,7 @@ function createDefaultOnlyInfoboxEditor(content) {
         codeBlock: false,
         link: false
       }),
+      WikiInfoboxTitle,
       WikiInfobox
     ],
     content: content || ""
@@ -392,10 +393,25 @@ await test("detectUnsupportedContent rejects unsupported embeds and accepts supp
   );
 });
 
-await test("detectUnsupportedContent accepts empty infobox image helpers", function () {
+await test("detectUnsupportedContent accepts schema-compatible infobox image helpers", function () {
   assert.equal(
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"></figure></aside>'),
     ""
+  );
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/portrait.png" alt="Portrait"></figure></aside>'),
+    ""
+  );
+});
+
+await test("detectUnsupportedContent rejects schema-incompatible infobox image helpers", function () {
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><p>Caption</p></figure></aside>'),
+    /figure layout/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/one.png" alt="One"><img src="/two.png" alt="Two"></figure></aside>'),
+    /figure layout/
   );
 });
 
@@ -2252,6 +2268,29 @@ await test("normalized saved infoboxes round trip through the Tiptap editor", fu
   editor.destroy();
 });
 
+await test("orphan infobox helper markup does not parse as a top-level helper node", function () {
+  const editor = createEditor('<div class="wiki-infobox__title" data-wiki-infobox-part="title">Orphan Title</div><p>Article text.</p>');
+  const json = editor.getJSON();
+  const rendered = editor.getHTML();
+
+  assert.equal(findJsonNode(json, "wikiInfoboxTitle"), null);
+  assert.doesNotMatch(rendered, /data-wiki-infobox-part="title"/);
+  assert.doesNotMatch(rendered, /wiki-infobox__title/);
+  assert.match(rendered, /Orphan Title/);
+  assert.match(rendered, /Article text\./);
+  editor.destroy();
+});
+
+await test("direct infobox prose is preserved through content helpers", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><p>Direct prose.</p></aside>');
+  const rendered = editor.getHTML();
+
+  assert.equal(findJsonNode(editor.getJSON(), "wikiInfoboxContent").content[0].type, "paragraph");
+  assert.doesNotMatch(rendered, /<aside class="wiki-infobox" data-wiki-node="infobox"><p>Direct prose\.<\/p>/);
+  assert.match(rendered, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Direct prose\.<\/p><\/div>/);
+  editor.destroy();
+});
+
 await test("wikiInfobox insert command creates starter infobox HTML", function () {
   const editor = createEditor("<p>Start</p>");
 
@@ -2305,7 +2344,7 @@ await test("wikiInfobox commands return false outside an active infobox", functi
 });
 
 await test("wikiInfobox insert command returns false when helper schema nodes are not registered", function () {
-  const editor = createDefaultOnlyInfoboxEditor("<p>Start</p>");
+  const editor = createPartialInfoboxEditor("<p>Start</p>");
 
   assert.equal(editor.commands.insertWikiInfobox(), false);
   assert.equal(editor.getHTML(), "<p>Start</p>");
@@ -2321,7 +2360,8 @@ await test("wikiInfobox unwrap and delete commands only affect the active infobo
   assert.doesNotMatch(unwrapped, /<aside class="wiki-infobox"/);
   assert.match(unwrapped, /<p>Before<\/p>/);
   assert.match(unwrapped, /Selene/);
-  assert.match(unwrapped, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  assert.match(unwrapped, /House/);
+  assert.match(unwrapped, /Voss/);
   assert.match(unwrapped, /<p>After<\/p>/);
   unwrapEditor.destroy();
 

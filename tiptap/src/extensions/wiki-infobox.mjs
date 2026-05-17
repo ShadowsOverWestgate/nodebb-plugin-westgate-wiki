@@ -2,6 +2,7 @@ import { mergeAttributes, Node } from "@tiptap/core";
 import { Selection } from "@tiptap/pm/state";
 
 const INFOBOX_NODE_NAME = "wikiInfobox";
+const INFOBOX_CONTENT_EXPRESSION = "wikiInfoboxPart*";
 
 function textContent(state, text) {
   const value = String(text || "");
@@ -92,6 +93,61 @@ function createRowsHelper(state) {
   return rowsType.create(null, row);
 }
 
+function createParagraphFromText(state, text) {
+  const paragraphType = state.schema.nodes.paragraph;
+  if (!paragraphType) {
+    return null;
+  }
+
+  return paragraphType.create(null, textContent(state, text));
+}
+
+function appendTextParagraph(state, blocks, text) {
+  const paragraph = createParagraphFromText(state, String(text || "").replace(/\s+/g, " ").trim());
+  if (paragraph) {
+    blocks.push(paragraph);
+  }
+}
+
+function flattenInfoboxContentForUnwrap(state, infoboxNode) {
+  const blocks = [];
+
+  infoboxNode.forEach(function (child) {
+    if (child.type.name === "wikiInfoboxContent") {
+      child.content.forEach(function (contentChild) {
+        blocks.push(contentChild);
+      });
+      return;
+    }
+
+    if (child.type.name === "wikiInfoboxRows") {
+      child.forEach(function (row) {
+        const text = [];
+        row.forEach(function (cell) {
+          if (cell.textContent) {
+            text.push(cell.textContent);
+          }
+        });
+        appendTextParagraph(state, blocks, text.join(" "));
+      });
+      return;
+    }
+
+    if (child.textContent) {
+      appendTextParagraph(state, blocks, child.textContent);
+    }
+  });
+
+  if (!blocks.length) {
+    const paragraph = createParagraphFromText(state, "");
+    if (paragraph) {
+      blocks.push(paragraph);
+    }
+  }
+
+  return blocks;
+}
+
 function findLastRowsInInfobox(context) {
   let result = null;
   context.node.forEach(function (child, offset) {
@@ -136,6 +192,27 @@ function renderInfoboxPart(tagName, className, partName, HTMLAttributes) {
   ];
 }
 
+function isInsideInfoboxElement(element) {
+  return !!(element && element.closest && element.closest('[data-wiki-node="infobox"], aside.wiki-infobox'));
+}
+
+function parseInfoboxPartRules(partName, tagName, className) {
+  return [
+    {
+      tag: `[data-wiki-infobox-part="${partName}"]`,
+      getAttrs: function (element) {
+        return isInsideInfoboxElement(element) ? null : false;
+      }
+    },
+    {
+      tag: `${tagName}.${className}`,
+      getAttrs: function (element) {
+        return isInsideInfoboxElement(element) ? null : false;
+      }
+    }
+  ];
+}
+
 function hasStarterInfoboxSchema(state) {
   return [
     "wikiInfoboxTitle",
@@ -151,14 +228,11 @@ function hasStarterInfoboxSchema(state) {
 export const WikiInfoboxTitle = Node.create({
   name: "wikiInfoboxTitle",
   priority: 1000,
-  group: "block",
+  group: "wikiInfoboxPart",
   content: "inline*",
   defining: true,
   parseHTML() {
-    return [
-      { tag: '[data-wiki-infobox-part="title"]' },
-      { tag: "div.wiki-infobox__title" }
-    ];
+    return parseInfoboxPartRules("title", "div", "wiki-infobox__title");
   },
   renderHTML({ HTMLAttributes }) {
     return renderInfoboxPart("div", "wiki-infobox__title", "title", HTMLAttributes);
@@ -168,14 +242,11 @@ export const WikiInfoboxTitle = Node.create({
 export const WikiInfoboxSubtitle = Node.create({
   name: "wikiInfoboxSubtitle",
   priority: 1000,
-  group: "block",
+  group: "wikiInfoboxPart",
   content: "inline*",
   defining: true,
   parseHTML() {
-    return [
-      { tag: '[data-wiki-infobox-part="subtitle"]' },
-      { tag: "div.wiki-infobox__subtitle" }
-    ];
+    return parseInfoboxPartRules("subtitle", "div", "wiki-infobox__subtitle");
   },
   renderHTML({ HTMLAttributes }) {
     return renderInfoboxPart("div", "wiki-infobox__subtitle", "subtitle", HTMLAttributes);
@@ -185,14 +256,11 @@ export const WikiInfoboxSubtitle = Node.create({
 export const WikiInfoboxImage = Node.create({
   name: "wikiInfoboxImage",
   priority: 1000,
-  group: "block",
+  group: "wikiInfoboxPart",
   content: "image?",
   defining: true,
   parseHTML() {
-    return [
-      { tag: '[data-wiki-infobox-part="image"]' },
-      { tag: "figure.wiki-infobox__image" }
-    ];
+    return parseInfoboxPartRules("image", "figure", "wiki-infobox__image");
   },
   renderHTML({ HTMLAttributes }) {
     return renderInfoboxPart("figure", "wiki-infobox__image", "image", HTMLAttributes);
@@ -202,14 +270,11 @@ export const WikiInfoboxImage = Node.create({
 export const WikiInfoboxSection = Node.create({
   name: "wikiInfoboxSection",
   priority: 1000,
-  group: "block",
+  group: "wikiInfoboxPart",
   content: "inline*",
   defining: true,
   parseHTML() {
-    return [
-      { tag: '[data-wiki-infobox-part="section"]' },
-      { tag: "div.wiki-infobox__section" }
-    ];
+    return parseInfoboxPartRules("section", "div", "wiki-infobox__section");
   },
   renderHTML({ HTMLAttributes }) {
     return renderInfoboxPart("div", "wiki-infobox__section", "section", HTMLAttributes);
@@ -219,14 +284,11 @@ export const WikiInfoboxSection = Node.create({
 export const WikiInfoboxRows = Node.create({
   name: "wikiInfoboxRows",
   priority: 1000,
-  group: "block",
+  group: "wikiInfoboxPart",
   content: "wikiInfoboxRow+",
   defining: true,
   parseHTML() {
-    return [
-      { tag: '[data-wiki-infobox-part="rows"]' },
-      { tag: "dl.wiki-infobox__rows" }
-    ];
+    return parseInfoboxPartRules("rows", "dl", "wiki-infobox__rows");
   },
   renderHTML({ HTMLAttributes }) {
     return renderInfoboxPart("dl", "wiki-infobox__rows", "rows", HTMLAttributes);
@@ -239,10 +301,7 @@ export const WikiInfoboxRow = Node.create({
   content: "wikiInfoboxTerm wikiInfoboxValue",
   defining: true,
   parseHTML() {
-    return [
-      { tag: '[data-wiki-infobox-part="row"]' },
-      { tag: "div.wiki-infobox__row" }
-    ];
+    return parseInfoboxPartRules("row", "div", "wiki-infobox__row");
   },
   renderHTML({ HTMLAttributes }) {
     return renderInfoboxPart("div", "wiki-infobox__row", "row", HTMLAttributes);
@@ -278,14 +337,11 @@ export const WikiInfoboxValue = Node.create({
 export const WikiInfoboxContent = Node.create({
   name: "wikiInfoboxContent",
   priority: 1000,
-  group: "block",
+  group: "wikiInfoboxPart",
   content: "block+",
   defining: true,
   parseHTML() {
-    return [
-      { tag: '[data-wiki-infobox-part="content"]' },
-      { tag: "div.wiki-infobox__content" }
-    ];
+    return parseInfoboxPartRules("content", "div", "wiki-infobox__content");
   },
   renderHTML({ HTMLAttributes }) {
     return renderInfoboxPart("div", "wiki-infobox__content", "content", HTMLAttributes);
@@ -296,7 +352,7 @@ const WikiInfobox = Node.create({
   name: INFOBOX_NODE_NAME,
   priority: 1000,
   group: "block",
-  content: "block+",
+  content: INFOBOX_CONTENT_EXPRESSION,
   defining: true,
   isolating: true,
   draggable: true,
@@ -379,7 +435,7 @@ const WikiInfobox = Node.create({
             return false;
           }
           if (dispatch) {
-            tr.replaceWith(context.pos, context.pos + context.node.nodeSize, context.node.content);
+            tr.replaceWith(context.pos, context.pos + context.node.nodeSize, flattenInfoboxContentForUnwrap(state, context.node));
             dispatch(setSelectionNear(tr, context.pos).scrollIntoView());
           }
           return true;

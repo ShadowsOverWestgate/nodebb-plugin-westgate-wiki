@@ -317,7 +317,7 @@ function isInsideInfobox(element) {
   return !!(element && element.closest && element.closest('[data-wiki-node="infobox"], .wiki-infobox, aside.infobox'));
 }
 
-function isInfoboxImageFigure(element) {
+function isInfoboxImageFigureElement(element) {
   return !!(
     element &&
     element.tagName &&
@@ -328,6 +328,19 @@ function isInfoboxImageFigure(element) {
       (element.classList && element.classList.contains("wiki-infobox__image"))
     )
   );
+}
+
+function isSupportedInfoboxImageFigure(element) {
+  if (!isInfoboxImageFigureElement(element)) {
+    return false;
+  }
+
+  const directChildren = Array.from(element.children || []);
+  if (directChildren.length === 0) {
+    return true;
+  }
+
+  return directChildren.length === 1 && directChildren[0].tagName.toLowerCase() === "img";
 }
 
 const INFOBOX_PART_CLASS_MAP = new Map([
@@ -822,7 +835,7 @@ export function getFigureImageLinkElement(figure) {
 
 export function normalizeSupportedFigures(root) {
   root.querySelectorAll("figure").forEach(function (figure) {
-    if (isInfoboxImageFigure(figure)) {
+    if (isInfoboxImageFigureElement(figure)) {
       return;
     }
 
@@ -930,7 +943,7 @@ export function normalizeLegacyHtmlForTiptap(html) {
   });
 
   root.querySelectorAll("figure").forEach(function (element) {
-    if (!isSupportedImageFigure(element) && !isPoetryQuoteFigure(element) && !isInfoboxImageFigure(element)) {
+    if (!isSupportedImageFigure(element) && !isPoetryQuoteFigure(element) && !isInfoboxImageFigureElement(element)) {
       unwrapElement(element);
     }
   });
@@ -1002,7 +1015,7 @@ export function detectUnsupportedContent(html) {
       return `Legacy HTML uses <${tag}>, which this Tiptap surface does not preserve safely yet.`;
     }
 
-    if (tag === "figure" && !isSupportedImageFigure(element) && !isPoetryQuoteFigure(element) && !isInfoboxImageFigure(element)) {
+    if (tag === "figure" && !isSupportedImageFigure(element) && !isPoetryQuoteFigure(element) && !isSupportedInfoboxImageFigure(element)) {
       return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
     }
 
