@@ -493,6 +493,9 @@ function detectUnsupportedInfoboxRowsBeforeNormalization(html) {
 
   for (const rows of Array.from(root.querySelectorAll('[data-wiki-infobox-part="rows"], .wiki-infobox__rows'))) {
     if (!isInfoboxRowsElement(rows)) {
+      if (isInsideInfobox(rows)) {
+        return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
+      }
       continue;
     }
 

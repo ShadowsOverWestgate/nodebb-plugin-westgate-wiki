@@ -430,6 +430,13 @@ await test("detectUnsupportedContent accepts canonical infobox rows", function (
   );
 });
 
+await test("detectUnsupportedContent rejects noncanonical infobox rows helper tags", function () {
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><div data-wiki-infobox-part="rows"><dt>House</dt><dd>Voss</dd></div></aside>'),
+    /definition rows/
+  );
+});
+
 await test("detectUnsupportedContent accepts safe legacy inline formatting in infobox rows", function () {
   const html = '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><b>House</b></dt><dd><i>Voss</i> <font color="#caa55a">Gold</font> Line<br>Break</dd></div></dl></aside>';
   const normalized = normalizeLegacyHtmlForTiptap(html);
