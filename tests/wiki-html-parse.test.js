@@ -51,3 +51,14 @@ test("looksLikeWikiStoredHtml accepts topdata bot pages that begin with marker c
 
   assert.equal(wikiHtmlParse.looksLikeWikiStoredHtml(html), true);
 });
+
+test("looksLikeWikiStoredHtml accepts infobox articles that begin with aside markup", function () {
+  const html = [
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Shar</div>',
+    '</aside>',
+    '<p>Article text.</p>'
+  ].join("");
+
+  assert.equal(wikiHtmlParse.looksLikeWikiStoredHtml(html), true);
+});
