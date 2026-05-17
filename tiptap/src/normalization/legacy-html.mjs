@@ -610,6 +610,13 @@ function normalizeInfoboxCell(document, cell) {
   }
 }
 
+function getInfoboxCellImageExtras(cell) {
+  if (!cell) {
+    return [];
+  }
+  return Array.from(cell.querySelectorAll("img"));
+}
+
 function moveInfoboxRowImageExtras(document, row, extras) {
   if (!extras.length || !row.parentElement || !isInfoboxRowsElement(row.parentElement)) {
     return;
@@ -634,6 +641,8 @@ function moveInfoboxRowImageExtras(document, row, extras) {
 }
 
 function repairInfoboxRow(document, row) {
+  row.removeAttribute("style");
+
   const children = Array.from(row.children || []);
   const term = children.find(function (child) {
     return child.tagName && child.tagName.toLowerCase() === "dt";
@@ -641,6 +650,7 @@ function repairInfoboxRow(document, row) {
   const value = children.find(function (child) {
     return child.tagName && child.tagName.toLowerCase() === "dd";
   }) || null;
+  const cellImageExtras = getInfoboxCellImageExtras(term).concat(getInfoboxCellImageExtras(value));
   if (term) {
     normalizeInfoboxCell(document, term);
   }
@@ -655,7 +665,7 @@ function repairInfoboxRow(document, row) {
   });
   const imageExtras = extraNodes.filter(function (child) {
     return child.nodeType === 1 && child.tagName.toLowerCase() === "img";
-  });
+  }).concat(cellImageExtras);
 
   if (term && value) {
     moveInfoboxRowImageExtras(document, row, imageExtras);
@@ -1165,6 +1175,10 @@ function elementContainsMedia(element) {
 
 export function normalizeLegacyMediaLayouts(document, root) {
   root.querySelectorAll("article, section, div").forEach(function (element) {
+    if (element.closest('[data-wiki-infobox-part="rows"], .wiki-infobox__rows')) {
+      return;
+    }
+
     const display = (element.style.display || "").trim().toLowerCase();
     if (!["flex", "grid", "inline-flex", "inline-grid"].includes(display)) {
       return;

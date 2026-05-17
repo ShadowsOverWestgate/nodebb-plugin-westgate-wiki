@@ -1084,6 +1084,21 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   assert.equal(detectUnsupportedContent(prettyPrintedDirectRows), "");
 });
 
+await test("normalizeLegacyHtmlForTiptap skips media layout conversion inside infobox rows", function () {
+  const directRowImage = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row" style="display:flex"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"></div></dl></aside>'
+  );
+  const valueImage = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row" style="display:flex"><dt>House</dt><dd>Voss<img src="/seal.png" alt="Seal"></dd></div></dl></aside>'
+  );
+
+  [directRowImage, valueImage].forEach(function (normalized) {
+    assert.doesNotMatch(normalized, /wiki-media-row/);
+    assert.match(normalized, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl>/);
+    assert.match(normalized, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
+  });
+});
+
 await test("detectUnsupportedContent rejects empty infobox rows helpers", function () {
   assert.match(
     detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"></dl></aside>'),
