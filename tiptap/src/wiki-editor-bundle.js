@@ -101,6 +101,7 @@ const BUTTON_ICONS = {
   strike: "fa-strikethrough",
   "inline-code": "fa-code",
   highlight: "fa-paint-brush",
+  "strip-span-styling": "fa-eraser",
   "block-background": "fa-square",
   subscript: "fa-subscript",
   superscript: "fa-superscript",
@@ -771,6 +772,53 @@ export function applyExternalLinkEdit(editor, attrs) {
   }).run();
 }
 
+export function selectionHasStyledSpan(editor) {
+  const markType = editor && editor.state && editor.state.schema && editor.state.schema.marks.styledSpan;
+  const selection = editor && editor.state && editor.state.selection;
+  if (!markType || !selection) {
+    return false;
+  }
+  if (selection.empty) {
+    return !!getMarkRange(selection.$from, markType);
+  }
+
+  let found = false;
+  editor.state.doc.nodesBetween(selection.from, selection.to, function (node) {
+    if (found) {
+      return false;
+    }
+    if (!node.isText) {
+      return true;
+    }
+    found = !!markType.isInSet(node.marks);
+    return !found;
+  });
+  return found;
+}
+
+export function stripStyledSpanSelection(editor) {
+  if (!selectionHasStyledSpan(editor)) {
+    return false;
+  }
+  const selection = editor.state.selection;
+  if (!selection.empty) {
+    return editor.chain().focus().unsetMark("styledSpan").run();
+  }
+
+  const markType = editor.state.schema.marks.styledSpan;
+  const range = getMarkRange(selection.$from, markType);
+  if (!range) {
+    return false;
+  }
+
+  return editor.chain()
+    .focus()
+    .setTextSelection(range)
+    .unsetMark("styledSpan")
+    .setTextSelection(selection.from)
+    .run();
+}
+
 function openExternalLinkDialog({ editor, onSave } = {}) {
   closeEditorDialogShells();
 
@@ -1310,6 +1358,18 @@ function createToolbar(root, editor, uploadImage) {
       },
       applyState: function (button) {
         button.classList.toggle("active", editor.isActive("highlight"));
+      }
+    },
+    {
+      id: "strip-span-styling",
+      title: "Strip span",
+      action: function () {
+        stripStyledSpanSelection(editor);
+      },
+      applyState: function (button) {
+        const active = selectionHasStyledSpan(editor);
+        button.disabled = !active;
+        button.classList.toggle("active", active);
       }
     },
     {

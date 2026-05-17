@@ -543,6 +543,43 @@ await test("styled span classes and styles round-trip through the extracted exte
   editor.destroy();
 });
 
+await test("stripStyledSpanSelection removes pasted span styling without removing semantic marks", async function () {
+  const { selectionHasStyledSpan, stripStyledSpanSelection } = await importEditorBundleForContract();
+  const editor = createEditor('<p><span class="legacy-accent" style="color: #bbb"><a href="https://example.com"><strong>Styled link</strong></a></span></p>');
+  const range = findTextRange(editor, "Styled link");
+
+  assert.ok(range, "expected styled link text range");
+  editor.commands.setTextSelection(range);
+  assert.equal(selectionHasStyledSpan(editor), true);
+  assert.equal(stripStyledSpanSelection(editor), true);
+
+  const rendered = editor.getHTML();
+  assert.match(rendered, /<strong>Styled link<\/strong>|<strong><span class="wiki-editor-link wiki-external-link"[^>]*>Styled link<\/span><\/strong>/);
+  assert.match(rendered, /class="wiki-editor-link wiki-external-link"/);
+  assert.match(rendered, /data-wiki-link-href="https:\/\/example\.com"/);
+  assert.doesNotMatch(rendered, /legacy-accent/);
+  assert.doesNotMatch(rendered, /<span[^>]*style="[^"]*color[^"]*"[^>]*>/);
+  editor.destroy();
+});
+
+await test("stripStyledSpanSelection expands a cursor inside pasted span styling", async function () {
+  const { selectionHasStyledSpan, stripStyledSpanSelection } = await importEditorBundleForContract();
+  const editor = createEditor('<p>Before <span style="color: #bbb">styled cursor text</span> after</p>');
+  const range = findTextRange(editor, "cursor");
+  const cursor = range.from + 2;
+
+  editor.commands.setTextSelection(cursor);
+  assert.equal(selectionHasStyledSpan(editor), true);
+  assert.equal(stripStyledSpanSelection(editor), true);
+
+  const rendered = editor.getHTML();
+  assert.match(rendered, /Before styled cursor text after/);
+  assert.doesNotMatch(rendered, /<span[^>]*style="[^"]*color[^"]*"[^>]*>styled cursor text<\/span>/);
+  assert.equal(editor.state.selection.from, cursor);
+  assert.equal(editor.state.selection.empty, true);
+  editor.destroy();
+});
+
 await test("highlight colors render as sanitized multicolor marks", function () {
   const editor = createEditor("<p>Colored highlight</p>");
 
@@ -2289,12 +2326,15 @@ await test("top toolbar schema keeps wiki entity tools and table creation tools 
   ]);
 
   const history = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "history"; });
+  const inlineFormatting = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "inline-formatting"; });
   const callouts = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "callouts"; });
   const media = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "links-media"; });
   const tables = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "tables"; });
   const view = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "view"; });
 
   assert.deepEqual(history.buttonIds, ["undo", "redo"]);
+  assert.deepEqual(inlineFormatting.buttonIds, ["bold", "italic", "underline", "strike", "inline-code", "highlight", "strip-span-styling", "subscript", "superscript"]);
+  assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("strip-span-styling"), true);
   assert.deepEqual(callouts.buttonIds, ["callout-info", "callout-success", "callout-warning", "callout-danger"]);
   assert.deepEqual(media.buttonIds, ["link", "wiki-page-link", "wiki-user-mention", "wiki-footnote", "image-upload", "media-row-2", "media-row-3"]);
   assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("wiki-namespace-link"), false);
