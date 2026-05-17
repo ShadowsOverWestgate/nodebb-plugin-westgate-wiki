@@ -435,6 +435,12 @@
       width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter)) !important;
       max-width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
     }
+
+    .wiki-article-prose > .card-body:has(> .wiki-infobox) > table[style*="width:100%"],
+    .wiki-article-prose > .card-body:has(> .wiki-infobox) > table[style*="width: 100%"] {
+      width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter)) !important;
+      max-width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
+    }
   }
 }
 
