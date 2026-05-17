@@ -30,7 +30,7 @@ export const TOP_TOOLBAR_GROUPS = [
   {
     id: "blocks",
     label: "Blocks",
-    buttonIds: ["bullet-list", "ordered-list", "task-list", "blockquote", "code-block", "block-background", "horizontal-rule"]
+    buttonIds: ["bullet-list", "ordered-list", "task-list", "blockquote", "code-block", "block-background", "horizontal-rule", "infobox-insert"]
   },
   {
     id: "callouts",

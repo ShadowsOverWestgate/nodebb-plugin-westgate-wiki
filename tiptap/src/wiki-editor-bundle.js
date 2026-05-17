@@ -32,6 +32,17 @@ import WikiBlockBackground from "./extensions/wiki-block-background.mjs";
 import WikiCallout from "./extensions/wiki-callout.mjs";
 import WikiCodeBlock, { CODE_BLOCK_LANGUAGE_OPTIONS } from "./extensions/wiki-code-block.mjs";
 import WikiEditingKeymap from "./extensions/wiki-editing-keymap.mjs";
+import WikiInfobox, {
+  WikiInfoboxContent,
+  WikiInfoboxImage,
+  WikiInfoboxRow,
+  WikiInfoboxRows,
+  WikiInfoboxSection,
+  WikiInfoboxSubtitle,
+  WikiInfoboxTerm,
+  WikiInfoboxTitle,
+  WikiInfoboxValue
+} from "./extensions/wiki-infobox.mjs";
 import WikiPoetryQuote from "./extensions/wiki-poetry-quote.mjs";
 import Highlight from "./extensions/wiki-highlight.mjs";
 import { WikiFootnote, WikiNamespaceLink, WikiPageLink, WikiUserMention } from "./extensions/wiki-entities.mjs";
@@ -129,6 +140,7 @@ const BUTTON_ICONS = {
   blockquote: "fa-quote-left",
   "code-block": "fa-file-code-o",
   "horizontal-rule": "fa-minus",
+  "infobox-insert": "fa-info-circle",
   "callout-info": "fa-info-circle",
   "callout-success": "fa-check-circle",
   "callout-warning": "fa-exclamation-triangle",
@@ -1152,6 +1164,7 @@ const WIKI_SLASH_ITEM_DEFS = [
   { id: "code-block", label: "Code block", aliases: ["pre", "fenced code"] },
   { id: "block-background", label: "Text block background", aliases: ["background", "block color"] },
   { id: "horizontal-rule", label: "Horizontal rule", aliases: ["hr", "divider", "rule"] },
+  { id: "infobox-insert", label: "Infobox", aliases: ["info box", "sidebar", "wiki box"] },
   { id: "callout-info", label: "Info callout", aliases: ["info", "note box"] },
   { id: "callout-success", label: "Success callout", aliases: ["success", "remember"] },
   { id: "callout-warning", label: "Warning callout", aliases: ["warning", "caution"] },
@@ -1279,6 +1292,9 @@ export function createWikiSlashItems({ root, editor, uploadImage } = {}) {
     },
     "horizontal-rule": function () {
       editor.chain().focus().setHorizontalRule().run();
+    },
+    "infobox-insert": function () {
+      editor.chain().focus().insertWikiInfobox().run();
     },
     "callout-info": function () {
       if (editor.isActive("wikiCallout", { type: "info" })) {
@@ -1834,6 +1850,13 @@ function createToolbar(root, editor, uploadImage) {
       title: "Horizontal rule",
       action: function () {
         editor.chain().focus().setHorizontalRule().run();
+      }
+    },
+    {
+      id: "infobox-insert",
+      title: "Insert infobox",
+      action: function () {
+        editor.chain().focus().insertWikiInfobox().run();
       }
     }
   ], "blocks");
@@ -3833,6 +3856,16 @@ export async function createWikiEditor(element, options) {
       WikiBlockBackground,
       WikiCallout,
       WikiPoetryQuote,
+      WikiInfoboxTitle,
+      WikiInfoboxSubtitle,
+      WikiInfoboxImage,
+      WikiInfoboxSection,
+      WikiInfoboxRows,
+      WikiInfoboxRow,
+      WikiInfoboxTerm,
+      WikiInfoboxValue,
+      WikiInfoboxContent,
+      WikiInfobox,
       WikiEditingKeymap,
       WikiPageLink,
       WikiNamespaceLink,

@@ -2979,6 +2979,17 @@ await test("blockquote toolbar action inserts the attributed quote tool instead 
   assert.doesNotMatch(editorBundleSource, /id:\s*"blockquote"[\s\S]{0,260}toggleBlockquote/);
 });
 
+await test("production editor bundle wires infobox insertion into schema toolbar and slash commands", function () {
+  assert.match(editorBundleSource, /import\s+WikiInfobox,\s*\{[\s\S]*\}\s+from\s+"\.\/extensions\/wiki-infobox\.mjs"/);
+  assert.match(editorBundleSource, /import\s+WikiInfobox,\s*\{[\s\S]*WikiInfoboxTitle[\s\S]*\}\s+from\s+"\.\/extensions\/wiki-infobox\.mjs"/);
+  assert.match(editorBundleSource, /import\s+WikiInfobox,\s*\{[\s\S]*WikiInfoboxContent[\s\S]*\}\s+from\s+"\.\/extensions\/wiki-infobox\.mjs"/);
+  assert.match(editorBundleSource, /WikiPoetryQuote,\s*[\r\n\s]*WikiInfoboxTitle,\s*[\r\n\s]*WikiInfoboxSubtitle,\s*[\r\n\s]*WikiInfoboxImage,\s*[\r\n\s]*WikiInfoboxSection,\s*[\r\n\s]*WikiInfoboxRows,\s*[\r\n\s]*WikiInfoboxRow,\s*[\r\n\s]*WikiInfoboxTerm,\s*[\r\n\s]*WikiInfoboxValue,\s*[\r\n\s]*WikiInfoboxContent,\s*[\r\n\s]*WikiInfobox,\s*[\r\n\s]*WikiEditingKeymap,/);
+  assert.match(editorBundleSource, /"infobox-insert":\s*"fa-info-circle"/);
+  assert.match(editorBundleSource, /id:\s*"infobox-insert"[\s\S]*title:\s*"Insert infobox"[\s\S]*insertWikiInfobox\(\)/);
+  assert.match(editorBundleSource, /\{\s*id:\s*"infobox-insert",\s*label:\s*"Infobox",\s*aliases:\s*\["info box",\s*"sidebar",\s*"wiki box"\]\s*\}/);
+  assert.match(editorBundleSource, /"infobox-insert":\s*function\s*\(\)\s*\{[\s\S]*insertWikiInfobox\(\)\.run\(\);[\s\S]*\}/);
+});
+
 await test("poetry quote floating toolbar exposes container toggle and unwrap actions", function () {
   assert.match(editorBundleSource, /wiki-editor-poetry-quote-tools/);
   assert.match(editorBundleSource, /poetry-quote-align-left/);
@@ -3088,6 +3099,8 @@ await test("main toolbar slash items are curated editor commands with aliases", 
   assert.equal(ids.includes("redo"), false);
   assert.equal(ids.includes("fullscreen-source"), false);
   assert.deepEqual(items.find(function (item) { return item.id === "dnd-alignment-table"; }).aliases, ["dnd", "alignment", "alignment table", "dungeons dragons"]);
+  assert.equal(items.find(function (item) { return item.id === "infobox-insert"; }).label, "Infobox");
+  assert.deepEqual(items.find(function (item) { return item.id === "infobox-insert"; }).aliases, ["info box", "sidebar", "wiki box"]);
   assert.equal(items.every(function (item) { return item.label && typeof item.run === "function"; }), true);
   editor.destroy();
 });
@@ -3265,6 +3278,7 @@ await test("top toolbar schema keeps wiki entity tools and table creation tools 
   const inlineFormatting = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "inline-formatting"; });
   const callouts = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "callouts"; });
   const media = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "links-media"; });
+  const blocks = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "blocks"; });
   const tables = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "tables"; });
   const view = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "view"; });
 
@@ -3274,6 +3288,8 @@ await test("top toolbar schema keeps wiki entity tools and table creation tools 
   assert.deepEqual(callouts.buttonIds, ["callout-info", "callout-success", "callout-warning", "callout-danger"]);
   assert.deepEqual(media.buttonIds, ["link", "wiki-page-link", "wiki-user-mention", "wiki-footnote", "image-upload", "media-row-2", "media-row-3"]);
   assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("wiki-namespace-link"), false);
+  assert.deepEqual(blocks.buttonIds, ["bullet-list", "ordered-list", "task-list", "blockquote", "code-block", "block-background", "horizontal-rule", "infobox-insert"]);
+  assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("infobox-insert"), true);
   assert.deepEqual(tables.buttonIds, ["table-insert", "dnd-alignment-table"]);
   assert.deepEqual(view.buttonIds, ["fullscreen-source"]);
   assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("fullscreen-source"), true);
