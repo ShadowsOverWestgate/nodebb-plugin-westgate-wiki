@@ -511,18 +511,25 @@ function repairInfoboxRow(document, row) {
   }
 
   if (term) {
+    const emptyValue = document.createElement("dd");
+    extras.forEach(function (child) {
+      appendInfoboxNodeAsInline(document, emptyValue, child);
+    });
     Array.from(row.childNodes || []).forEach(function (child) {
-      if (child !== term) {
+      if (child !== term && child.parentNode === row) {
         row.removeChild(child);
       }
     });
-    row.appendChild(document.createElement("dd"));
+    row.appendChild(emptyValue);
     return true;
   }
 
   if (value) {
+    extras.forEach(function (child) {
+      appendInfoboxNodeAsInline(document, value, child);
+    });
     Array.from(row.childNodes || []).forEach(function (child) {
-      if (child !== value) {
+      if (child !== value && child.parentNode === row) {
         row.removeChild(child);
       }
     });

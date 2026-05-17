@@ -386,7 +386,7 @@ function parseInfoboxRowsContent(element, schema) {
         schema,
         termElement,
         valueElement,
-        String(child.textContent || "").trim() ? child : null,
+        !termElement && !valueElement && String(child.textContent || "").trim() ? child : null,
         extraValueNodes
       );
       if (row) {
