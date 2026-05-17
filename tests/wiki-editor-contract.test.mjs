@@ -864,6 +864,22 @@ await test("media cell style css exists in article and editor prose", function (
   assert.match(editorCss, /\.wiki-editor-media-cell-color-menu__value\s*\{/);
 });
 
+await test("wikiInfobox source HTML copies between editor instances", function () {
+  const sourceEditor = createEditor("<p>Before</p>");
+  sourceEditor.commands.insertWikiInfobox();
+  const copiedHtml = sanitizeHtml(sourceEditor.getHTML()).match(/<aside class="wiki-infobox"[\s\S]*?<\/aside>/)[0];
+
+  const targetEditor = createEditor("<p>Target</p>");
+  targetEditor.commands.insertContent(copiedHtml);
+  const rendered = targetEditor.getHTML();
+
+  assert.match(rendered, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.equal(findJsonNode(targetEditor.getJSON(), "wikiInfobox").type, "wikiInfobox");
+
+  sourceEditor.destroy();
+  targetEditor.destroy();
+});
+
 await test("wikiInfobox css defines reader float, narrow full-width layout, and editor rail", function () {
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*float:\s*right/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*min\(22rem,\s*42%\)/);
@@ -902,6 +918,11 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*max-height:\s*min\(calc\(100vh\s*-\s*2rem\),\s*28rem\)/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*overflow-y:\s*auto/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\[hidden\]\s*\{[^}]*display:\s*none/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*float:\s*right[^}]*clear:\s*right[^}]*width:\s*min\(22rem,\s*42%\)/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image\s*\{[^}]*box-sizing:\s*border-box[^}]*max-width:\s*100%[^}]*width:\s*100%/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*max-height:\s*min\(calc\(100vh\s*-\s*2rem\),\s*28rem\)[^}]*overflow-y:\s*auto/);
 });
 
 await test("table cell block backgrounds keep their paired foreground color", function () {
