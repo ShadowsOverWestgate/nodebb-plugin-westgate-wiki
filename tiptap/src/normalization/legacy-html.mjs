@@ -327,6 +327,24 @@ const INFOBOX_PART_CLASS_MAP = new Map([
   ["content", "wiki-infobox__content"]
 ]);
 
+const INFOBOX_PART_SELECTOR = [
+  "[data-wiki-infobox-part]",
+  ".title",
+  ".subtitle",
+  ".image",
+  ".section",
+  ".rows",
+  ".row",
+  ".content",
+  ".wiki-infobox__title",
+  ".wiki-infobox__subtitle",
+  ".wiki-infobox__image",
+  ".wiki-infobox__section",
+  ".wiki-infobox__rows",
+  ".wiki-infobox__row",
+  ".wiki-infobox__content"
+].join(", ");
+
 function getInfoboxPartFromElement(element) {
   const explicitPart = (element.getAttribute("data-wiki-infobox-part") || "").trim();
   if (INFOBOX_PART_CLASS_MAP.has(explicitPart)) {
@@ -363,7 +381,7 @@ export function normalizeWikiInfoboxes(document, root) {
     element.className = "wiki-infobox";
     element.setAttribute("data-wiki-node", "infobox");
 
-    Array.from(element.children || []).forEach(function (child) {
+    Array.from(element.querySelectorAll(INFOBOX_PART_SELECTOR)).forEach(function (child) {
       const part = getInfoboxPartFromElement(child);
       if (part) {
         setInfoboxPart(child, part);
@@ -376,7 +394,7 @@ function isInsidePluginOwnedStructure(element) {
   return !!(element && element.closest && element.closest('[data-wiki-node="alignment-table"], figure.wiki-poetry-quote, [data-wiki-node="poetry-quote"], [data-wiki-node="infobox"], .wiki-infobox'));
 }
 
-function isPluginOwnedMediaLayoutElement(element) {
+function isPluginOwnedStructuredElement(element) {
   if (!element || !element.matches) {
     return false;
   }
@@ -828,7 +846,7 @@ export function normalizeLegacyHtmlForTiptap(html) {
   normalizeWikiInfoboxes(doc, root);
 
   root.querySelectorAll("article, section, div").forEach(function (element) {
-    if (isInsidePluginOwnedStructure(element) || isPluginOwnedMediaLayoutElement(element)) {
+    if (isInsidePluginOwnedStructure(element) || isPluginOwnedStructuredElement(element)) {
       return;
     }
 
