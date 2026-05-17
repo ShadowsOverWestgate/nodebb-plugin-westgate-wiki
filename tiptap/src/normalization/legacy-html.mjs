@@ -475,6 +475,9 @@ function detectUnsupportedInfoboxRowsBeforeNormalization(html) {
     }
 
     for (const child of Array.from(rows.childNodes || [])) {
+      if (isInfoboxRowElement(child)) {
+        continue;
+      }
       if (hasUnsupportedInfoboxRowExtra(child)) {
         return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
       }
