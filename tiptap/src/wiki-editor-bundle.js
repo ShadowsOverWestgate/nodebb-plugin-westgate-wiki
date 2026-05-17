@@ -2314,16 +2314,33 @@ function getActiveInfoboxElement(editor, surface) {
   return infobox && surface.contains(infobox) ? infobox : null;
 }
 
+export function calculateInfoboxRailPosition({ surfaceRect, boxRect, panelWidth, panelHeight, viewportHeight }) {
+  const safePanelWidth = panelWidth || 38;
+  const safePanelHeight = panelHeight || 0;
+  const left = Math.max(8, boxRect.left - surfaceRect.left - safePanelWidth - 8);
+  const viewportTop = Math.max(surfaceRect.top + 8, 12);
+  const viewportBottom = Math.min(surfaceRect.bottom - 8, viewportHeight - 12);
+  const visibleTop = Math.max(boxRect.top, viewportTop);
+  const visibleBottom = Math.min(boxRect.bottom, viewportBottom);
+  const maxTop = Math.max(visibleTop, visibleBottom - safePanelHeight);
+  const topViewport = Math.max(visibleTop, Math.min(viewportTop, maxTop));
+  const top = Math.max(8, topViewport - surfaceRect.top);
+  return {
+    left: Math.round(left),
+    top: Math.round(top)
+  };
+}
+
 function positionInfoboxRail(panel, infobox, surface) {
-  const surfaceRect = surface.getBoundingClientRect();
-  const boxRect = infobox.getBoundingClientRect();
-  const panelWidth = panel.offsetWidth || 38;
-  const left = Math.max(8, boxRect.left - surfaceRect.left - panelWidth - 8);
-  const visibleTop = Math.max(boxRect.top, surfaceRect.top + 8);
-  const visibleBottom = Math.min(boxRect.bottom, window.innerHeight - 12);
-  const top = Math.max(8, visibleTop - surfaceRect.top + Math.max(0, Math.min(48, (visibleBottom - visibleTop) / 4)));
-  panel.style.left = `${left}px`;
-  panel.style.top = `${top}px`;
+  const position = calculateInfoboxRailPosition({
+    surfaceRect: surface.getBoundingClientRect(),
+    boxRect: infobox.getBoundingClientRect(),
+    panelWidth: panel.offsetWidth || 38,
+    panelHeight: panel.offsetHeight || 0,
+    viewportHeight: window.innerHeight
+  });
+  panel.style.left = `${position.left}px`;
+  panel.style.top = `${position.top}px`;
 }
 
 function selectPoetryQuote(editor, target, surface) {

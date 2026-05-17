@@ -3335,6 +3335,32 @@ await test("infobox vertical rail source exposes all internal helper actions", f
   assert.match(editorBundleSource, /pickAndUploadImage\(\)/);
 });
 
+await test("infobox vertical rail follows the visible viewport segment of long infoboxes", async function () {
+  const { calculateInfoboxRailPosition } = await importEditorBundleForContract();
+
+  assert.equal(typeof calculateInfoboxRailPosition, "function");
+  assert.deepEqual(calculateInfoboxRailPosition({
+    surfaceRect: { left: 0, top: -420, right: 760, bottom: 1180, width: 760, height: 1600 },
+    boxRect: { left: 520, top: -360, right: 740, bottom: 1040, width: 220, height: 1400 },
+    panelWidth: 44,
+    panelHeight: 360,
+    viewportHeight: 700
+  }), {
+    left: 468,
+    top: 432
+  });
+  assert.deepEqual(calculateInfoboxRailPosition({
+    surfaceRect: { left: 0, top: 40, right: 760, bottom: 1240, width: 760, height: 1200 },
+    boxRect: { left: 520, top: 180, right: 740, bottom: 980, width: 220, height: 800 },
+    panelWidth: 44,
+    panelHeight: 360,
+    viewportHeight: 700
+  }), {
+    left: 468,
+    top: 140
+  });
+});
+
 await test("poetry quote floating toolbar exposes container toggle and unwrap actions", function () {
   assert.match(editorBundleSource, /wiki-editor-poetry-quote-tools/);
   assert.match(editorBundleSource, /poetry-quote-align-left/);
