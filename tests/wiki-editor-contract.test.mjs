@@ -872,7 +872,9 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__title\s*\{/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row\s*\{/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row > dt,\s*\.wiki-article-prose \.wiki-infobox__row > dd\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row > dd\s*\{[^}]*min-width:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*float:\s*right[^}]*clear:\s*right[^}]*width:\s*min\(22rem,\s*42%\)/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__surface\s*\{[^}]*container-type:\s*inline-size/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__surface\s*\{[^}]*container-name:\s*wiki-editor-surface/);
   assert.match(editorCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*float:\s*none/);
@@ -883,15 +885,19 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*clear:\s*both/);
   assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*width:\s*100%/);
   assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*margin:\s*1rem\s+0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image\s*\{[^}]*background:\s*transparent[^}]*border:\s*0[^}]*box-shadow:\s*none[^}]*max-width:\s*100%[^}]*width:\s*100%/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image img\s*\{[^}]*display:\s*block[^}]*max-width:\s*100%[^}]*margin:\s*0 auto/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dt,\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[^}]*overflow-wrap:\s*anywhere/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[^}]*min-width:\s*0/);
-  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[\s\S]*position:\s*absolute/);
-  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[\s\S]*z-index:\s*22/);
-  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[\s\S]*flex-direction:\s*column/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :first-child\s*\{[^}]*margin-top:\s*0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :last-child\s*\{[^}]*margin-bottom:\s*0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*position:\s*absolute/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*z-index:\s*22/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*flex-direction:\s*column/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*flex-wrap:\s*nowrap/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*max-height:\s*min\(calc\(100vh\s*-\s*2rem\),\s*28rem\)/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*overflow-y:\s*auto/);
-  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\[hidden\]\s*\{[\s\S]*display:\s*none/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\[hidden\]\s*\{[^}]*display:\s*none/);
 });
 
 await test("table cell block backgrounds keep their paired foreground color", function () {

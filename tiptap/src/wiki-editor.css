@@ -1208,8 +1208,20 @@
 }
 
 .westgate-wiki-compose .wiki-editor__content .wiki-infobox__image {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   margin: 0;
+  max-width: 100%;
   padding: 0.75rem 0.75rem 0;
+  width: 100%;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__image img {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 .westgate-wiki-compose .wiki-editor__content .wiki-infobox__section {
@@ -1254,6 +1266,14 @@
 
 .westgate-wiki-compose .wiki-editor__content .wiki-infobox__content {
   padding: 0.75rem 0.85rem;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__content > :first-child {
+  margin-top: 0;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__content > :last-child {
+  margin-bottom: 0;
 }
 
 .westgate-wiki-compose .wiki-editor-infobox-rail {
