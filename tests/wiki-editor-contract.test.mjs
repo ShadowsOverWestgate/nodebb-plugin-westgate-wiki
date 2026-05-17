@@ -868,6 +868,17 @@ await test("normalizeLegacyHtmlForTiptap upgrades pasted infobox rows nested und
   assert.match(normalized, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
 });
 
+await test("normalizeLegacyHtmlForTiptap preserves generic row classes inside infobox content", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="infobox"><div class="content"><div class="row"><p>Nested layout row</p></div></div></aside>'
+  );
+
+  assert.match(normalized, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.match(normalized, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><div class="row"><p>Nested layout row<\/p><\/div><\/div>/);
+  assert.doesNotMatch(normalized, /wiki-infobox__row/);
+  assert.doesNotMatch(normalized, /data-wiki-infobox-part="row"/);
+});
+
 await test("normalizeLegacyHtmlForTiptap preserves saved poetry quotes as plugin-owned structures", function () {
   const savedHtml = '<figure class="wiki-poetry-quote wiki-poetry-quote--plain" data-wiki-node="poetry-quote" data-wiki-quote-container="false"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>';
   const normalized = normalizeLegacyHtmlForTiptap(savedHtml);

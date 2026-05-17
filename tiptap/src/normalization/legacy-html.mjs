@@ -327,15 +327,19 @@ const INFOBOX_PART_CLASS_MAP = new Map([
   ["content", "wiki-infobox__content"]
 ]);
 
-const INFOBOX_PART_SELECTOR = [
+const INFOBOX_DIRECT_LEGACY_PARTS = new Set([
+  "title",
+  "subtitle",
+  "image",
+  "section",
+  "rows",
+  "content"
+]);
+
+const INFOBOX_ROW_LEGACY_PARTS = new Set(["row"]);
+
+const EXPLICIT_INFOBOX_PART_SELECTOR = [
   "[data-wiki-infobox-part]",
-  ".title",
-  ".subtitle",
-  ".image",
-  ".section",
-  ".rows",
-  ".row",
-  ".content",
   ".wiki-infobox__title",
   ".wiki-infobox__subtitle",
   ".wiki-infobox__image",
@@ -345,7 +349,7 @@ const INFOBOX_PART_SELECTOR = [
   ".wiki-infobox__content"
 ].join(", ");
 
-function getInfoboxPartFromElement(element) {
+function getExplicitInfoboxPartFromElement(element) {
   const explicitPart = (element.getAttribute("data-wiki-infobox-part") || "").trim();
   if (INFOBOX_PART_CLASS_MAP.has(explicitPart)) {
     return explicitPart;
@@ -353,6 +357,9 @@ function getInfoboxPartFromElement(element) {
 
   const classList = element.classList ? Array.from(element.classList) : [];
   for (const className of classList) {
+    if (!className.startsWith("wiki-infobox__")) {
+      continue;
+    }
     const part = className.replace(/^wiki-infobox__/, "");
     if (INFOBOX_PART_CLASS_MAP.has(part)) {
       return part;
@@ -360,6 +367,13 @@ function getInfoboxPartFromElement(element) {
   }
 
   return "";
+}
+
+function getLegacyInfoboxPartFromElement(element, allowedParts) {
+  const classList = element.classList ? Array.from(element.classList) : [];
+  return classList.find(function (className) {
+    return allowedParts.has(className);
+  }) || "";
 }
 
 function setInfoboxPart(element, part) {
@@ -372,7 +386,7 @@ function setInfoboxPart(element, part) {
   element.setAttribute("data-wiki-infobox-part", part);
 }
 
-export function normalizeWikiInfoboxes(document, root) {
+export function normalizeWikiInfoboxes(root) {
   root.querySelectorAll("aside.infobox, aside.wiki-infobox, aside[data-wiki-node='infobox']").forEach(function (element) {
     if (!isPluginOwnedInfoboxElement(element)) {
       return;
@@ -381,11 +395,26 @@ export function normalizeWikiInfoboxes(document, root) {
     element.className = "wiki-infobox";
     element.setAttribute("data-wiki-node", "infobox");
 
-    Array.from(element.querySelectorAll(INFOBOX_PART_SELECTOR)).forEach(function (child) {
-      const part = getInfoboxPartFromElement(child);
+    Array.from(element.querySelectorAll(EXPLICIT_INFOBOX_PART_SELECTOR)).forEach(function (child) {
+      const part = getExplicitInfoboxPartFromElement(child);
       if (part) {
         setInfoboxPart(child, part);
       }
+    });
+
+    Array.from(element.children || []).forEach(function (child) {
+      const part = getLegacyInfoboxPartFromElement(child, INFOBOX_DIRECT_LEGACY_PARTS);
+      if (part) {
+        setInfoboxPart(child, part);
+      }
+    });
+
+    Array.from(element.querySelectorAll('[data-wiki-infobox-part="rows"], .wiki-infobox__rows')).forEach(function (rows) {
+      Array.from(rows.children || []).forEach(function (child) {
+        if (getLegacyInfoboxPartFromElement(child, INFOBOX_ROW_LEGACY_PARTS)) {
+          setInfoboxPart(child, "row");
+        }
+      });
     });
   });
 }
@@ -843,7 +872,7 @@ export function normalizeLegacyHtmlForTiptap(html) {
     return "";
   }
 
-  normalizeWikiInfoboxes(doc, root);
+  normalizeWikiInfoboxes(root);
 
   root.querySelectorAll("article, section, div").forEach(function (element) {
     if (isInsidePluginOwnedStructure(element) || isPluginOwnedStructuredElement(element)) {
