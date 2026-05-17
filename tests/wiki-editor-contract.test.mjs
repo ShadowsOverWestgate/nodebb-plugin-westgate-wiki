@@ -929,7 +929,7 @@ await test("wikiInfobox normalization hoists top-level infoboxes before article 
 
 await test("wikiInfobox css defines reader float, narrow full-width layout, and editor rail", function () {
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*float:\s*right/);
-  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*min\(22rem,\s*42%\)/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*var\(--wiki-infobox-reader-width\)/);
   assert.match(articleBodyCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*float:\s*none/);
   assert.match(articleBodyCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*100%/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__title\s*\{/);
@@ -996,11 +996,16 @@ await test("table cell paragraphs have no margins in article and editor prose", 
   });
 });
 
-await test("article tables can shrink beside floated infoboxes", function () {
+await test("article tables can shrink or fill beside floated infoboxes", function () {
   assert.match(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*width:\s*auto/s);
   assert.match(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*max-width:\s*100%/s);
   assert.doesNotMatch(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*\n\s*width:\s*100%/s);
-  assert.match(articleBodyCss, /\.wiki-article-prose\s+table\[style\*="width:100%"\],\s*\.wiki-article-prose\s+table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*auto\s*!important/s);
+  assert.doesNotMatch(articleBodyCss, /\.wiki-article-prose\s+table\[style\*="width:100%"\],\s*\.wiki-article-prose\s+table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*auto\s*!important/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s*\{[^}]*--wiki-infobox-reader-width:\s*min\(22rem,\s*42%\)/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s*\{[^}]*--wiki-infobox-reader-gutter:\s*1\.25rem/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+\.wiki-infobox\s*\{[^}]*width:\s*var\(--wiki-infobox-reader-width\)/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+\.wiki-infobox\s*\{[^}]*margin:\s*0\.25rem\s+0\s+1rem\s+var\(--wiki-infobox-reader-gutter\)/s);
+  assert.match(articleBodyCss, /@media\s*\(min-width:\s*768px\)\s*\{\s*@supports\s+selector\(:has\(>\s*\.wiki-infobox\)\)\s*\{[\s\S]*\.wiki-article-prose:has\(>\s*\.wiki-infobox\)\s*>\s*table\[style\*="width:100%"\],\s*\.wiki-article-prose:has\(>\s*\.wiki-infobox\)\s*>\s*table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)\s*!important[^}]*max-width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)/s);
 });
 
 await test("saved table colgroup widths reload into Tiptap column width attrs", function () {

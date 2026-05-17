@@ -58,6 +58,8 @@
 
 /* --- Shared prose (article + Tiptap editable content) --- */
 .wiki-article-prose {
+  --wiki-infobox-reader-width: min(22rem, 42%);
+  --wiki-infobox-reader-gutter: 1.25rem;
   font-family: var(--wiki-prose-font-family, var(--bs-body-font-family, inherit));
   font-size: var(--wiki-prose-font-size, 1rem);
   color: var(--wiki-prose-color, var(--bs-body-color, inherit));
@@ -426,9 +428,14 @@
   border-collapse: collapse;
 }
 
-.wiki-article-prose table[style*="width:100%"],
-.wiki-article-prose table[style*="width: 100%"] {
-  width: auto !important;
+@media (min-width: 768px) {
+  @supports selector(:has(> .wiki-infobox)) {
+    .wiki-article-prose:has(> .wiki-infobox) > table[style*="width:100%"],
+    .wiki-article-prose:has(> .wiki-infobox) > table[style*="width: 100%"] {
+      width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter)) !important;
+      max-width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
+    }
+  }
 }
 
 .wiki-article-prose table.wiki-table-layout-auto {
@@ -928,8 +935,8 @@ content: "";
   box-sizing: border-box;
   float: right;
   clear: right;
-  width: min(22rem, 42%);
-  margin: 0.25rem 0 1rem 1.25rem;
+  width: var(--wiki-infobox-reader-width);
+  margin: 0.25rem 0 1rem var(--wiki-infobox-reader-gutter);
   border: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.38));
   border-radius: var(--wiki-infobox-radius, var(--bs-border-radius, 0.5rem));
   background: var(--wiki-infobox-bg, linear-gradient(145deg, rgba(31, 18, 35, 0.94), rgba(8, 7, 10, 0.96)));
