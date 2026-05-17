@@ -184,6 +184,22 @@ function appendNodeToActiveInfobox(state, dispatch, node) {
   return true;
 }
 
+function appendImageHelperToActiveInfobox(state, dispatch) {
+  const context = findActiveInfobox(state);
+  const node = createImageHelper(state);
+  if (!context || !node) {
+    return false;
+  }
+
+  const insertPos = context.pos + context.node.nodeSize - 1;
+  if (dispatch) {
+    const tr = state.tr.insert(insertPos, node);
+    tr.setSelection(NodeSelection.create(tr.doc, insertPos));
+    dispatch(tr.scrollIntoView());
+  }
+  return true;
+}
+
 function createInlineHelper(state, typeName, text) {
   const type = state.schema.nodes[typeName];
   if (!type) {
@@ -1160,7 +1176,7 @@ const WikiInfobox = Node.create({
         ({ state, dispatch }) => appendNodeToActiveInfobox(state, dispatch, createInlineHelper(state, "wikiInfoboxSubtitle", "Subtitle")),
       addWikiInfoboxImage:
         () =>
-        ({ state, dispatch }) => appendNodeToActiveInfobox(state, dispatch, createImageHelper(state)),
+        ({ state, dispatch }) => appendImageHelperToActiveInfobox(state, dispatch),
       setWikiInfoboxImage:
         (attrs, options) =>
         ({ state, dispatch }) => setImageInActiveInfobox(state, dispatch, attrs, options),

@@ -105,7 +105,8 @@ const {
   focusMediaCell,
   handleMediaCellSelectionClick,
   isMediaCellSurfaceTarget,
-  selectClickedImageNode
+  selectClickedImageNode,
+  selectInfoboxImageSlot
 } = mediaSelectionModule;
 const {
   MEDIA_CELL_SELECTION_PLUGIN_KEY,
@@ -918,6 +919,8 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*width:\s*100%/);
   assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*margin:\s*1rem\s+0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image\s*\{[^}]*background:\s*transparent[^}]*border:\s*0[^}]*box-shadow:\s*none[^}]*box-sizing:\s*border-box[^}]*max-width:\s*100%[^}]*padding:\s*0\.75rem\s+0\.75rem\s+0[^}]*width:\s*100%/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty\s*\{[^}]*cursor:\s*pointer[^}]*min-height:\s*4rem/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty:{1,2}before\s*\{[^}]*content:\s*"Upload image"[^}]*letter-spacing:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image img\s*\{[^}]*display:\s*block[^}]*max-width:\s*100%[^}]*margin:\s*0 auto/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__section\s*\{[^}]*letter-spacing:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dt,\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[^}]*overflow-wrap:\s*anywhere/);
@@ -935,6 +938,8 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*float:\s*right[^}]*clear:\s*right[^}]*width:\s*min\(22rem,\s*42%\)/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image\s*\{[^}]*box-sizing:\s*border-box[^}]*max-width:\s*100%[^}]*width:\s*100%/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty\s*\{[^}]*cursor:\s*pointer[^}]*min-height:\s*4rem/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty:{1,2}before\s*\{[^}]*content:\s*"Upload image"[^}]*letter-spacing:\s*0/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*max-height:\s*min\(calc\(100vh\s*-\s*2rem\),\s*28rem\)[^}]*overflow-y:\s*auto/);
 });
@@ -2795,6 +2800,18 @@ await test("wikiInfobox helper commands insert supported helper blocks inside th
   editor.destroy();
 });
 
+await test("wikiInfobox image helper command selects the inserted image slot", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.addWikiInfoboxImage(), true);
+
+  assert.equal(editor.state.selection instanceof NodeSelection, true);
+  assert.equal(editor.state.selection.node.type.name, "wikiInfoboxImage");
+  assert.equal(editor.state.selection.node.childCount, 0);
+  editor.destroy();
+});
+
 await test("wikiInfobox command-authored HTML passes unsupported content detection", function () {
   const editor = createEditor("<p>Start</p>");
 
@@ -2855,6 +2872,16 @@ await test("wikiInfobox image command appends an image helper when no slot exist
   const image = findJsonNode(infobox, "image");
   assert.equal(image.attrs.src, "/uploads/new.png");
   assert.equal(image.attrs.alt, "New portrait");
+  editor.destroy();
+});
+
+await test("empty infobox image helpers can be selected from their figure surface", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"></figure></aside>');
+  const slot = editor.view.dom.querySelector(".wiki-infobox__image");
+
+  assert.equal(selectInfoboxImageSlot(editor, slot, editor.view.dom), true);
+  assert.equal(editor.state.selection instanceof NodeSelection, true);
+  assert.equal(editor.state.selection.node.type.name, "wikiInfoboxImage");
   editor.destroy();
 });
 
@@ -3240,7 +3267,7 @@ await test("production editor bundle wires infobox insertion into schema toolbar
 });
 
 await test("infobox vertical rail source exposes all internal helper actions", function () {
-  assert.match(editorBundleSource, /function\s+createInfoboxContextToolbar\s*\(/);
+  assert.match(editorBundleSource, /function\s+createInfoboxContextToolbar\s*\(\s*surface,\s*editor,\s*uploadImage\s*\)/);
   assert.match(editorBundleSource, /wiki-editor-infobox-rail/);
   [
     "infobox-add-title",
@@ -3260,6 +3287,11 @@ await test("infobox vertical rail source exposes all internal helper actions", f
   assert.match(editorBundleSource, /editor\.can\(\)\.moveWikiInfoboxHelperUp\(\)/);
   assert.match(editorBundleSource, /editor\.can\(\)\.moveWikiInfoboxHelperDown\(\)/);
   assert.match(editorBundleSource, /editor\.can\(\)\.deleteWikiInfoboxHelper\(\)/);
+  assert.match(editorBundleSource, /function\s+addImageSlotAndUpload\s*\(\)\s*\{[\s\S]{0,360}addWikiInfoboxImage\(\)\.run\(\)[\s\S]{0,360}typeof uploadImage === "function"[\s\S]{0,180}uploadImage\(\)/);
+  assert.match(editorBundleSource, /id:\s*"infobox-add-image"[\s\S]{0,180}action:\s*addImageSlotAndUpload/);
+  assert.match(editorBundleSource, /createInfoboxContextToolbar\(editorMount,\s*editor,\s*pickAndUploadImage\)/);
+  assert.match(editorBundleSource, /selectInfoboxImageSlot\(editor,\s*target,\s*editorMount\)/);
+  assert.match(editorBundleSource, /pickAndUploadImage\(\)/);
 });
 
 await test("poetry quote floating toolbar exposes container toggle and unwrap actions", function () {
