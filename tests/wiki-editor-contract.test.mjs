@@ -392,6 +392,13 @@ await test("detectUnsupportedContent rejects unsupported embeds and accepts supp
   );
 });
 
+await test("detectUnsupportedContent accepts empty infobox image helpers", function () {
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"></figure></aside>'),
+    ""
+  );
+});
+
 await test("getNormalizationNotice reports when legacy html changes materially", function () {
   assert.equal(getNormalizationNotice("<p>Plain</p>"), "");
   assert.match(getNormalizationNotice("<center>Centered</center>"), /normalized to the supported Tiptap schema/);

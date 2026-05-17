@@ -1002,7 +1002,7 @@ export function detectUnsupportedContent(html) {
       return `Legacy HTML uses <${tag}>, which this Tiptap surface does not preserve safely yet.`;
     }
 
-    if (tag === "figure" && !isSupportedImageFigure(element) && !isPoetryQuoteFigure(element)) {
+    if (tag === "figure" && !isSupportedImageFigure(element) && !isPoetryQuoteFigure(element) && !isInfoboxImageFigure(element)) {
       return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
     }
 
