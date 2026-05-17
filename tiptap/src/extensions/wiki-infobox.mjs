@@ -357,28 +357,6 @@ function isContentFigureMediaElement(node) {
   );
 }
 
-function getTopLevelImageMedia(nodes) {
-  const media = Array.from(nodes || []).filter(function (node) {
-    return !!getImageMediaElement(node);
-  });
-  return media.filter(function (node) {
-    return !media.some(function (other) {
-      return other !== node && other.contains && other.contains(node);
-    });
-  });
-}
-
-function getTopLevelContentFigureMedia(nodes) {
-  const media = Array.from(nodes || []).filter(function (node) {
-    return isContentFigureMediaElement(node);
-  });
-  return media.filter(function (node) {
-    return !media.some(function (other) {
-      return other !== node && other.contains && other.contains(node);
-    });
-  });
-}
-
 function createImageHelperElement(document, source) {
   const image = getImageMediaElement(source);
   if (!image) {
@@ -457,6 +435,55 @@ function isLooseRowsContentElement(node, rows) {
   return true;
 }
 
+function isNestedInParseMediaEntry(node, entries) {
+  return entries.some(function (entry) {
+    return entry.node !== node && entry.node.contains && entry.node.contains(node);
+  });
+}
+
+function appendCellMediaEntriesForParse(cell, entries) {
+  if (!cell) {
+    return;
+  }
+
+  Array.from(cell.querySelectorAll("img, figure")).forEach(function (node) {
+    if (isNestedInParseMediaEntry(node, entries)) {
+      return;
+    }
+
+    if (isContentFigureMediaElement(node)) {
+      entries.push({ type: "content", node });
+      return;
+    }
+
+    if (getImageMediaElement(node)) {
+      entries.push({ type: "image", node });
+    }
+  });
+}
+
+function appendDirectRowMediaEntryForParse(node, entries) {
+  if (getImageMediaElement(node)) {
+    entries.push({ type: "image", node });
+    return;
+  }
+  if (isContentFigureMediaElement(node)) {
+    entries.push({ type: "content", node });
+  }
+}
+
+function getRowMediaEntriesForParse(row, term, value) {
+  const entries = [];
+  Array.from(row.childNodes || []).forEach(function (child) {
+    if (child === term || child === value) {
+      appendCellMediaEntriesForParse(child, entries);
+      return;
+    }
+    appendDirectRowMediaEntryForParse(child, entries);
+  });
+  return entries;
+}
+
 function moveInfoboxRowMediaForParse(element) {
   const clone = element.cloneNode(true);
   downgradeUnsupportedInfoboxImageHelpersForParse(clone);
@@ -487,43 +514,25 @@ function moveInfoboxRowMediaForParse(element) {
       const row = child;
       const term = findDirectInfoboxCell(row, "dt");
       const value = findDirectInfoboxCell(row, "dd");
-      const directMedia = getTopLevelImageMedia(Array.from(row.childNodes || []).filter(function (child) {
-        return child !== term && child !== value;
-      }));
-      const directContentMedia = getTopLevelContentFigureMedia(Array.from(row.childNodes || []).filter(function (child) {
-        return child !== term && child !== value;
-      }));
-      const cellMedia = getTopLevelImageMedia([
-        ...(term ? Array.from(term.querySelectorAll("img, figure")) : []),
-        ...(value ? Array.from(value.querySelectorAll("img, figure")) : [])
-      ]);
-      const cellContentMedia = getTopLevelContentFigureMedia([
-        ...(term ? Array.from(term.querySelectorAll("figure")) : []),
-        ...(value ? Array.from(value.querySelectorAll("figure")) : [])
-      ]);
-      const imageMedia = directMedia.concat(cellMedia.filter(function (node) {
-        const contentFigure = node.closest && node.closest("figure.image");
-        return !(contentFigure && contentFigure !== node && isContentFigureMediaElement(contentFigure));
-      }));
-      const contentMedia = directContentMedia.concat(cellContentMedia);
-      if ((!imageMedia.length && !contentMedia.length) || !rows.parentNode) {
+      const mediaEntries = getRowMediaEntriesForParse(row, term, value);
+      if (!mediaEntries.length || !rows.parentNode) {
         return;
       }
 
-      imageMedia.forEach(function (node) {
-        const helper = createImageHelperElement(clone.ownerDocument, node);
-        if (helper) {
-          insertFallback(helper);
+      mediaEntries.forEach(function (entry) {
+        if (!entry || !entry.node || !entry.node.parentNode) {
+          return;
         }
-        if (node.parentNode) {
-          node.parentNode.removeChild(node);
+        if (entry.type === "image") {
+          const helper = createImageHelperElement(clone.ownerDocument, entry.node);
+          if (helper) {
+            insertFallback(helper);
+          }
+        } else if (entry.type === "content") {
+          insertFallback(createContentHelperElement(clone.ownerDocument, entry.node));
         }
-      });
-      contentMedia.forEach(function (node) {
-        const helper = createContentHelperElement(clone.ownerDocument, node);
-        insertFallback(helper);
-        if (node.parentNode) {
-          node.parentNode.removeChild(node);
+        if (entry.node.parentNode) {
+          entry.node.parentNode.removeChild(entry.node);
         }
       });
     });

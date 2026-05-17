@@ -673,32 +673,99 @@ function normalizeInfoboxCell(document, cell) {
   }
 }
 
-function getInfoboxCellImageExtras(cell) {
-  if (!cell) {
-    return [];
-  }
-  const media = Array.from(cell.querySelectorAll("img, figure")).filter(function (node) {
-    const contentFigure = node.closest && node.closest("figure.image");
-    return getInfoboxImageExtraElement(node) && !(contentFigure && contentFigure !== node && isInfoboxContentFigureExtraElement(contentFigure));
-  });
-  return media.filter(function (node) {
-    return !media.some(function (other) {
-      return other !== node && other.contains && other.contains(node);
-    });
+function isNestedInInfoboxExtractionEntry(node, entries) {
+  return entries.some(function (entry) {
+    return entry.node !== node && entry.node.contains && entry.node.contains(node);
   });
 }
 
-function getInfoboxCellContentFigureExtras(cell) {
+function appendInfoboxCellExtractionEntries(cell, entries) {
   if (!cell) {
-    return [];
+    return;
   }
-  const media = Array.from(cell.querySelectorAll("figure")).filter(function (node) {
-    return isInfoboxContentFigureExtraElement(node);
+
+  Array.from(cell.querySelectorAll("img, figure")).forEach(function (node) {
+    if (isNestedInInfoboxExtractionEntry(node, entries)) {
+      return;
+    }
+
+    if (isInfoboxContentFigureExtraElement(node)) {
+      entries.push({ type: "content", node });
+      return;
+    }
+
+    if (getInfoboxImageExtraElement(node)) {
+      entries.push({ type: "image", node });
+    }
   });
-  return media.filter(function (node) {
-    return !media.some(function (other) {
-      return other !== node && other.contains && other.contains(node);
-    });
+}
+
+function appendInfoboxDirectRowExtractionEntry(node, entries) {
+  if (getInfoboxImageExtraElement(node)) {
+    entries.push({ type: "image", node });
+    return;
+  }
+  if (isInfoboxContentFigureExtraElement(node)) {
+    entries.push({ type: "content", node });
+  }
+}
+
+function getInfoboxRowExtractionEntries(row, term, value) {
+  const entries = [];
+  Array.from(row.childNodes || []).forEach(function (child) {
+    if (child === term || child === value) {
+      appendInfoboxCellExtractionEntries(child, entries);
+      return;
+    }
+    if (!isIgnorableInfoboxSibling(child)) {
+      appendInfoboxDirectRowExtractionEntry(child, entries);
+    }
+  });
+  return entries;
+}
+
+function moveInfoboxRowExtractionEntries(document, row, entries, insertFallback) {
+  if (!entries.length || !row.parentElement || !isInfoboxRowsElement(row.parentElement)) {
+    return;
+  }
+
+  const rows = row.parentElement;
+  const parent = rows.parentNode;
+  if (!parent) {
+    return;
+  }
+
+  entries.forEach(function (entry) {
+    if (!entry || !entry.node || !entry.node.parentNode) {
+      return;
+    }
+
+    if (entry.type === "image") {
+      const imageNode = getInfoboxImageExtraElement(entry.node);
+      if (!imageNode || !imageNode.parentNode) {
+        return;
+      }
+      const image = document.createElement("figure");
+      setInfoboxPart(image, "image");
+      image.appendChild(imageNode);
+      if (insertFallback) {
+        insertFallback(image);
+      } else {
+        parent.insertBefore(image, rows.nextSibling);
+      }
+      return;
+    }
+
+    if (entry.type === "content") {
+      const content = document.createElement("div");
+      setInfoboxPart(content, "content");
+      content.appendChild(entry.node);
+      if (insertFallback) {
+        insertFallback(content);
+      } else {
+        parent.insertBefore(content, rows.nextSibling);
+      }
+    }
   });
 }
 
@@ -711,59 +778,6 @@ function createInfoboxRowsFallbackInserter(rows) {
     rows.parentNode.insertBefore(node, cursor.nextSibling);
     cursor = node;
   };
-}
-
-function moveInfoboxRowImageExtras(document, row, extras, insertFallback) {
-  if (!extras.length || !row.parentElement || !isInfoboxRowsElement(row.parentElement)) {
-    return;
-  }
-
-  const rows = row.parentElement;
-  const parent = rows.parentNode;
-  if (!parent) {
-    return;
-  }
-
-  extras.forEach(function (node) {
-    const imageNode = getInfoboxImageExtraElement(node);
-    if (!imageNode || !imageNode.parentNode) {
-      return;
-    }
-    const image = document.createElement("figure");
-    setInfoboxPart(image, "image");
-    image.appendChild(imageNode);
-    if (insertFallback) {
-      insertFallback(image);
-    } else {
-      parent.insertBefore(image, rows.nextSibling);
-    }
-  });
-}
-
-function moveInfoboxRowContentExtras(document, row, extras, insertFallback) {
-  if (!extras.length || !row.parentElement || !isInfoboxRowsElement(row.parentElement)) {
-    return;
-  }
-
-  const rows = row.parentElement;
-  const parent = rows.parentNode;
-  if (!parent) {
-    return;
-  }
-
-  extras.forEach(function (node) {
-    if (!node.parentNode) {
-      return;
-    }
-    const content = document.createElement("div");
-    setInfoboxPart(content, "content");
-    content.appendChild(node);
-    if (insertFallback) {
-      insertFallback(content);
-    } else {
-      parent.insertBefore(content, rows.nextSibling);
-    }
-  });
 }
 
 function moveInfoboxRowsContentExtra(document, rows, node, insertFallback) {
@@ -791,17 +805,7 @@ function repairInfoboxRow(document, row, insertFallback) {
   const value = children.find(function (child) {
     return child.tagName && child.tagName.toLowerCase() === "dd";
   }) || null;
-  const cellImageExtras = getInfoboxCellImageExtras(term).concat(getInfoboxCellImageExtras(value));
-  const cellContentExtras = getInfoboxCellContentFigureExtras(term).concat(getInfoboxCellContentFigureExtras(value));
-  const initialExtraNodes = Array.from(row.childNodes || []).filter(function (child) {
-    return child !== term && child !== value && !isIgnorableInfoboxSibling(child);
-  });
-  moveInfoboxRowImageExtras(document, row, initialExtraNodes.filter(function (child) {
-    return !!getInfoboxImageExtraElement(child);
-  }).concat(cellImageExtras), insertFallback);
-  moveInfoboxRowContentExtras(document, row, initialExtraNodes.filter(function (child) {
-    return isInfoboxContentFigureExtraElement(child);
-  }).concat(cellContentExtras), insertFallback);
+  moveInfoboxRowExtractionEntries(document, row, getInfoboxRowExtractionEntries(row, term, value), insertFallback);
 
   if (term) {
     normalizeInfoboxCell(document, term);

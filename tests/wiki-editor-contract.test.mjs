@@ -1141,6 +1141,20 @@ await test("normalizeLegacyHtmlForTiptap inserts extracted row helpers before ex
   assert.ok(existingContentIndex < existingImageIndex);
 });
 
+await test("normalizeLegacyHtmlForTiptap preserves extracted row media DOM order", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><img src="/term.png" alt="Term">House</dt><dd>Voss</dd><img src="/direct.png" alt="Direct"></div></dl></aside>'
+  );
+  const rowsIndex = normalized.indexOf('class="wiki-infobox__rows"');
+  const termImageIndex = normalized.indexOf('src="/term.png"');
+  const directImageIndex = normalized.indexOf('src="/direct.png"');
+
+  assert.match(normalized, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  assert.ok(rowsIndex >= 0);
+  assert.ok(rowsIndex < termImageIndex);
+  assert.ok(termImageIndex < directImageIndex);
+});
+
 await test("normalizeLegacyHtmlForTiptap downgrades incompatible infobox image helpers", function () {
   const normalized = normalizeLegacyHtmlForTiptap(
     '<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><a href="/seal-full.png"><img src="/seal.png" alt="Seal"></a><figcaption>Seal</figcaption></figure></aside>'
@@ -2626,6 +2640,20 @@ await test("raw infobox rows insert extracted helpers before existing infobox he
   assert.ok(extractedImageIndex < extractedContentIndex);
   assert.ok(extractedContentIndex < existingContentIndex);
   assert.ok(existingContentIndex < existingImageIndex);
+  editor.destroy();
+});
+
+await test("raw infobox rows preserve extracted row media DOM order", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><img src="/term.png" alt="Term">House</dt><dd>Voss</dd><img src="/direct.png" alt="Direct"></div></dl></aside>');
+  const rendered = editor.getHTML();
+  const rowsIndex = rendered.indexOf('class="wiki-infobox__rows"');
+  const termImageIndex = rendered.indexOf('src="/term.png"');
+  const directImageIndex = rendered.indexOf('src="/direct.png"');
+
+  assert.match(rendered, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  assert.ok(rowsIndex >= 0);
+  assert.ok(rowsIndex < termImageIndex);
+  assert.ok(termImageIndex < directImageIndex);
   editor.destroy();
 });
 
