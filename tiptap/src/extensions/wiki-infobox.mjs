@@ -400,25 +400,18 @@ function createContentHelperElement(document, source) {
   return helper;
 }
 
-function isParseFallbackHelperElement(node) {
-  if (!node || node.nodeType !== 1) {
-    return false;
-  }
-  const part = node.getAttribute("data-wiki-infobox-part");
-  return part === "image" || part === "content";
-}
-
-function getParseFallbackReference(rows) {
-  let reference = rows.nextSibling;
-  while (isParseFallbackHelperElement(reference)) {
-    reference = reference.nextSibling;
-  }
-  return reference;
-}
-
 function moveInfoboxRowMediaForParse(element) {
   const clone = element.cloneNode(true);
   Array.from(clone.querySelectorAll('dl[data-wiki-infobox-part="rows"], dl.wiki-infobox__rows')).forEach(function (rows) {
+    let insertionCursor = rows;
+    const insertFallback = function (helper) {
+      if (!helper || !rows.parentNode) {
+        return;
+      }
+      rows.parentNode.insertBefore(helper, insertionCursor.nextSibling);
+      insertionCursor = helper;
+    };
+
     Array.from(rows.querySelectorAll(':scope > [data-wiki-infobox-part="row"], :scope > div.wiki-infobox__row')).forEach(function (row) {
       const term = findDirectInfoboxCell(row, "dt");
       const value = findDirectInfoboxCell(row, "dd");
@@ -448,7 +441,7 @@ function moveInfoboxRowMediaForParse(element) {
       imageMedia.forEach(function (node) {
         const helper = createImageHelperElement(clone.ownerDocument, node);
         if (helper) {
-          rows.parentNode.insertBefore(helper, getParseFallbackReference(rows));
+          insertFallback(helper);
         }
         if (node.parentNode) {
           node.parentNode.removeChild(node);
@@ -456,7 +449,7 @@ function moveInfoboxRowMediaForParse(element) {
       });
       contentMedia.forEach(function (node) {
         const helper = createContentHelperElement(clone.ownerDocument, node);
-        rows.parentNode.insertBefore(helper, getParseFallbackReference(rows));
+        insertFallback(helper);
         if (node.parentNode) {
           node.parentNode.removeChild(node);
         }

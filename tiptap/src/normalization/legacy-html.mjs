@@ -534,6 +534,12 @@ function detectUnsupportedInfoboxRowsBeforeNormalization(html) {
       continue;
     }
 
+    if (!Array.from(rows.childNodes || []).some(function (child) {
+      return !isIgnorableInfoboxSibling(child);
+    })) {
+      return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
+    }
+
     for (const child of Array.from(rows.childNodes || [])) {
       if (isInfoboxRowElement(child)) {
         continue;
@@ -552,6 +558,25 @@ function detectUnsupportedInfoboxRowsBeforeNormalization(html) {
           return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
         }
       }
+    }
+  }
+
+  return "";
+}
+
+function detectUnsupportedInfoboxImagesBeforeNormalization(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div data-root="1">${String(html || "")}</div>`, "text/html");
+  const root = doc.body.firstElementChild;
+  if (!root) {
+    return "";
+  }
+
+  normalizeWikiInfoboxes(root);
+
+  for (const figure of Array.from(root.querySelectorAll('figure[data-wiki-infobox-part="image"], figure.wiki-infobox__image'))) {
+    if (isInfoboxImageFigureElement(figure) && !isSupportedInfoboxImageFigure(figure)) {
+      return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
     }
   }
 
@@ -677,23 +702,18 @@ function getInfoboxCellContentFigureExtras(cell) {
   });
 }
 
-function isInfoboxFallbackHelperElement(node) {
-  if (!node || node.nodeType !== 1) {
-    return false;
-  }
-  const part = node.getAttribute("data-wiki-infobox-part");
-  return part === "image" || part === "content" || (node.classList && (node.classList.contains("wiki-infobox__image") || node.classList.contains("wiki-infobox__content")));
+function createInfoboxRowsFallbackInserter(rows) {
+  let cursor = rows;
+  return function (node) {
+    if (!node || !rows.parentNode) {
+      return;
+    }
+    rows.parentNode.insertBefore(node, cursor.nextSibling);
+    cursor = node;
+  };
 }
 
-function getInfoboxRowsFallbackReference(rows) {
-  let reference = rows.nextSibling;
-  while (isInfoboxFallbackHelperElement(reference)) {
-    reference = reference.nextSibling;
-  }
-  return reference;
-}
-
-function moveInfoboxRowImageExtras(document, row, extras) {
+function moveInfoboxRowImageExtras(document, row, extras, insertFallback) {
   if (!extras.length || !row.parentElement || !isInfoboxRowsElement(row.parentElement)) {
     return;
   }
@@ -712,11 +732,15 @@ function moveInfoboxRowImageExtras(document, row, extras) {
     const image = document.createElement("figure");
     setInfoboxPart(image, "image");
     image.appendChild(imageNode);
-    parent.insertBefore(image, getInfoboxRowsFallbackReference(rows));
+    if (insertFallback) {
+      insertFallback(image);
+    } else {
+      parent.insertBefore(image, rows.nextSibling);
+    }
   });
 }
 
-function moveInfoboxRowContentExtras(document, row, extras) {
+function moveInfoboxRowContentExtras(document, row, extras, insertFallback) {
   if (!extras.length || !row.parentElement || !isInfoboxRowsElement(row.parentElement)) {
     return;
   }
@@ -734,11 +758,15 @@ function moveInfoboxRowContentExtras(document, row, extras) {
     const content = document.createElement("div");
     setInfoboxPart(content, "content");
     content.appendChild(node);
-    parent.insertBefore(content, getInfoboxRowsFallbackReference(rows));
+    if (insertFallback) {
+      insertFallback(content);
+    } else {
+      parent.insertBefore(content, rows.nextSibling);
+    }
   });
 }
 
-function repairInfoboxRow(document, row) {
+function repairInfoboxRow(document, row, insertFallback) {
   row.removeAttribute("style");
 
   const children = Array.from(row.children || []);
@@ -755,10 +783,10 @@ function repairInfoboxRow(document, row) {
   });
   moveInfoboxRowImageExtras(document, row, initialExtraNodes.filter(function (child) {
     return !!getInfoboxImageExtraElement(child);
-  }).concat(cellImageExtras));
+  }).concat(cellImageExtras), insertFallback);
   moveInfoboxRowContentExtras(document, row, initialExtraNodes.filter(function (child) {
     return isInfoboxContentFigureExtraElement(child);
-  }).concat(cellContentExtras));
+  }).concat(cellContentExtras), insertFallback);
 
   if (term) {
     normalizeInfoboxCell(document, term);
@@ -861,6 +889,7 @@ function normalizeInfoboxRows(document, root) {
       return;
     }
 
+    const insertFallback = createInfoboxRowsFallbackInserter(rows);
     const children = Array.from(rows.childNodes || []);
     for (let index = 0; index < children.length; index += 1) {
       const child = children[index];
@@ -879,7 +908,9 @@ function normalizeInfoboxRows(document, root) {
       }
 
       if (isInfoboxRowElement(child)) {
-        repairInfoboxRow(document, child);
+        if (!repairInfoboxRow(document, child, insertFallback) && child.parentNode === rows) {
+          rows.removeChild(child);
+        }
         continue;
       }
 
@@ -901,8 +932,34 @@ function normalizeInfoboxRows(document, root) {
       } else if (tagName === "dt") {
         row.appendChild(document.createElement("dd"));
       }
-      repairInfoboxRow(document, row);
+      if (!repairInfoboxRow(document, row, insertFallback) && row.parentNode === rows) {
+        rows.removeChild(row);
+      }
     }
+
+    const hasValidRows = Array.from(rows.children || []).some(function (child) {
+      return isInfoboxRowElement(child);
+    });
+    if (!hasValidRows && rows.parentNode) {
+      rows.parentNode.removeChild(rows);
+    }
+  });
+}
+
+function normalizeInfoboxImageHelpers(document, root) {
+  root.querySelectorAll('figure[data-wiki-infobox-part="image"], figure.wiki-infobox__image').forEach(function (figure) {
+    if (!isInfoboxImageFigureElement(figure) || isSupportedInfoboxImageFigure(figure)) {
+      return;
+    }
+
+    const content = document.createElement("div");
+    setInfoboxPart(content, "content");
+    figure.className = "image";
+    figure.removeAttribute("data-wiki-infobox-part");
+    if (figure.parentNode) {
+      figure.parentNode.insertBefore(content, figure);
+    }
+    content.appendChild(figure);
   });
 }
 
@@ -1519,6 +1576,7 @@ export function normalizeLegacyHtmlForTiptap(html) {
   normalizeLegacyTableStructures(doc, root);
   normalizeSupportedFigures(root);
   normalizeStyledSpans(doc, root);
+  normalizeInfoboxImageHelpers(doc, root);
 
   root.querySelectorAll("figcaption").forEach(function (element) {
     const parentTag = element.parentElement && element.parentElement.tagName ? element.parentElement.tagName.toLowerCase() : "";
@@ -1587,6 +1645,11 @@ export function getNormalizationNotice(html) {
 }
 
 export function detectUnsupportedContent(html) {
+  const infoboxImagesNotice = detectUnsupportedInfoboxImagesBeforeNormalization(html);
+  if (infoboxImagesNotice) {
+    return infoboxImagesNotice;
+  }
+
   const infoboxRowsNotice = detectUnsupportedInfoboxRowsBeforeNormalization(html);
   if (infoboxRowsNotice) {
     return infoboxRowsNotice;

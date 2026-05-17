@@ -1075,6 +1075,15 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   const rowWithLinkedCaptionedFigure = normalizeLegacyHtmlForTiptap(
     '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><a href="/seal-full.png"><img src="/seal.png" alt="Seal"></a><figcaption>Seal</figcaption></figure></div></dl></aside>'
   );
+  const mediaOnlyRow = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><img src="/seal.png" alt="Seal"></div></dl></aside>'
+  );
+  const emptyRow = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"></div></dl></aside>'
+  );
+  const emptyRows = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"></dl></aside>'
+  );
   const prettyPrintedDirectRows = [
     '<aside class="wiki-infobox" data-wiki-node="infobox">',
     '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
@@ -1098,8 +1107,39 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   assert.match(rowWithLinkedCaptionedFigure, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
   assert.match(rowWithLinkedCaptionedFigure, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><figure class="image"><a href="\/seal-full\.png"><img src="\/seal\.png" alt="Seal"><\/a><figcaption>Seal<\/figcaption><\/figure><\/div>/);
   assert.doesNotMatch(rowWithLinkedCaptionedFigure, /<dd>Voss\s*<a|<dd>Voss\s*<figcaption|<dd>Voss\s*Seal/);
+  assert.doesNotMatch(mediaOnlyRow, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
+  assert.match(mediaOnlyRow, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
+  assert.doesNotMatch(emptyRow, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
+  assert.doesNotMatch(emptyRows, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
   assert.match(prettyPrintedRows, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt>\s*<dd>Voss<\/dd><\/div>/);
   assert.equal(detectUnsupportedContent(prettyPrintedDirectRows), "");
+});
+
+await test("normalizeLegacyHtmlForTiptap inserts extracted row helpers before existing infobox helpers", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"><figure class="image"><a href="/seal-full.png"><img src="/seal-full.png" alt="Seal full"></a><figcaption>Seal</figcaption></figure></div></dl><div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Existing notes.</p></div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/old.png" alt="Old"></figure></aside>'
+  );
+  const rowsIndex = normalized.indexOf('class="wiki-infobox__rows"');
+  const extractedImageIndex = normalized.indexOf('src="/seal.png"');
+  const extractedContentIndex = normalized.indexOf('src="/seal-full.png"');
+  const existingContentIndex = normalized.indexOf("Existing notes.");
+  const existingImageIndex = normalized.indexOf('src="/old.png"');
+
+  assert.ok(rowsIndex >= 0);
+  assert.ok(rowsIndex < extractedImageIndex);
+  assert.ok(extractedImageIndex < extractedContentIndex);
+  assert.ok(extractedContentIndex < existingContentIndex);
+  assert.ok(existingContentIndex < existingImageIndex);
+});
+
+await test("normalizeLegacyHtmlForTiptap downgrades incompatible infobox image helpers", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><a href="/seal-full.png"><img src="/seal.png" alt="Seal"></a><figcaption>Seal</figcaption></figure></aside>'
+  );
+
+  assert.doesNotMatch(normalized, /wiki-infobox__image|data-wiki-infobox-part="image"/);
+  assert.match(normalized, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><figure class="image"><a href="\/seal-full\.png"><img src="\/seal\.png" alt="Seal"><\/a><figcaption>Seal<\/figcaption><\/figure><\/div>/);
+  assert.equal(detectUnsupportedContent(normalized), "");
 });
 
 await test("normalizeLegacyHtmlForTiptap skips media layout conversion inside infobox rows", function () {
@@ -2560,6 +2600,23 @@ await test("raw infobox rows preserve image figure media extras", function () {
   assert.match(rendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl>/);
   assert.match(rendered, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img[^>]+src="\/seal\.png"[^>]*alt="Seal"[^>]*><\/figure>/);
   assert.doesNotMatch(rendered, /<figure class="image">/);
+  editor.destroy();
+});
+
+await test("raw infobox rows insert extracted helpers before existing infobox helpers", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"><figure class="image"><a href="/seal-full.png"><img src="/seal-full.png" alt="Seal full"></a><figcaption>Seal</figcaption></figure></div></dl><div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Existing notes.</p></div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/old.png" alt="Old"></figure></aside>');
+  const rendered = editor.getHTML();
+  const rowsIndex = rendered.indexOf('class="wiki-infobox__rows"');
+  const extractedImageIndex = rendered.indexOf('src="/seal.png"');
+  const extractedContentIndex = rendered.indexOf('src="/seal-full.png"');
+  const existingContentIndex = rendered.indexOf("Existing notes.");
+  const existingImageIndex = rendered.indexOf('src="/old.png"');
+
+  assert.ok(rowsIndex >= 0);
+  assert.ok(rowsIndex < extractedImageIndex);
+  assert.ok(extractedImageIndex < extractedContentIndex);
+  assert.ok(extractedContentIndex < existingContentIndex);
+  assert.ok(existingContentIndex < existingImageIndex);
   editor.destroy();
 });
 
