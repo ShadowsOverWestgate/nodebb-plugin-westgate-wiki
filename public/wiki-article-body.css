@@ -1021,6 +1021,11 @@ content: "";
   padding: 0.75rem 0.85rem;
 }
 
+.wiki-article-prose .wiki-infobox__content .wiki-alignment-table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .wiki-article-prose .wiki-infobox__content > :first-child {
   margin-top: 0;
 }

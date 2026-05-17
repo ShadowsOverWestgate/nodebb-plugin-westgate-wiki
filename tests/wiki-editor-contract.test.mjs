@@ -906,6 +906,7 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row > dt,\s*\.wiki-article-prose \.wiki-infobox__row > dd\s*\{[^}]*overflow-wrap:\s*anywhere/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row > dd\s*\{[^}]*min-width:\s*0/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__content\s*\{[^}]*padding:\s*0\.75rem\s+0\.85rem/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__content \.wiki-alignment-table\s*\{[^}]*margin-left:\s*auto[^}]*margin-right:\s*auto/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*float:\s*right[^}]*clear:\s*right[^}]*width:\s*min\(22rem,\s*42%\)/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__surface\s*\{[^}]*container-type:\s*inline-size/);
@@ -926,6 +927,7 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dt,\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[^}]*overflow-wrap:\s*anywhere/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[^}]*min-width:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content\s*\{[^}]*padding:\s*0\.75rem\s+0\.85rem/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content \.wiki-alignment-table\s*\{[^}]*margin-left:\s*auto[^}]*margin-right:\s*auto/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :first-child\s*\{[^}]*margin-top:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :last-child\s*\{[^}]*margin-bottom:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*position:\s*absolute/);
@@ -940,6 +942,7 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image\s*\{[^}]*box-sizing:\s*border-box[^}]*max-width:\s*100%[^}]*width:\s*100%/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty\s*\{[^}]*cursor:\s*pointer[^}]*min-height:\s*4rem/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty:{1,2}before\s*\{[^}]*content:\s*"Upload image"[^}]*letter-spacing:\s*0/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content \.wiki-alignment-table\s*\{[^}]*margin-left:\s*auto[^}]*margin-right:\s*auto/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*max-height:\s*min\(calc\(100vh\s*-\s*2rem\),\s*28rem\)[^}]*overflow-y:\s*auto/);
 });
