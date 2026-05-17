@@ -400,8 +400,67 @@ function createContentHelperElement(document, source) {
   return helper;
 }
 
+function isSupportedInfoboxImageHelperElement(element) {
+  if (!element || !element.childNodes) {
+    return false;
+  }
+
+  let imageCount = 0;
+  for (const child of Array.from(element.childNodes || [])) {
+    if (child.nodeType === 8) {
+      continue;
+    }
+    if (child.nodeType === 3) {
+      if (String(child.nodeValue || "").trim()) {
+        return false;
+      }
+      continue;
+    }
+    if (child.nodeType !== 1 || !child.tagName || child.tagName.toLowerCase() !== "img") {
+      return false;
+    }
+    imageCount += 1;
+    if (imageCount > 1) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function downgradeUnsupportedInfoboxImageHelpersForParse(element) {
+  Array.from(element.querySelectorAll('figure[data-wiki-infobox-part="image"], figure.wiki-infobox__image')).forEach(function (figure) {
+    if (isSupportedInfoboxImageHelperElement(figure) || !figure.parentNode) {
+      return;
+    }
+
+    const helper = figure.ownerDocument.createElement("div");
+    helper.className = "wiki-infobox__content";
+    helper.setAttribute("data-wiki-infobox-part", "content");
+    figure.className = "image";
+    figure.removeAttribute("data-wiki-infobox-part");
+    figure.parentNode.insertBefore(helper, figure);
+    helper.appendChild(figure);
+  });
+}
+
+function isLooseRowsContentElement(node, rows) {
+  if (!node || node.nodeType !== 1 || node.parentElement !== rows || !node.tagName) {
+    return false;
+  }
+  const tagName = node.tagName.toLowerCase();
+  if (["dt", "dd"].includes(tagName)) {
+    return false;
+  }
+  if (node.matches && node.matches('[data-wiki-infobox-part="row"], div.wiki-infobox__row')) {
+    return false;
+  }
+  return true;
+}
+
 function moveInfoboxRowMediaForParse(element) {
   const clone = element.cloneNode(true);
+  downgradeUnsupportedInfoboxImageHelpersForParse(clone);
+
   Array.from(clone.querySelectorAll('dl[data-wiki-infobox-part="rows"], dl.wiki-infobox__rows')).forEach(function (rows) {
     let insertionCursor = rows;
     const insertFallback = function (helper) {
@@ -412,7 +471,20 @@ function moveInfoboxRowMediaForParse(element) {
       insertionCursor = helper;
     };
 
-    Array.from(rows.querySelectorAll(':scope > [data-wiki-infobox-part="row"], :scope > div.wiki-infobox__row')).forEach(function (row) {
+    Array.from(rows.childNodes || []).forEach(function (child) {
+      if (isLooseRowsContentElement(child, rows)) {
+        insertFallback(createContentHelperElement(clone.ownerDocument, child));
+        if (child.parentNode) {
+          child.parentNode.removeChild(child);
+        }
+        return;
+      }
+
+      if (!child.matches || !child.matches('[data-wiki-infobox-part="row"], div.wiki-infobox__row')) {
+        return;
+      }
+
+      const row = child;
       const term = findDirectInfoboxCell(row, "dt");
       const value = findDirectInfoboxCell(row, "dd");
       const directMedia = getTopLevelImageMedia(Array.from(row.childNodes || []).filter(function (child) {

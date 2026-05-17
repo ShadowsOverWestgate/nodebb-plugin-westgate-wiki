@@ -1084,6 +1084,12 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   const emptyRows = normalizeLegacyHtmlForTiptap(
     '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"></dl></aside>'
   );
+  const rowsWithLooseParagraph = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><p>Loose row text</p></dl></aside>'
+  );
+  const rowWithLooseParagraph = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><p>Loose row text</p></dl></aside>'
+  );
   const prettyPrintedDirectRows = [
     '<aside class="wiki-infobox" data-wiki-node="infobox">',
     '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
@@ -1111,6 +1117,9 @@ await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without 
   assert.match(mediaOnlyRow, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
   assert.doesNotMatch(emptyRow, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
   assert.doesNotMatch(emptyRows, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
+  assert.doesNotMatch(rowsWithLooseParagraph, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
+  assert.match(rowsWithLooseParagraph, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Loose row text<\/p><\/div>/);
+  assert.match(rowWithLooseParagraph, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl><div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Loose row text<\/p><\/div>/);
   assert.match(prettyPrintedRows, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt>\s*<dd>Voss<\/dd><\/div>/);
   assert.equal(detectUnsupportedContent(prettyPrintedDirectRows), "");
 });
@@ -2617,6 +2626,28 @@ await test("raw infobox rows insert extracted helpers before existing infobox he
   assert.ok(extractedImageIndex < extractedContentIndex);
   assert.ok(extractedContentIndex < existingContentIndex);
   assert.ok(existingContentIndex < existingImageIndex);
+  editor.destroy();
+});
+
+await test("raw infobox rows preserve loose non-row block children", function () {
+  const paragraphOnlyEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><p>Loose row text</p></dl></aside>');
+  const mixedEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><p>Loose row text</p></dl></aside>');
+  const paragraphOnlyRendered = paragraphOnlyEditor.getHTML();
+  const mixedRendered = mixedEditor.getHTML();
+
+  assert.doesNotMatch(paragraphOnlyRendered, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
+  assert.match(paragraphOnlyRendered, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Loose row text<\/p><\/div>/);
+  assert.match(mixedRendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl><div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Loose row text<\/p><\/div>/);
+  paragraphOnlyEditor.destroy();
+  mixedEditor.destroy();
+});
+
+await test("raw infobox image helpers downgrade incompatible figures into content", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><a href="/seal-full.png"><img src="/seal.png" alt="Seal"></a><figcaption>Seal</figcaption></figure></aside>');
+  const rendered = editor.getHTML();
+
+  assert.doesNotMatch(rendered, /wiki-infobox__image|data-wiki-infobox-part="image"/);
+  assert.match(rendered, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><figure class="image" data-wiki-node="image-figure"><a href="\/seal-full\.png"><img[^>]+src="\/seal\.png"[^>]*alt="Seal"[^>]*><\/a><figcaption><p>Seal<\/p><\/figcaption><\/figure><\/div>/);
   editor.destroy();
 });
 

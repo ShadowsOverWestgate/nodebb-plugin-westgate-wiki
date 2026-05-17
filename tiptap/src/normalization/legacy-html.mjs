@@ -766,6 +766,21 @@ function moveInfoboxRowContentExtras(document, row, extras, insertFallback) {
   });
 }
 
+function moveInfoboxRowsContentExtra(document, rows, node, insertFallback) {
+  if (!node || !node.parentNode || !isInfoboxRowsElement(rows)) {
+    return;
+  }
+
+  const content = document.createElement("div");
+  setInfoboxPart(content, "content");
+  content.appendChild(node);
+  if (insertFallback) {
+    insertFallback(content);
+  } else if (rows.parentNode) {
+    rows.parentNode.insertBefore(content, rows.nextSibling);
+  }
+}
+
 function repairInfoboxRow(document, row, insertFallback) {
   row.removeAttribute("style");
 
@@ -911,6 +926,17 @@ function normalizeInfoboxRows(document, root) {
         if (!repairInfoboxRow(document, child, insertFallback) && child.parentNode === rows) {
           rows.removeChild(child);
         }
+        continue;
+      }
+
+      if (
+        child &&
+        child.nodeType === 1 &&
+        child.parentElement === rows &&
+        !["dt", "dd"].includes(tagName) &&
+        !isIgnorableInfoboxSibling(child)
+      ) {
+        moveInfoboxRowsContentExtra(document, rows, child, insertFallback);
         continue;
       }
 
