@@ -206,6 +206,55 @@ function createImageHelper(state) {
   return type ? type.create() : null;
 }
 
+function createImageHelperWithImage(state, attrs) {
+  const helperType = state.schema.nodes.wikiInfoboxImage;
+  const imageType = state.schema.nodes.image;
+  if (!helperType || !imageType) {
+    return null;
+  }
+  return helperType.create(null, imageType.create(attrs || {}));
+}
+
+function findEmptyImageHelper(context) {
+  let result = null;
+  context.node.forEach(function (child, offset, index) {
+    if (result || child.type.name !== "wikiInfoboxImage" || child.childCount) {
+      return;
+    }
+    result = {
+      index,
+      node: child,
+      pos: context.pos + 1 + offset
+    };
+  });
+  return result;
+}
+
+function setImageInActiveInfobox(state, dispatch, attrs) {
+  const context = findActiveInfobox(state);
+  const imageHelper = createImageHelperWithImage(state, attrs);
+  if (!context || !imageHelper) {
+    return false;
+  }
+
+  const activeContext = findActiveInfoboxHelper(state);
+  const target = activeContext && activeContext.helper.node.type.name === "wikiInfoboxImage"
+    ? activeContext.helper
+    : findEmptyImageHelper(context);
+
+  if (dispatch) {
+    if (target) {
+      const tr = state.tr.replaceWith(target.pos, target.pos + target.node.nodeSize, imageHelper);
+      dispatch(setSelectionNear(tr, target.pos + 1).scrollIntoView());
+    } else {
+      const insertPos = context.pos + context.node.nodeSize - 1;
+      const tr = state.tr.insert(insertPos, imageHelper);
+      dispatch(setSelectionNear(tr, insertPos + 1).scrollIntoView());
+    }
+  }
+  return true;
+}
+
 function createRow(state) {
   const rowType = state.schema.nodes.wikiInfoboxRow;
   const termType = state.schema.nodes.wikiInfoboxTerm;
@@ -1112,6 +1161,9 @@ const WikiInfobox = Node.create({
       addWikiInfoboxImage:
         () =>
         ({ state, dispatch }) => appendNodeToActiveInfobox(state, dispatch, createImageHelper(state)),
+      setWikiInfoboxImage:
+        (attrs, options) =>
+        ({ state, dispatch }) => setImageInActiveInfobox(state, dispatch, attrs, options),
       addWikiInfoboxSection:
         () =>
         ({ state, dispatch }) => appendNodeToActiveInfobox(state, dispatch, createInlineHelper(state, "wikiInfoboxSection", "Section")),

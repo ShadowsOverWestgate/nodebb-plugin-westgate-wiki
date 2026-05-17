@@ -3922,10 +3922,20 @@ export async function createWikiEditor(element, options) {
     try {
       for (const file of imageFiles) {
         const url = await uploadImageFile(relativePath, csrfToken, file);
-        editor.chain().focus().setImage({
+        const imageAttrs = {
           src: url,
           alt: file.name || ""
-        }).run();
+        };
+        let insertedInfoboxImage = false;
+        const hasInfoboxImageCommand = typeof editor.commands.setWikiInfoboxImage === "function";
+        const selectionWasInInfobox = hasInfoboxImageCommand && typeof editor.isActive === "function" && editor.isActive("wikiInfobox");
+        if (hasInfoboxImageCommand) {
+          const infoboxImageChain = editor.chain().focus();
+          insertedInfoboxImage = typeof infoboxImageChain.setWikiInfoboxImage === "function" && infoboxImageChain.setWikiInfoboxImage(imageAttrs).run();
+        }
+        if (!insertedInfoboxImage && (!selectionWasInInfobox || !hasInfoboxImageCommand)) {
+          editor.chain().focus().setImage(imageAttrs).run();
+        }
       }
     } catch (err) {
       const message = (err && err.message) || String(err);

@@ -267,6 +267,20 @@ function findJsonNode(node, typeName) {
   return null;
 }
 
+function findJsonNodes(node, typeName, matches) {
+  const results = matches || [];
+  if (!node) {
+    return results;
+  }
+  if (node.type === typeName) {
+    results.push(node);
+  }
+  for (const child of node.content || []) {
+    findJsonNodes(child, typeName, results);
+  }
+  return results;
+}
+
 function collectJsonNodeTypes(node, types) {
   if (!node) {
     return types;
@@ -2795,6 +2809,55 @@ await test("wikiInfobox command-authored HTML passes unsupported content detecti
   editor.destroy();
 });
 
+await test("wikiInfobox image command fills an empty image slot from title selection", function () {
+  const editor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"></figure><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside><p>After</p>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.setWikiInfoboxImage({ src: "/uploads/selene.png", alt: "Selene portrait" }), true);
+
+  const json = editor.getJSON();
+  assert.deepEqual(json.content.map((node) => node.type), ["paragraph", "wikiInfobox", "paragraph"]);
+  assert.equal(findJsonNodes(json, "wikiInfobox").length, 1);
+  assert.equal(findJsonNodes(json, "wikiInfoboxImage").length, 1);
+  assert.equal(findJsonNodes(json, "image").length, 1);
+  const image = findJsonNode(json, "image");
+  assert.equal(image.attrs.src, "/uploads/selene.png");
+  assert.equal(image.attrs.alt, "Selene portrait");
+  assert.match(editor.getHTML(), /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img[^>]+src="\/uploads\/selene\.png"[^>]*alt="Selene portrait"[^>]*><\/figure>/);
+  editor.destroy();
+});
+
+await test("wikiInfobox image command fills a selected empty image helper", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"></figure></aside>');
+  const imageHelperPos = findNodePositions(editor, "wikiInfoboxImage")[0];
+  editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, imageHelperPos)));
+
+  assert.equal(editor.commands.setWikiInfoboxImage({ src: "/uploads/portrait.png", alt: "Portrait" }), true);
+
+  const json = editor.getJSON();
+  assert.equal(json.content[0].type, "wikiInfobox");
+  assert.equal(json.content.some((node) => node.type === "image" || node.type === "wikiInfoboxImage"), false);
+  assert.equal(findJsonNodes(json, "wikiInfoboxImage").length, 1);
+  const image = findJsonNode(json, "image");
+  assert.equal(image.attrs.src, "/uploads/portrait.png");
+  assert.equal(image.attrs.alt, "Portrait");
+  editor.destroy();
+});
+
+await test("wikiInfobox image command appends an image helper when no slot exists", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.setWikiInfoboxImage({ src: "/uploads/new.png", alt: "New portrait" }), true);
+
+  const infobox = findJsonNode(editor.getJSON(), "wikiInfobox");
+  assert.deepEqual(infobox.content.map((node) => node.type), ["wikiInfoboxTitle", "wikiInfoboxImage"]);
+  const image = findJsonNode(infobox, "image");
+  assert.equal(image.attrs.src, "/uploads/new.png");
+  assert.equal(image.attrs.alt, "New portrait");
+  editor.destroy();
+});
+
 await test("wikiInfobox helper movement commands reorder helper blocks", function () {
   const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
 
@@ -2911,6 +2974,7 @@ await test("wikiInfobox commands return false outside an active infobox", functi
     "addWikiInfoboxTitle",
     "addWikiInfoboxSubtitle",
     "addWikiInfoboxImage",
+    "setWikiInfoboxImage",
     "addWikiInfoboxSection",
     "addWikiInfoboxRow",
     "addWikiInfoboxContent",
@@ -2924,6 +2988,19 @@ await test("wikiInfobox commands return false outside an active infobox", functi
   });
   assert.equal(editor.getHTML(), "<p>Outside</p>");
   editor.destroy();
+});
+
+await test("editor upload source tries infobox images before generic image insertion", function () {
+  const uploadBlockStart = editorBundleSource.indexOf("async function uploadFiles");
+  const uploadBlockEnd = editorBundleSource.indexOf("let editor;", uploadBlockStart);
+  const uploadBlock = editorBundleSource.slice(uploadBlockStart, uploadBlockEnd);
+  const infoboxImageIndex = uploadBlock.indexOf("setWikiInfoboxImage");
+  const genericImageIndex = uploadBlock.indexOf("setImage(");
+
+  assert.ok(infoboxImageIndex !== -1, "upload source should call setWikiInfoboxImage");
+  assert.ok(uploadBlock.includes('isActive("wikiInfobox")'), "upload source should avoid generic setImage fallback while the selection is in an infobox");
+  assert.ok(genericImageIndex !== -1, "upload source should still keep the generic setImage fallback");
+  assert.ok(infoboxImageIndex < genericImageIndex, "upload source should try setWikiInfoboxImage before setImage");
 });
 
 await test("wikiInfobox insert command returns false when helper schema nodes are not registered", function () {
