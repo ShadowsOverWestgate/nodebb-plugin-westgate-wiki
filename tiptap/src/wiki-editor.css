@@ -1237,12 +1237,17 @@
 .westgate-wiki-compose .wiki-editor__content .wiki-infobox__row > dd {
   margin: 0;
   min-height: 1.45em;
+  overflow-wrap: anywhere;
   padding: 0.45rem 0.65rem;
 }
 
 .westgate-wiki-compose .wiki-editor__content .wiki-infobox__row > dt {
   color: var(--wiki-infobox-label-color, var(--wiki-prose-caption-color, inherit));
   font-weight: 700;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__row > dd {
+  min-width: 0;
 }
 
 .westgate-wiki-compose .wiki-editor__content .wiki-infobox__content {
@@ -1265,6 +1270,15 @@
 
 .westgate-wiki-compose .wiki-editor-infobox-rail[hidden] {
   display: none;
+}
+
+@media (max-width: 767.98px) {
+  .westgate-wiki-compose .wiki-editor__content .wiki-infobox {
+    float: none;
+    clear: both;
+    width: 100%;
+    margin: 1rem 0;
+  }
 }
 
 .wiki-editor-media-cell-color-menu {

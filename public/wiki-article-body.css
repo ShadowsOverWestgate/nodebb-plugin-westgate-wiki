@@ -996,6 +996,7 @@ content: "";
 .wiki-article-prose .wiki-infobox__row > dt,
 .wiki-article-prose .wiki-infobox__row > dd {
   margin: 0;
+  overflow-wrap: anywhere;
   padding: 0.45rem 0.65rem;
 }
 

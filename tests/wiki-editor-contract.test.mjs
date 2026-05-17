@@ -871,9 +871,16 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(articleBodyCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*100%/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__title\s*\{/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row\s*\{/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row > dt,\s*\.wiki-article-prose \.wiki-infobox__row > dd\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{/);
+  assert.match(editorCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[\s\S]*float:\s*none/);
+  assert.match(editorCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[\s\S]*width:\s*100%/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dt,\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[\s\S]*min-width:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[\s\S]*position:\s*absolute/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[\s\S]*z-index:\s*22/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[\s\S]*flex-direction:\s*column/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\[hidden\]\s*\{[\s\S]*display:\s*none/);
 });
 
 await test("table cell block backgrounds keep their paired foreground color", function () {
