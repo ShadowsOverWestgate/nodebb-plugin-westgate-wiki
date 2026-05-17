@@ -313,6 +313,42 @@ function isPluginOwnedInfoboxElement(element) {
   return element.matches('[data-wiki-node="infobox"], .wiki-infobox, aside.infobox');
 }
 
+function isTopLevelInfoboxElement(element) {
+  return !!(
+    element &&
+    element.matches &&
+    element.matches('aside.wiki-infobox, aside[data-wiki-node="infobox"]')
+  );
+}
+
+function isIgnorableTopLevelNode(node) {
+  return node && (
+    node.nodeType === 8 ||
+    (node.nodeType === 3 && !String(node.nodeValue || "").trim())
+  );
+}
+
+function hoistTopLevelInfoboxes(root) {
+  const infoboxes = Array.from(root.children || []).filter(isTopLevelInfoboxElement);
+  if (!infoboxes.length) {
+    return;
+  }
+
+  let anchor = root.firstChild;
+  while (anchor && isIgnorableTopLevelNode(anchor)) {
+    anchor = anchor.nextSibling;
+  }
+
+  infoboxes.forEach(function (infobox) {
+    if (infobox === anchor) {
+      anchor = infobox.nextSibling;
+      return;
+    }
+    root.insertBefore(infobox, anchor);
+    anchor = infobox.nextSibling;
+  });
+}
+
 function isInsideInfobox(element) {
   return !!(element && element.closest && element.closest('[data-wiki-node="infobox"], .wiki-infobox, aside.infobox'));
 }
@@ -1605,6 +1641,7 @@ export function normalizeLegacyHtmlForTiptap(html) {
   }
 
   normalizeWikiInfoboxes(root);
+  hoistTopLevelInfoboxes(root);
 
   root.querySelectorAll("article, section, div").forEach(function (element) {
     if (isInsidePluginOwnedStructure(element) || isPluginOwnedStructuredElement(element)) {

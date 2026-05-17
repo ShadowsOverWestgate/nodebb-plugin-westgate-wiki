@@ -912,6 +912,21 @@ await test("wikiInfobox source HTML copies between editor instances", function (
   targetEditor.destroy();
 });
 
+await test("wikiInfobox normalization hoists top-level infoboxes before article blocks", function () {
+  const source = [
+    "<p>Intro text.</p>",
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Shar</div>',
+    "</aside>",
+    "<p>Body text.</p>"
+  ].join("");
+  const normalized = normalizeLegacyHtmlForTiptap(source);
+  const sanitized = sanitizeHtml(source);
+
+  assert.ok(normalized.indexOf('<aside class="wiki-infobox"') < normalized.indexOf("<p>Intro text.</p>"));
+  assert.ok(sanitized.indexOf('<aside class="wiki-infobox"') < sanitized.indexOf("<p>Intro text.</p>"));
+});
+
 await test("wikiInfobox css defines reader float, narrow full-width layout, and editor rail", function () {
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*float:\s*right/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*min\(22rem,\s*42%\)/);
@@ -2809,7 +2824,9 @@ await test("raw infobox image helpers downgrade incompatible figures into conten
 await test("wikiInfobox insert command creates starter infobox HTML", function () {
   const editor = createEditor("<p>Start</p>");
 
+  editor.commands.setTextSelection(editor.state.doc.content.size);
   assert.equal(editor.commands.insertWikiInfobox(), true);
+  assert.equal(editor.getJSON().content[0].type, "wikiInfobox");
   const rendered = editor.getHTML();
 
   assert.match(rendered, /data-wiki-node="infobox"/);

@@ -932,6 +932,7 @@ function parseInfoboxRowsContent(element, schema) {
 
 function hasStarterInfoboxSchema(state) {
   return [
+    "wikiInfobox",
     "wikiInfoboxTitle",
     "wikiInfoboxRows",
     "wikiInfoboxRow",
@@ -940,6 +941,29 @@ function hasStarterInfoboxSchema(state) {
   ].every(function (typeName) {
     return !!state.schema.nodes[typeName];
   });
+}
+
+function createStarterInfobox(state) {
+  const infoboxType = state.schema.nodes.wikiInfobox;
+  const title = createInlineHelper(state, "wikiInfoboxTitle", "Untitled Infobox");
+  const rows = createRowsHelper(state);
+  return infoboxType && title && rows ? infoboxType.create(null, [title, rows]) : null;
+}
+
+function getInfoboxInsertPos(state) {
+  let insertPos = 0;
+  let keepScanning = true;
+  state.doc.forEach(function (node, offset) {
+    if (!keepScanning) {
+      return;
+    }
+    if (offset === insertPos && node.type.name === INFOBOX_NODE_NAME) {
+      insertPos += node.nodeSize;
+      return;
+    }
+    keepScanning = false;
+  });
+  return insertPos;
 }
 
 export const WikiInfoboxTitle = Node.create({
@@ -1141,38 +1165,23 @@ const WikiInfobox = Node.create({
     return {
       insertWikiInfobox:
         () =>
-        ({ commands, state }) => {
+        ({ state, dispatch }) => {
           if (!hasStarterInfoboxSchema(state)) {
             return false;
           }
 
-          return commands.insertContent({
-            type: this.name,
-            content: [
-              {
-                type: "wikiInfoboxTitle",
-                content: [{ type: "text", text: "Untitled Infobox" }]
-              },
-              {
-                type: "wikiInfoboxRows",
-                content: [
-                  {
-                    type: "wikiInfoboxRow",
-                    content: [
-                      {
-                        type: "wikiInfoboxTerm",
-                        content: [{ type: "text", text: "Label" }]
-                      },
-                      {
-                        type: "wikiInfoboxValue",
-                        content: [{ type: "text", text: "Value" }]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          });
+          const infobox = createStarterInfobox(state);
+          if (!infobox) {
+            return false;
+          }
+
+          if (dispatch) {
+            const insertPos = getInfoboxInsertPos(state);
+            const tr = state.tr.insert(insertPos, infobox);
+            tr.setSelection(NodeSelection.create(tr.doc, insertPos));
+            dispatch(tr.scrollIntoView());
+          }
+          return true;
         },
       addWikiInfoboxTitle:
         () =>

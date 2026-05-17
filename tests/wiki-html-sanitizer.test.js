@@ -196,6 +196,32 @@ test("sanitizeWikiHtml preserves wiki infobox structure and helper data attribut
   assert.doesNotMatch(sanitized, /onclick/);
 });
 
+test("sanitizeWikiHtml hoists top-level infoboxes before article blocks", function () {
+  const html = [
+    '<p>Intro text.</p>',
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Shar</div>',
+    '</aside>',
+    '<p>Body text.</p>'
+  ].join("");
+  const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);
+
+  assert.ok(sanitized.indexOf('<aside class="wiki-infobox"') < sanitized.indexOf("<p>Intro text.</p>"));
+});
+
+test("renderReadOnlyWikiHtml hoists top-level infoboxes before article blocks", function () {
+  const html = [
+    '<p>Intro text.</p>',
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Shar</div>',
+    '</aside>',
+    '<p>Body text.</p>'
+  ].join("");
+  const rendered = wikiHtmlSanitizer.renderReadOnlyWikiHtml(html);
+
+  assert.ok(rendered.indexOf('<aside class="wiki-infobox"') < rendered.indexOf("<p>Intro text.</p>"));
+});
+
 test("sanitizeWikiHtml strips unsafe styles from wiki infoboxes", function () {
   const html = '<aside class="wiki-infobox" data-wiki-node="infobox" style="position:fixed; color:#caa55a"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div></aside>';
   const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);
