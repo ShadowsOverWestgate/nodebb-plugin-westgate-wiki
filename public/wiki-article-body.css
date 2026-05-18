@@ -442,6 +442,23 @@
       max-width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
     }
   }
+
+  .wiki-article-prose .wiki-infobox ~ table[style*="width:100%"],
+  .wiki-article-prose .wiki-infobox ~ table[style*="width: 100%"] {
+    width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter)) !important;
+    max-width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
+  }
+
+  .wiki-article-prose .wiki-infobox ~ :where(.tableWrapper, .table-responsive, .table-responsive-md, figure.table) {
+    width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
+    max-width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
+  }
+
+  .wiki-article-prose .wiki-infobox ~ :where(.tableWrapper, .table-responsive, .table-responsive-md, figure.table) > table[style*="width:100%"],
+  .wiki-article-prose .wiki-infobox ~ :where(.tableWrapper, .table-responsive, .table-responsive-md, figure.table) > table[style*="width: 100%"] {
+    width: 100% !important;
+    max-width: 100%;
+  }
 }
 
 .wiki-article-prose table.wiki-table-layout-auto {
