@@ -30,7 +30,7 @@ export const TOP_TOOLBAR_GROUPS = [
   {
     id: "blocks",
     label: "Blocks",
-    buttonIds: ["bullet-list", "ordered-list", "task-list", "blockquote", "code-block", "block-background", "horizontal-rule"]
+    buttonIds: ["bullet-list", "ordered-list", "task-list", "blockquote", "code-block", "block-background", "horizontal-rule", "infobox-insert"]
   },
   {
     id: "callouts",
@@ -68,6 +68,21 @@ export const IMAGE_CONTEXT_BUTTON_IDS = [
   "image-size-lg",
   "image-size-full",
   "image-convert-figure"
+];
+
+export const INFOBOX_CONTEXT_BUTTON_IDS = [
+  "infobox-add-title",
+  "infobox-add-subtitle",
+  "infobox-add-image",
+  "infobox-add-alignment-table",
+  "infobox-add-section",
+  "infobox-add-row",
+  "infobox-add-content",
+  "infobox-move-helper-up",
+  "infobox-move-helper-down",
+  "infobox-delete-helper",
+  "infobox-unwrap",
+  "infobox-delete"
 ];
 
 export const TABLE_CONTEXT_BUTTON_IDS = TABLE_STICKY_COMMAND_IDS;

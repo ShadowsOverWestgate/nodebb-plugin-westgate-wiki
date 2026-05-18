@@ -11,7 +11,10 @@ export const SUPPORTED_TIPTAP_TAGS = new Set([
   "col",
   "colgroup",
   "code",
+  "dd",
   "div",
+  "dl",
+  "dt",
   "em",
   "figcaption",
   "figure",
@@ -302,16 +305,890 @@ function isPoetryQuoteFigure(element) {
   );
 }
 
-function isInsidePluginOwnedStructure(element) {
-  return !!(element && element.closest && element.closest('[data-wiki-node="alignment-table"], figure.wiki-poetry-quote, [data-wiki-node="poetry-quote"]'));
-}
-
-function isPluginOwnedMediaLayoutElement(element) {
+function isPluginOwnedInfoboxElement(element) {
   if (!element || !element.matches) {
     return false;
   }
 
-  return element.matches('[data-wiki-node="media-row"], [data-wiki-node="media-cell"], .wiki-media-row, .wiki-media-cell');
+  return element.matches('[data-wiki-node="infobox"], .wiki-infobox, aside.infobox');
+}
+
+function isTopLevelInfoboxElement(element) {
+  return !!(
+    element &&
+    element.matches &&
+    element.matches('aside.wiki-infobox, aside[data-wiki-node="infobox"]')
+  );
+}
+
+function isIgnorableTopLevelNode(node) {
+  return node && (
+    node.nodeType === 8 ||
+    (node.nodeType === 3 && !String(node.nodeValue || "").trim())
+  );
+}
+
+function hoistTopLevelInfoboxes(root) {
+  const infoboxes = Array.from(root.children || []).filter(isTopLevelInfoboxElement);
+  if (!infoboxes.length) {
+    return;
+  }
+
+  let anchor = root.firstChild;
+  while (anchor && isIgnorableTopLevelNode(anchor)) {
+    anchor = anchor.nextSibling;
+  }
+
+  infoboxes.forEach(function (infobox) {
+    if (infobox === anchor) {
+      anchor = infobox.nextSibling;
+      return;
+    }
+    root.insertBefore(infobox, anchor);
+    anchor = infobox.nextSibling;
+  });
+}
+
+function isInsideInfobox(element) {
+  return !!(element && element.closest && element.closest('[data-wiki-node="infobox"], .wiki-infobox, aside.infobox'));
+}
+
+function isInfoboxRowsElement(element) {
+  return !!(
+    element &&
+    element.tagName &&
+    element.tagName.toLowerCase() === "dl" &&
+    isInsideInfobox(element) &&
+    (
+      element.getAttribute("data-wiki-infobox-part") === "rows" ||
+      (element.classList && element.classList.contains("wiki-infobox__rows"))
+    )
+  );
+}
+
+function isInfoboxRowElement(element) {
+  return !!(
+    element &&
+    element.tagName &&
+    element.tagName.toLowerCase() === "div" &&
+    isInfoboxRowsElement(element.parentElement) &&
+    (
+      element.getAttribute("data-wiki-infobox-part") === "row" ||
+      (element.classList && element.classList.contains("wiki-infobox__row"))
+    )
+  );
+}
+
+function isInfoboxTermElement(element) {
+  return !!(
+    element &&
+    element.tagName &&
+    element.tagName.toLowerCase() === "dt" &&
+    isInfoboxRowElement(element.parentElement)
+  );
+}
+
+function isInfoboxValueElement(element) {
+  return !!(
+    element &&
+    element.tagName &&
+    element.tagName.toLowerCase() === "dd" &&
+    isInfoboxRowElement(element.parentElement)
+  );
+}
+
+function isInfoboxImageFigureElement(element) {
+  return !!(
+    element &&
+    element.tagName &&
+    element.tagName.toLowerCase() === "figure" &&
+    isInsideInfobox(element) &&
+    (
+      element.getAttribute("data-wiki-infobox-part") === "image" ||
+      (element.classList && element.classList.contains("wiki-infobox__image"))
+    )
+  );
+}
+
+function isSupportedInfoboxImageFigure(element) {
+  if (!isInfoboxImageFigureElement(element)) {
+    return false;
+  }
+
+  let imageCount = 0;
+  for (const child of Array.from(element.childNodes || [])) {
+    if (child.nodeType === 8) {
+      continue;
+    }
+    if (child.nodeType === 3) {
+      if ((child.nodeValue || "").trim()) {
+        return false;
+      }
+      continue;
+    }
+    if (child.nodeType !== 1 || child.tagName.toLowerCase() !== "img") {
+      return false;
+    }
+    imageCount += 1;
+    if (imageCount > 1) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function isSupportedInfoboxRowsStructure(element) {
+  if (!isInfoboxRowsElement(element)) {
+    return false;
+  }
+
+  const rows = Array.from(element.children || []);
+  if (!rows.length) {
+    return false;
+  }
+
+  return rows.every(function (row) {
+    if (!isInfoboxRowElement(row)) {
+      return false;
+    }
+    const cells = Array.from(row.children || []);
+    return (
+      cells.length === 2 &&
+      cells[0].tagName.toLowerCase() === "dt" &&
+      cells[1].tagName.toLowerCase() === "dd"
+    );
+  });
+}
+
+function isCaptionlessInfoboxImageFigure(element) {
+  if (!isSupportedImageFigure(element)) {
+    return false;
+  }
+
+  const children = Array.from(element.children || []);
+  return children.length === 1 && children[0].tagName.toLowerCase() === "img";
+}
+
+function getInfoboxImageExtraElement(node) {
+  if (!node || node.nodeType !== 1) {
+    return null;
+  }
+  const tagName = node.tagName.toLowerCase();
+  if (tagName === "img") {
+    return node;
+  }
+  if (isCaptionlessInfoboxImageFigure(node)) {
+    return getFigureImageElement(node);
+  }
+  return null;
+}
+
+function isInfoboxContentFigureExtraElement(node) {
+  return !!(
+    node &&
+    node.nodeType === 1 &&
+    node.tagName.toLowerCase() === "figure" &&
+    node.classList &&
+    node.classList.contains("image") &&
+    getFigureImageElement(node) &&
+    !getInfoboxImageExtraElement(node)
+  );
+}
+
+function hasUnsupportedInfoboxRowCellChild(node) {
+  if (!node) {
+    return false;
+  }
+
+  if (node.nodeType === 8) {
+    return false;
+  }
+
+  if (node.nodeType === 3) {
+    return false;
+  }
+
+  if (node.nodeType !== 1) {
+    return true;
+  }
+
+  if (getInfoboxImageExtraElement(node)) {
+    return false;
+  }
+
+  return hasUnsupportedInfoboxRowExtra(node);
+}
+
+function hasUnsupportedInfoboxRowExtra(node) {
+  if (!node) {
+    return false;
+  }
+
+  if (node.nodeType === 8) {
+    return false;
+  }
+
+  if (node.nodeType === 3) {
+    return false;
+  }
+
+  if (node.nodeType !== 1) {
+    return true;
+  }
+
+  const element = node;
+  const tag = element.tagName.toLowerCase();
+  if (tag === "dt" || tag === "dd") {
+    return Array.from(element.childNodes || []).some(hasUnsupportedInfoboxRowCellChild);
+  }
+
+  if ([
+    "a",
+    "abbr",
+    "acronym",
+    "address",
+    "b",
+    "big",
+    "br",
+    "cite",
+    "code",
+    "del",
+    "dfn",
+    "em",
+    "font",
+    "i",
+    "ins",
+    "kbd",
+    "mark",
+    "p",
+    "s",
+    "small",
+    "span",
+    "strike",
+    "strong",
+    "sub",
+    "sup",
+    "tt",
+    "u"
+  ].includes(tag)) {
+    return Array.from(element.childNodes || []).some(hasUnsupportedInfoboxRowExtra);
+  }
+
+  return true;
+}
+
+function detectUnsupportedInfoboxRowsBeforeNormalization(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div data-root="1">${String(html || "")}</div>`, "text/html");
+  const root = doc.body.firstElementChild;
+  if (!root) {
+    return "";
+  }
+
+  normalizeWikiInfoboxes(root);
+
+  for (const rows of Array.from(root.querySelectorAll('[data-wiki-infobox-part="rows"], .wiki-infobox__rows'))) {
+    if (!isInfoboxRowsElement(rows)) {
+      if (isInsideInfobox(rows)) {
+        return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
+      }
+      continue;
+    }
+
+    if (!Array.from(rows.childNodes || []).some(function (child) {
+      return !isIgnorableInfoboxSibling(child);
+    })) {
+      return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
+    }
+
+    for (const child of Array.from(rows.childNodes || [])) {
+      if (isInfoboxRowElement(child)) {
+        continue;
+      }
+      if (hasUnsupportedInfoboxRowExtra(child)) {
+        return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
+      }
+    }
+
+    for (const row of Array.from(rows.querySelectorAll(':scope > [data-wiki-infobox-part="row"], :scope > .wiki-infobox__row'))) {
+      for (const child of Array.from(row.childNodes || [])) {
+        if (getInfoboxImageExtraElement(child)) {
+          continue;
+        }
+        if (hasUnsupportedInfoboxRowExtra(child)) {
+          return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
+        }
+      }
+    }
+  }
+
+  return "";
+}
+
+function detectUnsupportedInfoboxImagesBeforeNormalization(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<div data-root="1">${String(html || "")}</div>`, "text/html");
+  const root = doc.body.firstElementChild;
+  if (!root) {
+    return "";
+  }
+
+  normalizeWikiInfoboxes(root);
+
+  for (const figure of Array.from(root.querySelectorAll('figure[data-wiki-infobox-part="image"], figure.wiki-infobox__image'))) {
+    if (isInfoboxImageFigureElement(figure) && !isSupportedInfoboxImageFigure(figure)) {
+      return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
+    }
+  }
+
+  return "";
+}
+
+const INFOBOX_INLINE_FLATTEN_BLOCK_TAGS = new Set(["address", "article", "blockquote", "div", "dl", "figure", "h1", "h2", "h3", "h4", "hr", "ol", "p", "pre", "section", "table", "ul"]);
+
+function appendInfoboxInlineChildren(document, target, source) {
+  let needsSeparator = false;
+  Array.from(source.childNodes || []).forEach(function (child) {
+    if (child.nodeType === 1) {
+      const tag = child.tagName.toLowerCase();
+      if (INFOBOX_INLINE_FLATTEN_BLOCK_TAGS.has(tag)) {
+        const childHadVisibleContent = hasVisibleInfoboxNode(child);
+        if (childHadVisibleContent) {
+          appendInfoboxCellSeparator(document, target);
+        }
+        appendInfoboxInlineChildren(document, target, child);
+        if (childHadVisibleContent) {
+          needsSeparator = true;
+        }
+        return;
+      }
+    }
+    if (needsSeparator && hasVisibleInfoboxNode(child)) {
+      appendInfoboxCellSeparator(document, target);
+    }
+    target.appendChild(child);
+    if (hasVisibleInfoboxNode(child)) {
+      needsSeparator = false;
+    }
+  });
+}
+
+function hasVisibleInfoboxNode(node) {
+  if (!node) {
+    return false;
+  }
+  if (node.nodeType === 3) {
+    return !!String(node.nodeValue || "").trim();
+  }
+  if (node.nodeType === 1) {
+    return !!String(node.textContent || "").trim();
+  }
+  return false;
+}
+
+function appendInfoboxCellSeparator(document, target) {
+  const text = String(target.textContent || "");
+  if (text.trim() && !/\s$/.test(text)) {
+    target.appendChild(document.createTextNode(" "));
+  }
+}
+
+function appendInfoboxNodeAsInline(document, target, node) {
+  if (!hasVisibleInfoboxNode(node)) {
+    return;
+  }
+
+  appendInfoboxCellSeparator(document, target);
+  if (node.nodeType === 3) {
+    target.appendChild(document.createTextNode(String(node.nodeValue || "").replace(/\s+/g, " ").trim()));
+    return;
+  }
+  if (node.nodeType === 1) {
+    appendInfoboxInlineChildren(document, target, node);
+    if (node.parentNode) {
+      node.parentNode.removeChild(node);
+    }
+  }
+}
+
+function createInfoboxCell(document, tagName, source) {
+  const cell = document.createElement(tagName);
+  if (source) {
+    appendInfoboxInlineChildren(document, cell, source);
+  }
+  return cell;
+}
+
+function normalizeInfoboxCell(document, cell) {
+  if (!cell) {
+    return;
+  }
+
+  const normalized = document.createElement(cell.tagName.toLowerCase());
+  appendInfoboxInlineChildren(document, normalized, cell);
+  while (cell.firstChild) {
+    cell.removeChild(cell.firstChild);
+  }
+  while (normalized.firstChild) {
+    cell.appendChild(normalized.firstChild);
+  }
+}
+
+function isNestedInInfoboxExtractionEntry(node, entries) {
+  return entries.some(function (entry) {
+    return entry.node !== node && entry.node.contains && entry.node.contains(node);
+  });
+}
+
+function appendInfoboxCellExtractionEntries(cell, entries) {
+  if (!cell) {
+    return;
+  }
+
+  Array.from(cell.querySelectorAll("img, figure")).forEach(function (node) {
+    if (isNestedInInfoboxExtractionEntry(node, entries)) {
+      return;
+    }
+
+    if (isInfoboxContentFigureExtraElement(node)) {
+      entries.push({ type: "content", node });
+      return;
+    }
+
+    if (getInfoboxImageExtraElement(node)) {
+      entries.push({ type: "image", node });
+    }
+  });
+}
+
+function appendInfoboxDirectRowExtractionEntry(node, entries) {
+  if (getInfoboxImageExtraElement(node)) {
+    entries.push({ type: "image", node });
+    return;
+  }
+  if (isInfoboxContentFigureExtraElement(node)) {
+    entries.push({ type: "content", node });
+  }
+}
+
+function getInfoboxRowExtractionEntries(row, term, value) {
+  const entries = [];
+  Array.from(row.childNodes || []).forEach(function (child) {
+    if (child === term || child === value) {
+      appendInfoboxCellExtractionEntries(child, entries);
+      return;
+    }
+    if (!isIgnorableInfoboxSibling(child)) {
+      appendInfoboxDirectRowExtractionEntry(child, entries);
+    }
+  });
+  return entries;
+}
+
+function moveInfoboxRowExtractionEntries(document, row, entries, insertFallback) {
+  if (!entries.length || !row.parentElement || !isInfoboxRowsElement(row.parentElement)) {
+    return;
+  }
+
+  const rows = row.parentElement;
+  const parent = rows.parentNode;
+  if (!parent) {
+    return;
+  }
+
+  entries.forEach(function (entry) {
+    if (!entry || !entry.node || !entry.node.parentNode) {
+      return;
+    }
+
+    if (entry.type === "image") {
+      const imageNode = getInfoboxImageExtraElement(entry.node);
+      if (!imageNode || !imageNode.parentNode) {
+        return;
+      }
+      const image = document.createElement("figure");
+      setInfoboxPart(image, "image");
+      image.appendChild(imageNode);
+      if (insertFallback) {
+        insertFallback(image);
+      } else {
+        parent.insertBefore(image, rows.nextSibling);
+      }
+      return;
+    }
+
+    if (entry.type === "content") {
+      const content = document.createElement("div");
+      setInfoboxPart(content, "content");
+      content.appendChild(entry.node);
+      if (insertFallback) {
+        insertFallback(content);
+      } else {
+        parent.insertBefore(content, rows.nextSibling);
+      }
+    }
+  });
+}
+
+function createInfoboxRowsFallbackInserter(rows) {
+  let cursor = rows;
+  return function (node) {
+    if (!node || !rows.parentNode) {
+      return;
+    }
+    rows.parentNode.insertBefore(node, cursor.nextSibling);
+    cursor = node;
+  };
+}
+
+function moveInfoboxRowsContentExtra(document, rows, node, insertFallback) {
+  if (!node || !node.parentNode || !isInfoboxRowsElement(rows)) {
+    return;
+  }
+
+  const content = document.createElement("div");
+  setInfoboxPart(content, "content");
+  content.appendChild(node);
+  if (insertFallback) {
+    insertFallback(content);
+  } else if (rows.parentNode) {
+    rows.parentNode.insertBefore(content, rows.nextSibling);
+  }
+}
+
+function repairInfoboxRow(document, row, insertFallback) {
+  row.removeAttribute("style");
+
+  const children = Array.from(row.children || []);
+  const term = children.find(function (child) {
+    return child.tagName && child.tagName.toLowerCase() === "dt";
+  }) || null;
+  const value = children.find(function (child) {
+    return child.tagName && child.tagName.toLowerCase() === "dd";
+  }) || null;
+  moveInfoboxRowExtractionEntries(document, row, getInfoboxRowExtractionEntries(row, term, value), insertFallback);
+
+  if (term) {
+    normalizeInfoboxCell(document, term);
+  }
+  if (value) {
+    normalizeInfoboxCell(document, value);
+  }
+  const extraNodes = Array.from(row.childNodes || []).filter(function (child) {
+    return child !== term && child !== value && !isIgnorableInfoboxSibling(child);
+  });
+  const extras = extraNodes.filter(function (child) {
+    return hasVisibleInfoboxNode(child);
+  });
+
+  if (term && value) {
+    extras.forEach(function (child) {
+      appendInfoboxNodeAsInline(document, value, child);
+    });
+    Array.from(row.childNodes || []).forEach(function (child) {
+      if (child !== term && child !== value && child.parentNode === row) {
+        row.removeChild(child);
+      }
+    });
+    if (term.nextSibling !== value) {
+      row.insertBefore(value, term.nextSibling);
+    }
+    return true;
+  }
+
+  if (term) {
+    const emptyValue = document.createElement("dd");
+    extras.forEach(function (child) {
+      appendInfoboxNodeAsInline(document, emptyValue, child);
+    });
+    Array.from(row.childNodes || []).forEach(function (child) {
+      if (child !== term && child.parentNode === row) {
+        row.removeChild(child);
+      }
+    });
+    row.appendChild(emptyValue);
+    return true;
+  }
+
+  if (value) {
+    extras.forEach(function (child) {
+      appendInfoboxNodeAsInline(document, value, child);
+    });
+    Array.from(row.childNodes || []).forEach(function (child) {
+      if (child !== value && child.parentNode === row) {
+        row.removeChild(child);
+      }
+    });
+    row.insertBefore(document.createElement("dt"), value);
+    return true;
+  }
+
+  if (!String(row.textContent || "").trim()) {
+    return false;
+  }
+
+  const termFromContent = createInfoboxCell(document, "dt", row);
+  while (row.firstChild) {
+    row.removeChild(row.firstChild);
+  }
+  row.appendChild(termFromContent);
+  row.appendChild(document.createElement("dd"));
+  return true;
+}
+
+function isIgnorableInfoboxSibling(node) {
+  if (!node) {
+    return true;
+  }
+  if (node.nodeType === 8) {
+    return true;
+  }
+  return node.nodeType === 3 && !String(node.nodeValue || "").trim();
+}
+
+function getNextSignificantInfoboxSibling(nodes, index, parent) {
+  for (let nextIndex = index + 1; nextIndex < nodes.length; nextIndex += 1) {
+    const next = nodes[nextIndex];
+    if (!next || next.parentElement !== parent) {
+      continue;
+    }
+    if (isIgnorableInfoboxSibling(next)) {
+      continue;
+    }
+    return {
+      index: nextIndex,
+      node: next
+    };
+  }
+  return null;
+}
+
+function normalizeInfoboxRows(document, root) {
+  root.querySelectorAll('[data-wiki-infobox-part="rows"], .wiki-infobox__rows').forEach(function (rows) {
+    if (!isInfoboxRowsElement(rows)) {
+      return;
+    }
+
+    const insertFallback = createInfoboxRowsFallbackInserter(rows);
+    const children = Array.from(rows.childNodes || []);
+    for (let index = 0; index < children.length; index += 1) {
+      const child = children[index];
+      const tagName = child && child.tagName ? child.tagName.toLowerCase() : "";
+
+      if (child.nodeType === 3 && hasVisibleInfoboxNode(child) && child.parentNode === rows) {
+        const row = document.createElement("div");
+        const term = document.createElement("dt");
+        setInfoboxPart(row, "row");
+        term.textContent = String(child.nodeValue || "").replace(/\s+/g, " ").trim();
+        row.appendChild(term);
+        row.appendChild(document.createElement("dd"));
+        rows.insertBefore(row, child);
+        rows.removeChild(child);
+        continue;
+      }
+
+      if (isInfoboxRowElement(child)) {
+        if (!repairInfoboxRow(document, child, insertFallback) && child.parentNode === rows) {
+          rows.removeChild(child);
+        }
+        continue;
+      }
+
+      if (
+        child &&
+        child.nodeType === 1 &&
+        child.parentElement === rows &&
+        !["dt", "dd"].includes(tagName) &&
+        !isIgnorableInfoboxSibling(child)
+      ) {
+        moveInfoboxRowsContentExtra(document, rows, child, insertFallback);
+        continue;
+      }
+
+      if (!child || !["dt", "dd"].includes(tagName) || child.parentElement !== rows) {
+        continue;
+      }
+
+      const next = getNextSignificantInfoboxSibling(children, index, rows);
+      const row = document.createElement("div");
+      setInfoboxPart(row, "row");
+      rows.insertBefore(row, child);
+      if (tagName === "dd") {
+        row.appendChild(document.createElement("dt"));
+      }
+      row.appendChild(child);
+      if (tagName === "dt" && next && next.node.tagName && next.node.tagName.toLowerCase() === "dd") {
+        row.appendChild(next.node);
+        index = next.index;
+      } else if (tagName === "dt") {
+        row.appendChild(document.createElement("dd"));
+      }
+      if (!repairInfoboxRow(document, row, insertFallback) && row.parentNode === rows) {
+        rows.removeChild(row);
+      }
+    }
+
+    const hasValidRows = Array.from(rows.children || []).some(function (child) {
+      return isInfoboxRowElement(child);
+    });
+    if (!hasValidRows && rows.parentNode) {
+      rows.parentNode.removeChild(rows);
+    }
+  });
+}
+
+function normalizeInfoboxImageHelpers(document, root) {
+  root.querySelectorAll('figure[data-wiki-infobox-part="image"], figure.wiki-infobox__image').forEach(function (figure) {
+    if (!isInfoboxImageFigureElement(figure) || isSupportedInfoboxImageFigure(figure)) {
+      return;
+    }
+
+    const content = document.createElement("div");
+    setInfoboxPart(content, "content");
+    figure.className = "image";
+    figure.removeAttribute("data-wiki-infobox-part");
+    if (figure.parentNode) {
+      figure.parentNode.insertBefore(content, figure);
+    }
+    content.appendChild(figure);
+  });
+}
+
+const INFOBOX_PART_CLASS_MAP = new Map([
+  ["title", "wiki-infobox__title"],
+  ["subtitle", "wiki-infobox__subtitle"],
+  ["image", "wiki-infobox__image"],
+  ["section", "wiki-infobox__section"],
+  ["rows", "wiki-infobox__rows"],
+  ["row", "wiki-infobox__row"],
+  ["content", "wiki-infobox__content"]
+]);
+
+const INFOBOX_DIRECT_LEGACY_PARTS = new Set([
+  "title",
+  "subtitle",
+  "image",
+  "section",
+  "rows",
+  "content"
+]);
+
+const INFOBOX_ROW_LEGACY_PARTS = new Set(["row"]);
+
+const EXPLICIT_INFOBOX_PART_SELECTOR = [
+  "[data-wiki-infobox-part]",
+  ".wiki-infobox__title",
+  ".wiki-infobox__subtitle",
+  ".wiki-infobox__image",
+  ".wiki-infobox__section",
+  ".wiki-infobox__rows",
+  ".wiki-infobox__row",
+  ".wiki-infobox__content"
+].join(", ");
+
+function getExplicitInfoboxPartFromElement(element) {
+  const explicitPart = (element.getAttribute("data-wiki-infobox-part") || "").trim();
+  if (INFOBOX_PART_CLASS_MAP.has(explicitPart)) {
+    return explicitPart;
+  }
+
+  const classList = element.classList ? Array.from(element.classList) : [];
+  for (const className of classList) {
+    if (!className.startsWith("wiki-infobox__")) {
+      continue;
+    }
+    const part = className.replace(/^wiki-infobox__/, "");
+    if (INFOBOX_PART_CLASS_MAP.has(part)) {
+      return part;
+    }
+  }
+
+  return "";
+}
+
+function getLegacyInfoboxPartFromElement(element, allowedParts) {
+  const classList = element.classList ? Array.from(element.classList) : [];
+  return classList.find(function (className) {
+    return allowedParts.has(className);
+  }) || "";
+}
+
+function setInfoboxPart(element, part) {
+  const className = INFOBOX_PART_CLASS_MAP.get(part);
+  if (!className) {
+    return;
+  }
+
+  element.className = className;
+  element.setAttribute("data-wiki-infobox-part", part);
+}
+
+const INFOBOX_CONTENT_BLOCK_TAGS = new Set(["blockquote", "div", "dl", "figure", "h1", "h2", "h3", "h4", "hr", "ol", "p", "pre", "table", "ul"]);
+
+function ensureInfoboxContentBlocks(document, element) {
+  const hasBlockChild = Array.from(element.children || []).some(function (child) {
+    return INFOBOX_CONTENT_BLOCK_TAGS.has(child.tagName.toLowerCase());
+  });
+  if (hasBlockChild || !Array.from(element.childNodes || []).some(hasVisibleInfoboxNode)) {
+    return;
+  }
+
+  const paragraph = document.createElement("p");
+  while (element.firstChild) {
+    paragraph.appendChild(element.firstChild);
+  }
+  element.appendChild(paragraph);
+}
+
+export function normalizeWikiInfoboxes(root) {
+  root.querySelectorAll("aside.infobox, aside.wiki-infobox, aside[data-wiki-node='infobox']").forEach(function (element) {
+    if (!isPluginOwnedInfoboxElement(element)) {
+      return;
+    }
+
+    element.className = "wiki-infobox";
+    element.setAttribute("data-wiki-node", "infobox");
+
+    Array.from(element.querySelectorAll(EXPLICIT_INFOBOX_PART_SELECTOR)).forEach(function (child) {
+      const part = getExplicitInfoboxPartFromElement(child);
+      if (part) {
+        setInfoboxPart(child, part);
+      }
+    });
+
+    Array.from(element.children || []).forEach(function (child) {
+      const part = getLegacyInfoboxPartFromElement(child, INFOBOX_DIRECT_LEGACY_PARTS);
+      if (part) {
+        if (part === "rows" && child.tagName.toLowerCase() !== "dl") {
+          setInfoboxPart(child, "content");
+          ensureInfoboxContentBlocks(root.ownerDocument, child);
+        } else {
+          setInfoboxPart(child, part);
+        }
+      }
+    });
+
+    Array.from(element.querySelectorAll('[data-wiki-infobox-part="rows"], .wiki-infobox__rows')).forEach(function (rows) {
+      Array.from(rows.children || []).forEach(function (child) {
+        if (getLegacyInfoboxPartFromElement(child, INFOBOX_ROW_LEGACY_PARTS)) {
+          setInfoboxPart(child, "row");
+        }
+      });
+    });
+  });
+}
+
+function isInsidePluginOwnedStructure(element) {
+  return !!(element && element.closest && element.closest('[data-wiki-node="alignment-table"], figure.wiki-poetry-quote, [data-wiki-node="poetry-quote"], [data-wiki-node="infobox"], .wiki-infobox'));
+}
+
+function isPluginOwnedStructuredElement(element) {
+  if (!element || !element.matches) {
+    return false;
+  }
+
+  return element.matches('[data-wiki-node="media-row"], [data-wiki-node="media-cell"], .wiki-media-row, .wiki-media-cell, [data-wiki-node="infobox"], .wiki-infobox');
 }
 
 export function normalizeLegacyPresentationalTags(document, root) {
@@ -572,6 +1449,10 @@ function elementContainsMedia(element) {
 
 export function normalizeLegacyMediaLayouts(document, root) {
   root.querySelectorAll("article, section, div").forEach(function (element) {
+    if (element.closest('[data-wiki-infobox-part="rows"], .wiki-infobox__rows')) {
+      return;
+    }
+
     const display = (element.style.display || "").trim().toLowerCase();
     if (!["flex", "grid", "inline-flex", "inline-grid"].includes(display)) {
       return;
@@ -692,6 +1573,10 @@ export function getFigureImageLinkElement(figure) {
 
 export function normalizeSupportedFigures(root) {
   root.querySelectorAll("figure").forEach(function (figure) {
+    if (isInfoboxImageFigureElement(figure)) {
+      return;
+    }
+
     if (!isSupportedImageFigure(figure)) {
       return;
     }
@@ -755,8 +1640,11 @@ export function normalizeLegacyHtmlForTiptap(html) {
     return "";
   }
 
+  normalizeWikiInfoboxes(root);
+  hoistTopLevelInfoboxes(root);
+
   root.querySelectorAll("article, section, div").forEach(function (element) {
-    if (isInsidePluginOwnedStructure(element) || isPluginOwnedMediaLayoutElement(element)) {
+    if (isInsidePluginOwnedStructure(element) || isPluginOwnedStructuredElement(element)) {
       return;
     }
 
@@ -781,6 +1669,7 @@ export function normalizeLegacyHtmlForTiptap(html) {
   normalizeLegacyTableStructures(doc, root);
   normalizeSupportedFigures(root);
   normalizeStyledSpans(doc, root);
+  normalizeInfoboxImageHelpers(doc, root);
 
   root.querySelectorAll("figcaption").forEach(function (element) {
     const parentTag = element.parentElement && element.parentElement.tagName ? element.parentElement.tagName.toLowerCase() : "";
@@ -794,12 +1683,18 @@ export function normalizeLegacyHtmlForTiptap(html) {
   });
 
   root.querySelectorAll("figure").forEach(function (element) {
-    if (!isSupportedImageFigure(element) && !isPoetryQuoteFigure(element)) {
+    if (!isSupportedImageFigure(element) && !isPoetryQuoteFigure(element) && !isInfoboxImageFigureElement(element)) {
       unwrapElement(element);
     }
   });
 
+  normalizeInfoboxRows(doc, root);
+
   root.querySelectorAll("dt").forEach(function (element) {
+    if (isInfoboxTermElement(element)) {
+      return;
+    }
+
     const paragraph = doc.createElement("p");
     const strong = doc.createElement("strong");
     while (element.firstChild) {
@@ -810,10 +1705,18 @@ export function normalizeLegacyHtmlForTiptap(html) {
   });
 
   root.querySelectorAll("dd").forEach(function (element) {
+    if (isInfoboxValueElement(element)) {
+      return;
+    }
+
     renameElement(doc, element, "p");
   });
 
   root.querySelectorAll("dl").forEach(function (element) {
+    if (isInfoboxRowsElement(element)) {
+      return;
+    }
+
     unwrapElement(element);
   });
 
@@ -835,6 +1738,16 @@ export function getNormalizationNotice(html) {
 }
 
 export function detectUnsupportedContent(html) {
+  const infoboxImagesNotice = detectUnsupportedInfoboxImagesBeforeNormalization(html);
+  if (infoboxImagesNotice) {
+    return infoboxImagesNotice;
+  }
+
+  const infoboxRowsNotice = detectUnsupportedInfoboxRowsBeforeNormalization(html);
+  if (infoboxRowsNotice) {
+    return infoboxRowsNotice;
+  }
+
   const trimmed = normalizeLegacyHtmlForTiptap(String(html || "")).trim();
   if (!trimmed) {
     return "";
@@ -854,8 +1767,18 @@ export function detectUnsupportedContent(html) {
       return `Legacy HTML uses <${tag}>, which this Tiptap surface does not preserve safely yet.`;
     }
 
-    if (tag === "figure" && !isSupportedImageFigure(element) && !isPoetryQuoteFigure(element)) {
-      return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
+    if (tag === "figure") {
+      if (isInfoboxImageFigureElement(element)) {
+        if (!isSupportedInfoboxImageFigure(element)) {
+          return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
+        }
+      } else if (!isSupportedImageFigure(element) && !isPoetryQuoteFigure(element)) {
+        return "Legacy HTML uses a figure layout that this Tiptap surface does not preserve safely yet.";
+      }
+    }
+
+    if (isInfoboxRowsElement(element) && !isSupportedInfoboxRowsStructure(element)) {
+      return "Legacy HTML uses definition rows that this Tiptap surface does not preserve safely yet.";
     }
 
     if (tag === "figcaption") {

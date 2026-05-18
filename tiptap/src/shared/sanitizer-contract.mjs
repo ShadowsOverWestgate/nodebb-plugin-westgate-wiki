@@ -136,11 +136,53 @@ export function sanitizeInlineStyles(root) {
   });
 }
 
+function isIgnorableTopLevelNode(node) {
+  return node && (
+    node.nodeType === Node.COMMENT_NODE ||
+    (node.nodeType === Node.TEXT_NODE && !String(node.nodeValue || "").trim())
+  );
+}
+
+function isTopLevelInfoboxElement(node) {
+  return !!(
+    node &&
+    node.nodeType === Node.ELEMENT_NODE &&
+    node.matches &&
+    node.matches('aside.wiki-infobox, aside[data-wiki-node="infobox"]')
+  );
+}
+
+export function hoistTopLevelInfoboxes(root) {
+  if (!root) {
+    return;
+  }
+
+  const infoboxes = Array.from(root.children || []).filter(isTopLevelInfoboxElement);
+  if (!infoboxes.length) {
+    return;
+  }
+
+  let anchor = root.firstChild;
+  while (anchor && isIgnorableTopLevelNode(anchor)) {
+    anchor = anchor.nextSibling;
+  }
+
+  infoboxes.forEach(function (infobox) {
+    if (infobox === anchor) {
+      anchor = infobox.nextSibling;
+      return;
+    }
+    root.insertBefore(infobox, anchor);
+    anchor = infobox.nextSibling;
+  });
+}
+
 export function sanitizeHtml(html) {
   const clean = DOMPurify.sanitize(String(html || ""), DOMPURIFY_OPTIONS);
   const parser = new DOMParser();
   const doc = parser.parseFromString(`<div>${clean}</div>`, "text/html");
   sanitizeAnchorTargets(doc.body);
   sanitizeInlineStyles(doc.body);
+  hoistTopLevelInfoboxes(doc.body.firstElementChild);
   return doc.body.innerHTML.trim();
 }

@@ -73,6 +73,24 @@ export function selectClickedImageNode(editor, target, editorMount) {
   return editor.chain().focus().setNodeSelection(selectionPos).run();
 }
 
+export function selectInfoboxImageSlot(editor, target, editorMount) {
+  if (!editor || !target || typeof target.closest !== "function") {
+    return false;
+  }
+
+  const slot = target.closest('figure[data-wiki-infobox-part="image"], figure.wiki-infobox__image');
+  if (!slot || (editorMount && !editorMount.contains(slot))) {
+    return false;
+  }
+
+  const selectionPos = findNodeSelectionPos(editor, slot, ["wikiInfoboxImage"]);
+  if (selectionPos == null) {
+    return false;
+  }
+
+  return editor.chain().focus().setNodeSelection(selectionPos).run();
+}
+
 function isEffectivelyEmptyMediaCell(cellElement) {
   if (!cellElement) {
     return false;

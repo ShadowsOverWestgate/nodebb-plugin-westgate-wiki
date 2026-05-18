@@ -1,4 +1,5 @@
 import { mergeAttributes, Node } from "@tiptap/core";
+import { NodeSelection } from "@tiptap/pm/state";
 
 export const DND_ALIGNMENT_OPTIONS = [
   { id: "lg", label: "Lawful Good", abbreviation: "LG" },
@@ -15,6 +16,14 @@ export const DND_ALIGNMENT_OPTIONS = [
 const ALIGNMENT_IDS = new Set(DND_ALIGNMENT_OPTIONS.map(function (option) {
   return option.id;
 }));
+const INFOBOX_HELPER_NODE_NAMES = new Set([
+  "wikiInfoboxTitle",
+  "wikiInfoboxSubtitle",
+  "wikiInfoboxImage",
+  "wikiInfoboxSection",
+  "wikiInfoboxRows",
+  "wikiInfoboxContent"
+]);
 
 export function normalizeAlignments(value) {
   const values = Array.isArray(value) ? value : String(value || "").split(/\s+/);
@@ -27,6 +36,157 @@ export function normalizeAlignments(value) {
 
 export function normalizeAlignmentTableMode(value) {
   return String(value || "").trim().toLowerCase() === "full" ? "full" : "compact";
+}
+
+function getAlignmentTableAttrs(attributes) {
+  return {
+    highlighted: normalizeAlignments(attributes && attributes.highlighted).join(" "),
+    mode: normalizeAlignmentTableMode(attributes && attributes.mode)
+  };
+}
+
+function isInfoboxHelperNode(node) {
+  return !!(node && INFOBOX_HELPER_NODE_NAMES.has(node.type.name));
+}
+
+function findActiveInfobox(state) {
+  const { $from, from, node } = state.selection;
+  if (node && node.type.name === "wikiInfobox") {
+    return {
+      node,
+      pos: from
+    };
+  }
+
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    const ancestor = $from.node(depth);
+    if (ancestor.type.name === "wikiInfobox") {
+      return {
+        node: ancestor,
+        pos: $from.before(depth)
+      };
+    }
+  }
+  return null;
+}
+
+function findInfoboxHelperChild(context, childPos) {
+  let result = null;
+  context.node.forEach(function (child, offset, index) {
+    if (result) {
+      return;
+    }
+    const pos = context.pos + 1 + offset;
+    if (pos === childPos) {
+      result = {
+        index,
+        node: child,
+        pos
+      };
+    }
+  });
+  return result;
+}
+
+function findDirectInfoboxHelperAtResolvedPos(context, $pos) {
+  for (let depth = $pos.depth; depth > 0; depth -= 1) {
+    const ancestor = $pos.node(depth);
+    const parent = depth > 0 ? $pos.node(depth - 1) : null;
+    if (isInfoboxHelperNode(ancestor) && parent && parent.type.name === "wikiInfobox") {
+      return findInfoboxHelperChild(context, $pos.before(depth));
+    }
+  }
+  return null;
+}
+
+function findActiveInfoboxHelper(state, context) {
+  const infobox = context || findActiveInfobox(state);
+  if (!infobox) {
+    return null;
+  }
+
+  const { $from, $to, from, node } = state.selection;
+  if (isInfoboxHelperNode(node) && $from.parent.type.name === "wikiInfobox") {
+    const directChild = findInfoboxHelperChild(infobox, from);
+    if (directChild) {
+      return {
+        infobox,
+        helper: directChild
+      };
+    }
+  }
+
+  const fromHelper = findDirectInfoboxHelperAtResolvedPos(infobox, $from);
+  const toHelper = findDirectInfoboxHelperAtResolvedPos(infobox, $to);
+  if (!fromHelper || !toHelper || fromHelper.pos !== toHelper.pos) {
+    return null;
+  }
+
+  return {
+    infobox,
+    helper: fromHelper
+  };
+}
+
+function isInsideInfoboxContent(state) {
+  const { $from } = state.selection;
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    if ($from.node(depth).type.name === "wikiInfoboxContent") {
+      return true;
+    }
+  }
+  return false;
+}
+
+function findLastInfoboxContent(context) {
+  let result = null;
+  context.node.forEach(function (child, offset) {
+    if (child.type.name === "wikiInfoboxContent") {
+      result = {
+        node: child,
+        pos: context.pos + 1 + offset
+      };
+    }
+  });
+  return result;
+}
+
+function insertAlignmentTableInActiveInfobox(state, dispatch, attrs) {
+  if (isInsideInfoboxContent(state)) {
+    return false;
+  }
+
+  const context = findActiveInfobox(state);
+  const contentType = state.schema.nodes.wikiInfoboxContent;
+  const tableType = state.schema.nodes.wikiAlignmentTable;
+  if (!context || !contentType || !tableType) {
+    return false;
+  }
+
+  const table = tableType.create(attrs);
+  if (dispatch) {
+    const activeHelper = findActiveInfoboxHelper(state, context);
+    if (activeHelper && activeHelper.helper.node.type.name !== "wikiInfoboxContent") {
+      const insertPos = activeHelper.helper.pos + activeHelper.helper.node.nodeSize;
+      const tr = state.tr.insert(insertPos, contentType.create(null, table));
+      tr.setSelection(NodeSelection.create(tr.doc, insertPos + 1));
+      dispatch(tr.scrollIntoView());
+    } else {
+      const existingContent = findLastInfoboxContent(context);
+      if (existingContent) {
+        const insertPos = existingContent.pos + existingContent.node.nodeSize - 1;
+        const tr = state.tr.insert(insertPos, table);
+        tr.setSelection(NodeSelection.create(tr.doc, insertPos));
+        dispatch(tr.scrollIntoView());
+      } else {
+        const insertPos = context.pos + context.node.nodeSize - 1;
+        const tr = state.tr.insert(insertPos, contentType.create(null, table));
+        tr.setSelection(NodeSelection.create(tr.doc, insertPos + 1));
+        dispatch(tr.scrollIntoView());
+      }
+    }
+  }
+  return true;
 }
 
 const WikiAlignmentTable = Node.create({
@@ -88,13 +248,16 @@ const WikiAlignmentTable = Node.create({
   },
   addCommands() {
     return {
-      insertWikiAlignmentTable: attributes => ({ commands }) => commands.insertContent({
-        type: this.name,
-        attrs: {
-          highlighted: normalizeAlignments(attributes && attributes.highlighted).join(" "),
-          mode: normalizeAlignmentTableMode(attributes && attributes.mode)
+      insertWikiAlignmentTable: attributes => ({ commands, dispatch, state }) => {
+        const attrs = getAlignmentTableAttrs(attributes);
+        if (insertAlignmentTableInActiveInfobox(state, dispatch, attrs)) {
+          return true;
         }
-      }),
+        return commands.insertContent({
+          type: this.name,
+          attrs
+        });
+      },
       updateWikiAlignmentTable: attributes => ({ commands }) => commands.updateAttributes(this.name, {
         highlighted: normalizeAlignments(attributes && attributes.highlighted).join(" "),
         mode: normalizeAlignmentTableMode(attributes && attributes.mode)

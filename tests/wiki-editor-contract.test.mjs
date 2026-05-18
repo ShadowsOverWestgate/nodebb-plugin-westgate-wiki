@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { NodeSelection } from "@tiptap/pm/state";
 
 import { installJsdomGlobals } from "./helpers/jsdom-setup.mjs";
 
@@ -21,7 +22,7 @@ function test(name, fn) {
 
 installJsdomGlobals();
 
-const [{ Editor }, StarterKitModule, HighlightModule, ImageModule, TableModule, TableCellModule, TableHeaderModule, TableRowModule, PreservedNodeAttributesModule, StyledSpanModule, ContainerBlockModule, MediaRowModule, ImageFigureModule, WikiAlignmentTableModule, WikiCalloutModule, WikiPoetryQuoteModule, WikiEditingKeymapModule, SlashCommandModule, WikiCodeBlockModule, WikiBlockBackgroundModule, WikiLinkModule, WikiEntitiesModule, toolbarSchemaModule, editorTocModule, linkInteractionsModule, imageResizeModule, mediaSelectionModule, mediaCellSelectionModule, legacyHtmlModule, sanitizerContractModule, colorContrastModule] = await Promise.all([
+const [{ Editor }, StarterKitModule, HighlightModule, ImageModule, TableModule, TableCellModule, TableHeaderModule, TableRowModule, PreservedNodeAttributesModule, StyledSpanModule, ContainerBlockModule, MediaRowModule, ImageFigureModule, WikiAlignmentTableModule, WikiCalloutModule, WikiPoetryQuoteModule, WikiInfoboxModule, WikiEditingKeymapModule, SlashCommandModule, WikiCodeBlockModule, WikiBlockBackgroundModule, WikiLinkModule, WikiEntitiesModule, toolbarSchemaModule, editorTocModule, linkInteractionsModule, imageResizeModule, mediaSelectionModule, mediaCellSelectionModule, legacyHtmlModule, sanitizerContractModule, colorContrastModule] = await Promise.all([
   import("@tiptap/core"),
   import("@tiptap/starter-kit"),
   import("../tiptap/src/extensions/wiki-highlight.mjs"),
@@ -38,6 +39,7 @@ const [{ Editor }, StarterKitModule, HighlightModule, ImageModule, TableModule, 
   import("../tiptap/src/extensions/wiki-alignment-table.mjs"),
   import("../tiptap/src/extensions/wiki-callout.mjs"),
   import("../tiptap/src/extensions/wiki-poetry-quote.mjs"),
+  import("../tiptap/src/extensions/wiki-infobox.mjs"),
   import("../tiptap/src/extensions/wiki-editing-keymap.mjs"),
   import("../tiptap/src/extensions/slash-command.mjs"),
   import("../tiptap/src/extensions/wiki-code-block.mjs"),
@@ -77,6 +79,18 @@ const ImageFigure = ImageFigureModule.default;
 const WikiAlignmentTable = WikiAlignmentTableModule.default;
 const WikiCallout = WikiCalloutModule.default;
 const WikiPoetryQuote = WikiPoetryQuoteModule.default;
+const WikiInfobox = WikiInfoboxModule.default;
+const {
+  WikiInfoboxContent,
+  WikiInfoboxImage,
+  WikiInfoboxRow,
+  WikiInfoboxRows,
+  WikiInfoboxSection,
+  WikiInfoboxSubtitle,
+  WikiInfoboxTerm,
+  WikiInfoboxTitle,
+  WikiInfoboxValue
+} = WikiInfoboxModule;
 const WikiEditingKeymap = WikiEditingKeymapModule.default;
 const SlashCommand = SlashCommandModule.default;
 const WikiCodeBlock = WikiCodeBlockModule.default;
@@ -91,7 +105,8 @@ const {
   focusMediaCell,
   handleMediaCellSelectionClick,
   isMediaCellSurfaceTarget,
-  selectClickedImageNode
+  selectClickedImageNode,
+  selectInfoboxImageSlot
 } = mediaSelectionModule;
 const {
   MEDIA_CELL_SELECTION_PLUGIN_KEY,
@@ -155,6 +170,16 @@ function createEditor(content) {
       WikiAlignmentTable,
       WikiCallout,
       WikiPoetryQuote,
+      WikiInfoboxTitle,
+      WikiInfoboxSubtitle,
+      WikiInfoboxImage,
+      WikiInfoboxSection,
+      WikiInfoboxRows,
+      WikiInfoboxRow,
+      WikiInfoboxTerm,
+      WikiInfoboxValue,
+      WikiInfoboxContent,
+      WikiInfobox,
       WikiEditingKeymap,
       WikiCodeBlock,
       WikiBlockBackground,
@@ -199,6 +224,24 @@ function createEditor(content) {
   });
 }
 
+function createPartialInfoboxEditor(content) {
+  const mount = document.createElement("div");
+  document.body.appendChild(mount);
+
+  return new Editor({
+    element: mount,
+    extensions: [
+      StarterKit.configure({
+        codeBlock: false,
+        link: false
+      }),
+      WikiInfoboxTitle,
+      WikiInfobox
+    ],
+    content: content || ""
+  });
+}
+
 function findNodePositions(editor, typeName) {
   const positions = [];
   editor.state.doc.descendants(function (node, pos) {
@@ -223,6 +266,31 @@ function findJsonNode(node, typeName) {
     }
   }
   return null;
+}
+
+function findJsonNodes(node, typeName, matches) {
+  const results = matches || [];
+  if (!node) {
+    return results;
+  }
+  if (node.type === typeName) {
+    results.push(node);
+  }
+  for (const child of node.content || []) {
+    findJsonNodes(child, typeName, results);
+  }
+  return results;
+}
+
+function collectJsonNodeTypes(node, types) {
+  if (!node) {
+    return types;
+  }
+  types.add(node.type);
+  for (const child of node.content || []) {
+    collectJsonNodeTypes(child, types);
+  }
+  return types;
 }
 
 function findTextRange(editor, text) {
@@ -337,6 +405,134 @@ await test("detectUnsupportedContent rejects unsupported embeds and accepts supp
   assert.equal(
     detectUnsupportedContent('<figure class="image"><img src="/ok.png" alt="Ok"><figcaption><span class="legacy-accent">Safe</span></figcaption></figure>'),
     ""
+  );
+});
+
+await test("detectUnsupportedContent accepts schema-compatible infobox image helpers", function () {
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"></figure></aside>'),
+    ""
+  );
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/portrait.png" alt="Portrait"></figure></aside>'),
+    ""
+  );
+});
+
+await test("detectUnsupportedContent rejects schema-incompatible infobox image helpers", function () {
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><p>Caption</p></figure></aside>'),
+    /figure layout/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/one.png" alt="One"><img src="/two.png" alt="Two"></figure></aside>'),
+    /figure layout/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image">Caption</figure></aside>'),
+    /figure layout/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/one.png" alt="One"> Caption</figure></aside>'),
+    /figure layout/
+  );
+});
+
+await test("detectUnsupportedContent accepts canonical infobox rows", function () {
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>'),
+    ""
+  );
+});
+
+await test("detectUnsupportedContent accepts infobox row media normalized into image helpers", function () {
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"></div></dl></aside>'),
+    ""
+  );
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><img src="/seal.png" alt="Seal"></div></dl></aside>'),
+    ""
+  );
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><img src="/seal.png" alt="Seal"></figure></div></dl></aside>'),
+    ""
+  );
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><img src="/term.png" alt="Term">House</dt><dd>Voss</dd></div></dl></aside>'),
+    ""
+  );
+  assert.equal(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd><figure class="image"><img src="/value.png" alt="Value"></figure>Voss</dd></div></dl></aside>'),
+    ""
+  );
+});
+
+await test("detectUnsupportedContent rejects noncanonical infobox rows helper tags", function () {
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><div data-wiki-infobox-part="rows"><dt>House</dt><dd>Voss</dd></div></aside>'),
+    /definition rows/
+  );
+});
+
+await test("detectUnsupportedContent accepts safe legacy inline formatting in infobox rows", function () {
+  const html = '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><b>House</b></dt><dd><i>Voss</i> <font color="#caa55a">Gold</font> Line<br>Break</dd></div></dl></aside>';
+  const normalized = normalizeLegacyHtmlForTiptap(html);
+
+  assert.equal(detectUnsupportedContent(html), "");
+  assert.match(normalized, /<dt><strong>House<\/strong><\/dt>/);
+  assert.match(normalized, /<em>Voss<\/em>/);
+  assert.match(normalized, /Gold/);
+  assert.match(normalized, /Line<br>Break/);
+  assert.doesNotMatch(normalized, /<b>|<i>|<font/);
+});
+
+await test("infobox row cell block children preserve text boundaries", function () {
+  const html = '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><p>House</p><p>Name</p></dt><dd><p>House</p><p>Voss</p></dd></div></dl></aside>';
+  const normalized = normalizeLegacyHtmlForTiptap(html);
+  const editor = createEditor(html);
+  const rendered = editor.getHTML();
+
+  assert.equal(detectUnsupportedContent(html), "");
+  assert.match(normalized, /<dt>House Name<\/dt><dd>House Voss<\/dd>/);
+  assert.doesNotMatch(normalized, /HouseName|HouseVoss/);
+  assert.match(rendered, /<dt>House Name<\/dt><dd>House Voss<\/dd>/);
+  assert.doesNotMatch(rendered, /HouseName|HouseVoss/);
+  editor.destroy();
+});
+
+await test("detectUnsupportedContent rejects lossy infobox row media", function () {
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><img src="/seal.png" alt="Seal"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><hr></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><input type="checkbox" checked></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><a><img src="/seal.png" alt="Seal"></a></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><span><input type="checkbox" checked></span></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss <hr></dd></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House <input type="checkbox" checked></dt><dd>Voss</dd></div></dl></aside>'),
+    /definition rows/
+  );
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd><figure class="image"><a href="/seal-full.png"><img src="/seal.png" alt="Seal"></a><figcaption>Seal</figcaption></figure>Voss</dd></div></dl></aside>'),
+    /definition rows/
   );
 });
 
@@ -625,6 +821,21 @@ await test("block background command auto-selects a legible foreground for custo
   editor.destroy();
 });
 
+await test("infobox key-value cells preserve and accept block text styling", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt style="text-align: center">House</dt><dd>Voss</dd></div></dl></aside>');
+
+  assert.match(editor.getHTML(), /<dt style="text-align: center;">House<\/dt>/);
+
+  editor.commands.setTextSelection(findTextRange(editor, "Voss").from + 1);
+  assert.equal(editor.commands.setWikiBlockBackground({ backgroundColor: "#111827" }), true);
+  assert.match(editor.getHTML(), /<dd style="background-color: rgb\(17, 24, 39\); color: rgb\(249, 250, 251\);?">Voss<\/dd>/);
+
+  editor.commands.setTextSelection(findTextRange(editor, "House").from + 1);
+  assert.equal(editor.commands.setWikiBlockBackground({ backgroundColor: "#fef08a" }), true);
+  assert.match(editor.getHTML(), /<dt style="text-align: center; background-color: rgb\(254, 240, 138\); color: rgb\(17, 24, 39\);?">House<\/dt>/);
+  editor.destroy();
+});
+
 await test("editor color contrast helpers normalize custom hex colors and choose readable text", function () {
   assert.equal(normalizeHexColor("abc"), "#aabbcc");
   assert.equal(normalizeHexColor("#3B0764"), "#3b0764");
@@ -643,6 +854,8 @@ await test("editor toolbar exposes highlight and text block background color pal
   assert.match(editorBundleSource, /const BLOCK_BACKGROUND_COLOR_OPTIONS = \[/);
   assert.match(editorBundleSource, /setWikiBlockBackground\(\{ backgroundColor, textColor \}\)/);
   assert.match(editorBundleSource, /unsetWikiBlockBackground\(\)/);
+  assert.match(editorBundleSource, /TextAlign\.configure\(\{[\s\S]*types:\s*\[[^\]]*"wikiInfoboxTerm"[\s\S]*"wikiInfoboxValue"/);
+  assert.match(vendoredEditorBundleSource, /types:\["heading","paragraph","wikiInfoboxTitle","wikiInfoboxSubtitle","wikiInfoboxSection","wikiInfoboxTerm","wikiInfoboxValue"\]/);
   assert.match(editorCss, /\.wiki-editor-color-menu\s*\{/);
   assert.match(editorCss, /\.wiki-editor-color-swatch\s*\{/);
   assert.match(editorCss, /\.wiki-editor-color-custom\s*\{/);
@@ -683,6 +896,89 @@ await test("media cell style css exists in article and editor prose", function (
   assert.match(editorCss, /\.wiki-editor-media-cell-color-menu__value\s*\{/);
 });
 
+await test("wikiInfobox source HTML copies between editor instances", function () {
+  const sourceEditor = createEditor("<p>Before</p>");
+  sourceEditor.commands.insertWikiInfobox();
+  const copiedHtml = sanitizeHtml(sourceEditor.getHTML()).match(/<aside class="wiki-infobox"[\s\S]*?<\/aside>/)[0];
+
+  const targetEditor = createEditor("<p>Target</p>");
+  targetEditor.commands.insertContent(copiedHtml);
+  const rendered = targetEditor.getHTML();
+
+  assert.match(rendered, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.equal(findJsonNode(targetEditor.getJSON(), "wikiInfobox").type, "wikiInfobox");
+
+  sourceEditor.destroy();
+  targetEditor.destroy();
+});
+
+await test("wikiInfobox normalization hoists top-level infoboxes before article blocks", function () {
+  const source = [
+    "<p>Intro text.</p>",
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Shar</div>',
+    "</aside>",
+    "<p>Body text.</p>"
+  ].join("");
+  const normalized = normalizeLegacyHtmlForTiptap(source);
+  const sanitized = sanitizeHtml(source);
+
+  assert.ok(normalized.indexOf('<aside class="wiki-infobox"') < normalized.indexOf("<p>Intro text.</p>"));
+  assert.ok(sanitized.indexOf('<aside class="wiki-infobox"') < sanitized.indexOf("<p>Intro text.</p>"));
+});
+
+await test("wikiInfobox css defines reader float, narrow full-width layout, and editor rail", function () {
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*float:\s*right/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*var\(--wiki-infobox-reader-width\)/);
+  assert.match(articleBodyCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*float:\s*none/);
+  assert.match(articleBodyCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{[\s\S]*\.wiki-article-prose \.wiki-infobox\s*\{[\s\S]*width:\s*100%/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__title\s*\{/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__image\s*\{[^}]*box-sizing:\s*border-box[^}]*padding:\s*0\.75rem\s+0\.75rem\s+0[^}]*width:\s*100%/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row\s*\{/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row > dt,\s*\.wiki-article-prose \.wiki-infobox__row > dd\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__row > dd\s*\{[^}]*min-width:\s*0/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__content\s*\{[^}]*padding:\s*0\.75rem\s+0\.85rem/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-infobox__content \.wiki-alignment-table\s*\{[^}]*margin-left:\s*auto[^}]*margin-right:\s*auto/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*float:\s*right[^}]*clear:\s*right[^}]*width:\s*min\(22rem,\s*42%\)/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__surface\s*\{[^}]*container-type:\s*inline-size/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__surface\s*\{[^}]*container-name:\s*wiki-editor-surface/);
+  assert.match(editorCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*float:\s*none/);
+  assert.match(editorCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*clear:\s*both/);
+  assert.match(editorCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*width:\s*100%/);
+  assert.match(editorCss, /@media\s*\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*margin:\s*1rem\s+0/);
+  assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*float:\s*none/);
+  assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*clear:\s*both/);
+  assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*width:\s*100%/);
+  assert.match(editorCss, /@container\s+wiki-editor-surface\s+\(max-width:\s*767\.98px\)\s*\{\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*margin:\s*1rem\s+0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image\s*\{[^}]*background:\s*transparent[^}]*border:\s*0[^}]*box-shadow:\s*none[^}]*box-sizing:\s*border-box[^}]*max-width:\s*100%[^}]*padding:\s*0\.75rem\s+0\.75rem\s+0[^}]*width:\s*100%/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty\s*\{[^}]*cursor:\s*pointer[^}]*min-height:\s*4rem/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty:{1,2}before\s*\{[^}]*content:\s*"Upload image"[^}]*letter-spacing:\s*0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image img\s*\{[^}]*display:\s*block[^}]*max-width:\s*100%[^}]*margin:\s*0 auto/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__section\s*\{[^}]*letter-spacing:\s*0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dt,\s*\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[^}]*overflow-wrap:\s*anywhere/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row > dd\s*\{[^}]*min-width:\s*0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content\s*\{[^}]*padding:\s*0\.75rem\s+0\.85rem/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content \.wiki-alignment-table\s*\{[^}]*margin-left:\s*auto[^}]*margin-right:\s*auto/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :first-child\s*\{[^}]*margin-top:\s*0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :last-child\s*\{[^}]*margin-bottom:\s*0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*position:\s*absolute/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*z-index:\s*22/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*flex-direction:\s*column/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*flex-wrap:\s*nowrap/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*max-height:\s*min\(calc\(100vh\s*-\s*2rem\),\s*28rem\)/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*overflow-y:\s*auto/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\[hidden\]\s*\{[^}]*display:\s*none/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox\s*\{[^}]*float:\s*right[^}]*clear:\s*right[^}]*width:\s*min\(22rem,\s*42%\)/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image\s*\{[^}]*box-sizing:\s*border-box[^}]*max-width:\s*100%[^}]*width:\s*100%/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty\s*\{[^}]*cursor:\s*pointer[^}]*min-height:\s*4rem/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty:{1,2}before\s*\{[^}]*content:\s*"Upload image"[^}]*letter-spacing:\s*0/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content \.wiki-alignment-table\s*\{[^}]*margin-left:\s*auto[^}]*margin-right:\s*auto/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*max-height:\s*min\(calc\(100vh\s*-\s*2rem\),\s*28rem\)[^}]*overflow-y:\s*auto/);
+});
+
 await test("table cell block backgrounds keep their paired foreground color", function () {
   const editor = createEditor("<table><tbody><tr><td><p>Cell background</p></td></tr></tbody></table>");
 
@@ -698,6 +994,22 @@ await test("table cell paragraphs have no margins in article and editor prose", 
   [editorCss, vendoredEditorCss].forEach(function (css) {
     assert.match(css, /\.westgate-wiki-compose\s+\.wiki-editor__content\s+:where\(td,\s*th\)\s*>\s*p\s*\{[^}]*margin:\s*0/s);
   });
+});
+
+await test("article tables can shrink or fill beside floated infoboxes", function () {
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*width:\s*auto/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*max-width:\s*100%/s);
+  assert.doesNotMatch(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*\n\s*width:\s*100%/s);
+  assert.doesNotMatch(articleBodyCss, /\.wiki-article-prose\s+table\[style\*="width:100%"\],\s*\.wiki-article-prose\s+table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*auto\s*!important/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s*\{[^}]*--wiki-infobox-reader-width:\s*min\(22rem,\s*42%\)/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s*\{[^}]*--wiki-infobox-reader-gutter:\s*1\.25rem/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+\.wiki-infobox\s*\{[^}]*width:\s*var\(--wiki-infobox-reader-width\)/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+\.wiki-infobox\s*\{[^}]*margin:\s*0\.25rem\s+0\s+1rem\s+var\(--wiki-infobox-reader-gutter\)/s);
+  assert.match(articleBodyCss, /@media\s*\(min-width:\s*768px\)\s*\{[\s\S]*\.wiki-article-prose\s+\.wiki-infobox\s*~\s*table\[style\*="width:100%"\],\s*\.wiki-article-prose\s+\.wiki-infobox\s*~\s*table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)\s*!important[^}]*max-width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)/s);
+  assert.match(articleBodyCss, /@media\s*\(min-width:\s*768px\)\s*\{[\s\S]*\.wiki-article-prose\s+\.wiki-infobox\s*~\s*:where\(\.tableWrapper,\s*\.table-responsive,\s*\.table-responsive-md,\s*figure\.table\)\s*\{[^}]*width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)[^}]*max-width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)/s);
+  assert.match(articleBodyCss, /@media\s*\(min-width:\s*768px\)\s*\{[\s\S]*\.wiki-article-prose\s+\.wiki-infobox\s*~\s*:where\(\.tableWrapper,\s*\.table-responsive,\s*\.table-responsive-md,\s*figure\.table\)\s*>\s*table\[style\*="width:100%"\],\s*\.wiki-article-prose\s+\.wiki-infobox\s*~\s*:where\(\.tableWrapper,\s*\.table-responsive,\s*\.table-responsive-md,\s*figure\.table\)\s*>\s*table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*100%\s*!important[^}]*max-width:\s*100%/s);
+  assert.match(articleBodyCss, /@media\s*\(min-width:\s*768px\)\s*\{\s*@supports\s+selector\(:has\(>\s*\.wiki-infobox\)\)\s*\{[\s\S]*\.wiki-article-prose:has\(>\s*\.wiki-infobox\)\s*>\s*table\[style\*="width:100%"\],\s*\.wiki-article-prose:has\(>\s*\.wiki-infobox\)\s*>\s*table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)\s*!important[^}]*max-width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)/s);
+  assert.match(articleBodyCss, /@media\s*\(min-width:\s*768px\)\s*\{\s*@supports\s+selector\(:has\(>\s*\.wiki-infobox\)\)\s*\{[\s\S]*\.wiki-article-prose\s*>\s*\.card-body:has\(>\s*\.wiki-infobox\)\s*>\s*table\[style\*="width:100%"\],\s*\.wiki-article-prose\s*>\s*\.card-body:has\(>\s*\.wiki-infobox\)\s*>\s*table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)\s*!important[^}]*max-width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)/s);
 });
 
 await test("saved table colgroup widths reload into Tiptap column width attrs", function () {
@@ -826,6 +1138,25 @@ await test("alignment table full mode preserves full labels as secondary display
   editor.destroy();
 });
 
+await test("alignment table command inserts inside an active infobox without splitting it", function () {
+  const editor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><div class="wiki-infobox__section" data-wiki-infobox-part="section">Powers</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside><p>After</p>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.insertWikiAlignmentTable({ highlighted: ["tn"], mode: "full" }), true);
+
+  const json = editor.getJSON();
+  assert.deepEqual(json.content.map(function (node) { return node.type; }), ["paragraph", "wikiInfobox", "paragraph"]);
+  assert.equal(findJsonNodes(json, "wikiInfobox").length, 1);
+  const infobox = findJsonNode(json, "wikiInfobox");
+  assert.deepEqual(infobox.content.map(function (node) { return node.type; }), ["wikiInfoboxTitle", "wikiInfoboxContent", "wikiInfoboxSection", "wikiInfoboxRows"]);
+  const chart = findJsonNode(infobox, "wikiAlignmentTable");
+  assert.ok(chart);
+  assert.equal(chart.attrs.highlighted, "tn");
+  assert.equal(chart.attrs.mode, "full");
+  assert.match(editor.getHTML(), /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><div class="wiki-alignment-table/);
+  editor.destroy();
+});
+
 await test("normalizeLegacyHtmlForTiptap preserves saved alignment tables as plugin-owned structures", function () {
   const savedHtml = '<div class="wiki-alignment-table wiki-alignment-table--compact" data-wiki-node="alignment-table" data-alignments="lg tn" data-mode="compact" contenteditable="false"><div class="wiki-alignment-table__cell wiki-alignment-table__cell--active" data-alignment="lg">LG</div><div class="wiki-alignment-table__cell" data-alignment="ng">NG</div></div>';
   const normalized = normalizeLegacyHtmlForTiptap(savedHtml);
@@ -833,6 +1164,228 @@ await test("normalizeLegacyHtmlForTiptap preserves saved alignment tables as plu
   assert.match(normalized, /data-wiki-node="alignment-table"/);
   assert.match(normalized, /<div class="wiki-alignment-table__cell wiki-alignment-table__cell--active" data-alignment="lg">LG<\/div>/);
   assert.doesNotMatch(normalized, /<p class="wiki-alignment-table__cell/);
+});
+
+await test("normalizeLegacyHtmlForTiptap preserves saved infoboxes as plugin-owned structures", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>'
+  );
+
+  assert.match(normalized, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.match(normalized, /data-wiki-infobox-part="title"/);
+  assert.match(normalized, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">/);
+  assert.match(normalized, /<dt>House<\/dt><dd>Voss<\/dd>/);
+});
+
+await test("normalizeLegacyHtmlForTiptap preserves saved infobox image helpers", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/selene.png" alt="Selene"></figure></aside>'
+  );
+
+  assert.match(normalized, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/selene\.png" alt="Selene"><\/figure>/);
+  assert.doesNotMatch(normalized, /<figure class="image"/);
+});
+
+await test("normalizeLegacyHtmlForTiptap only preserves canonical infobox definition rows", function () {
+  const canonical = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>'
+  );
+  const genericContent = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__content" data-wiki-infobox-part="content"><dl><dt>Loose</dt><dd>Value</dd></dl></div></aside>'
+  );
+  const malformedRows = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><dt>Loose</dt><dd>Value</dd></dl></aside>'
+  );
+
+  assert.match(canonical, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl>/);
+  assert.doesNotMatch(genericContent, /<dl/);
+  assert.doesNotMatch(genericContent, /<dt/);
+  assert.doesNotMatch(genericContent, /<dd/);
+  assert.match(genericContent, /<p><strong>Loose<\/strong><\/p><p>Value<\/p>/);
+  assert.match(malformedRows, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Loose<\/dt><dd>Value<\/dd><\/div><\/dl>/);
+});
+
+await test("normalizeLegacyHtmlForTiptap repairs malformed infobox rows without dropping visible text", function () {
+  const valueOnly = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><dd>Value</dd></dl></aside>'
+  );
+  const rowWithProse = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><p>Text</p></div></dl></aside>'
+  );
+  const rowWithExtraContent = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><p>Lost note</p></div></dl></aside>'
+  );
+  const rowsWithDirectText = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">Loose text<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>'
+  );
+  const termOnlyWithExtraContent = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><p>Lost note</p></div></dl></aside>'
+  );
+  const valueOnlyWithExtraContent = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dd>Value</dd><p>Lost note</p></div></dl></aside>'
+  );
+  const rowWithExtraImage = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"></div></dl></aside>'
+  );
+  const rowWithExtraImageFigure = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><img src="/seal.png" alt="Seal"></figure></div></dl></aside>'
+  );
+  const rowWithLinkedCaptionedFigure = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><a href="/seal-full.png"><img src="/seal.png" alt="Seal"></a><figcaption>Seal</figcaption></figure></div></dl></aside>'
+  );
+  const mediaOnlyRow = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><img src="/seal.png" alt="Seal"></div></dl></aside>'
+  );
+  const emptyRow = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"></div></dl></aside>'
+  );
+  const emptyRows = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"></dl></aside>'
+  );
+  const rowsWithLooseParagraph = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><p>Loose row text</p></dl></aside>'
+  );
+  const rowWithLooseParagraph = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><p>Loose row text</p></dl></aside>'
+  );
+  const prettyPrintedDirectRows = [
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
+    '  <dt>House</dt>',
+    '  <dd>Voss</dd>',
+    '</dl>',
+    '</aside>'
+  ].join("\n");
+  const prettyPrintedRows = normalizeLegacyHtmlForTiptap(prettyPrintedDirectRows);
+
+  assert.match(valueOnly, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd>Value<\/dd><\/div>/);
+  assert.match(rowWithProse, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Text<\/dt><dd><\/dd><\/div>/);
+  assert.match(rowWithExtraContent, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss Lost note<\/dd><\/div>/);
+  assert.match(rowsWithDirectText, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Loose text<\/dt><dd><\/dd><\/div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
+  assert.match(termOnlyWithExtraContent, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Lost note<\/dd><\/div>/);
+  assert.match(valueOnlyWithExtraContent, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd>Value Lost note<\/dd><\/div>/);
+  assert.match(rowWithExtraImage, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
+  assert.match(rowWithExtraImage, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
+  assert.match(rowWithExtraImageFigure, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
+  assert.match(rowWithExtraImageFigure, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
+  assert.match(rowWithLinkedCaptionedFigure, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
+  assert.match(rowWithLinkedCaptionedFigure, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><figure class="image"><a href="\/seal-full\.png"><img src="\/seal\.png" alt="Seal"><\/a><figcaption>Seal<\/figcaption><\/figure><\/div>/);
+  assert.doesNotMatch(rowWithLinkedCaptionedFigure, /<dd>Voss\s*<a|<dd>Voss\s*<figcaption|<dd>Voss\s*Seal/);
+  assert.doesNotMatch(mediaOnlyRow, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
+  assert.match(mediaOnlyRow, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
+  assert.doesNotMatch(emptyRow, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
+  assert.doesNotMatch(emptyRows, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
+  assert.doesNotMatch(rowsWithLooseParagraph, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
+  assert.match(rowsWithLooseParagraph, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Loose row text<\/p><\/div>/);
+  assert.match(rowWithLooseParagraph, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl><div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Loose row text<\/p><\/div>/);
+  assert.match(prettyPrintedRows, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt>\s*<dd>Voss<\/dd><\/div>/);
+  assert.equal(detectUnsupportedContent(prettyPrintedDirectRows), "");
+});
+
+await test("normalizeLegacyHtmlForTiptap inserts extracted row helpers before existing infobox helpers", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"><figure class="image"><a href="/seal-full.png"><img src="/seal-full.png" alt="Seal full"></a><figcaption>Seal</figcaption></figure></div></dl><div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Existing notes.</p></div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/old.png" alt="Old"></figure></aside>'
+  );
+  const rowsIndex = normalized.indexOf('class="wiki-infobox__rows"');
+  const extractedImageIndex = normalized.indexOf('src="/seal.png"');
+  const extractedContentIndex = normalized.indexOf('src="/seal-full.png"');
+  const existingContentIndex = normalized.indexOf("Existing notes.");
+  const existingImageIndex = normalized.indexOf('src="/old.png"');
+
+  assert.ok(rowsIndex >= 0);
+  assert.ok(rowsIndex < extractedImageIndex);
+  assert.ok(extractedImageIndex < extractedContentIndex);
+  assert.ok(extractedContentIndex < existingContentIndex);
+  assert.ok(existingContentIndex < existingImageIndex);
+});
+
+await test("normalizeLegacyHtmlForTiptap preserves extracted row media DOM order", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><img src="/term.png" alt="Term">House</dt><dd>Voss</dd><img src="/direct.png" alt="Direct"></div></dl></aside>'
+  );
+  const rowsIndex = normalized.indexOf('class="wiki-infobox__rows"');
+  const termImageIndex = normalized.indexOf('src="/term.png"');
+  const directImageIndex = normalized.indexOf('src="/direct.png"');
+
+  assert.match(normalized, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  assert.ok(rowsIndex >= 0);
+  assert.ok(rowsIndex < termImageIndex);
+  assert.ok(termImageIndex < directImageIndex);
+});
+
+await test("normalizeLegacyHtmlForTiptap downgrades incompatible infobox image helpers", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><a href="/seal-full.png"><img src="/seal.png" alt="Seal"></a><figcaption>Seal</figcaption></figure></aside>'
+  );
+
+  assert.doesNotMatch(normalized, /wiki-infobox__image|data-wiki-infobox-part="image"/);
+  assert.match(normalized, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><figure class="image"><a href="\/seal-full\.png"><img src="\/seal\.png" alt="Seal"><\/a><figcaption>Seal<\/figcaption><\/figure><\/div>/);
+  assert.equal(detectUnsupportedContent(normalized), "");
+});
+
+await test("normalizeLegacyHtmlForTiptap skips media layout conversion inside infobox rows", function () {
+  const directRowImage = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row" style="display:flex"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"></div></dl></aside>'
+  );
+  const valueImage = normalizeLegacyHtmlForTiptap(
+    '<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row" style="display:flex"><dt>House</dt><dd>Voss<img src="/seal.png" alt="Seal"></dd></div></dl></aside>'
+  );
+
+  [directRowImage, valueImage].forEach(function (normalized) {
+    assert.doesNotMatch(normalized, /wiki-media-row/);
+    assert.match(normalized, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl>/);
+    assert.match(normalized, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="\/seal\.png" alt="Seal"><\/figure>/);
+  });
+});
+
+await test("detectUnsupportedContent rejects empty infobox rows helpers", function () {
+  assert.match(
+    detectUnsupportedContent('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"></dl></aside>'),
+    /definition rows/
+  );
+});
+
+await test("normalizeLegacyHtmlForTiptap upgrades simple pasted infobox class names", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="infobox"><div class="title">Selene</div><div class="subtitle">Vampire Noble</div><div class="section">Details</div><div class="content"><p>Notes</p></div></aside>'
+  );
+
+  assert.match(normalized, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.match(normalized, /class="wiki-infobox__title" data-wiki-infobox-part="title"/);
+  assert.match(normalized, /class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle"/);
+  assert.match(normalized, /class="wiki-infobox__section" data-wiki-infobox-part="section"/);
+  assert.match(normalized, /class="wiki-infobox__content" data-wiki-infobox-part="content"/);
+});
+
+await test("normalizeLegacyHtmlForTiptap treats non-dl legacy rows as content", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="infobox"><div class="rows">Details</div></aside>'
+  );
+
+  assert.match(normalized, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.doesNotMatch(normalized, /data-wiki-infobox-part="rows"|wiki-infobox__rows/);
+  assert.match(normalized, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Details<\/p><\/div>/);
+});
+
+await test("normalizeLegacyHtmlForTiptap upgrades pasted infobox rows nested under rows helpers", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="infobox"><dl class="rows"><div class="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>'
+  );
+
+  assert.match(normalized, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.match(normalized, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">/);
+  assert.match(normalized, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
+});
+
+await test("normalizeLegacyHtmlForTiptap preserves generic row classes inside infobox content", function () {
+  const normalized = normalizeLegacyHtmlForTiptap(
+    '<aside class="infobox"><div class="content"><div class="row"><p>Nested layout row</p></div></div></aside>'
+  );
+
+  assert.match(normalized, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.match(normalized, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><div class="row"><p>Nested layout row<\/p><\/div><\/div>/);
+  assert.doesNotMatch(normalized, /wiki-infobox__row/);
+  assert.doesNotMatch(normalized, /data-wiki-infobox-part="row"/);
 });
 
 await test("normalizeLegacyHtmlForTiptap preserves saved poetry quotes as plugin-owned structures", function () {
@@ -2076,6 +2629,584 @@ await test("wikiCallout css uses themed icon callout bars in articles and editor
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout--success\s*\{[\s\S]*candle-flame\.svg/);
 });
 
+await test("wikiInfobox parses and renders saved infobox helper structure", function () {
+  const savedHtml = [
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene Voss</div>',
+    '<div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Vampire Noble</div>',
+    '<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/uploads/selene.png" alt="Selene"></figure>',
+    '<div class="wiki-infobox__section" data-wiki-infobox-part="section">Details</div>',
+    '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
+    '<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div>',
+    '</dl>',
+    '<div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Optional notes.</p></div>',
+    '</aside>'
+  ].join("");
+  const editor = createEditor(savedHtml);
+  const types = collectJsonNodeTypes(editor.getJSON(), new Set());
+  const rendered = editor.getHTML();
+
+  [
+    "wikiInfobox",
+    "wikiInfoboxTitle",
+    "wikiInfoboxSubtitle",
+    "wikiInfoboxImage",
+    "wikiInfoboxSection",
+    "wikiInfoboxRows",
+    "wikiInfoboxRow",
+    "wikiInfoboxTerm",
+    "wikiInfoboxValue",
+    "wikiInfoboxContent"
+  ].forEach(function (typeName) {
+    assert.ok(types.has(typeName), `${typeName} should be present in editor JSON`);
+  });
+  assert.match(rendered, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.match(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title"/);
+  assert.match(rendered, /class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle"/);
+  assert.match(rendered, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img[^>]+src="\/uploads\/selene\.png"[^>]*><\/figure>/);
+  assert.match(rendered, /class="wiki-infobox__section" data-wiki-infobox-part="section"/);
+  assert.match(rendered, /class="wiki-infobox__rows" data-wiki-infobox-part="rows"/);
+  assert.match(rendered, /class="wiki-infobox__row" data-wiki-infobox-part="row"/);
+  assert.match(rendered, /class="wiki-infobox__content" data-wiki-infobox-part="content"/);
+  assert.match(rendered, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  editor.destroy();
+});
+
+await test("normalized saved infoboxes round trip through the Tiptap editor", function () {
+  const savedHtml = [
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene Voss</div>',
+    '<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/uploads/selene.png" alt="Selene"></figure>',
+    '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
+    '<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div>',
+    '</dl>',
+    '</aside>'
+  ].join("");
+  const editor = createEditor(normalizeLegacyHtmlForTiptap(savedHtml));
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /<aside class="wiki-infobox" data-wiki-node="infobox">/);
+  assert.match(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title"/);
+  assert.match(rendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">/);
+  assert.match(rendered, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  assert.match(rendered, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img[^>]+src="\/uploads\/selene\.png"[^>]*><\/figure>/);
+  editor.destroy();
+});
+
+await test("orphan infobox helper markup does not parse as a top-level helper node", function () {
+  const editor = createEditor('<div class="wiki-infobox__title" data-wiki-infobox-part="title">Orphan Title</div><p>Article text.</p>');
+  const json = editor.getJSON();
+  const rendered = editor.getHTML();
+
+  assert.equal(findJsonNode(json, "wikiInfoboxTitle"), null);
+  assert.doesNotMatch(rendered, /data-wiki-infobox-part="title"/);
+  assert.doesNotMatch(rendered, /wiki-infobox__title/);
+  assert.match(rendered, /Orphan Title/);
+  assert.match(rendered, /Article text\./);
+  editor.destroy();
+});
+
+await test("direct infobox prose is preserved through content helpers", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><p>Direct prose.</p></aside>');
+  const rendered = editor.getHTML();
+
+  assert.equal(findJsonNode(editor.getJSON(), "wikiInfoboxContent").content[0].type, "paragraph");
+  assert.doesNotMatch(rendered, /<aside class="wiki-infobox" data-wiki-node="infobox"><p>Direct prose\.<\/p>/);
+  assert.match(rendered, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Direct prose\.<\/p><\/div>/);
+  editor.destroy();
+});
+
+await test("non-dl infobox rows helper markup does not parse as rows", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div data-wiki-infobox-part="rows"><dt>House</dt><dd>Voss</dd></div></aside>');
+  const json = editor.getJSON();
+  const rendered = editor.getHTML();
+
+  assert.equal(findJsonNode(json, "wikiInfoboxRows"), null);
+  assert.doesNotMatch(rendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">/);
+  editor.destroy();
+});
+
+await test("malformed raw infobox rows parse as repaired row helpers", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><dt>Loose</dt><dd>Value</dd></dl></aside>');
+  const prettyPrintedEditor = createEditor([
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
+    '  <dt>House</dt>',
+    '  <dd>Voss</dd>',
+    '</dl>',
+    '</aside>'
+  ].join("\n"));
+  const rendered = editor.getHTML();
+  const prettyPrintedRendered = prettyPrintedEditor.getHTML();
+
+  assert.match(rendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Loose<\/dt><dd>Value<\/dd><\/div><\/dl>/);
+  assert.doesNotMatch(rendered, /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd><\/dd><\/div>/);
+  assert.doesNotMatch(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title">Loose<\/div>/);
+  assert.doesNotMatch(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title">Value<\/div>/);
+  assert.match(prettyPrintedRendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl>/);
+  assert.equal((prettyPrintedRendered.match(/class="wiki-infobox__row"/g) || []).length, 1);
+  editor.destroy();
+  prettyPrintedEditor.destroy();
+});
+
+await test("malformed raw infobox rows preserve visible content instead of empty rows", function () {
+  const valueOnlyEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><dd>Value</dd></dl></aside>');
+  const emptyRowsEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"></dl></aside>');
+  const proseRowEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><p>Text</p></div></dl></aside>');
+  const extraContentEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><p>Lost note</p></div></dl></aside>');
+  const directTextEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">Loose text<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>');
+  const termOnlyExtraEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><p>Lost note</p></div></dl></aside>');
+  const valueOnlyExtraEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dd>Value</dd><p>Lost note</p></div></dl></aside>');
+
+  assert.match(valueOnlyEditor.getHTML(), /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd>Value<\/dd><\/div>/);
+  assert.doesNotMatch(emptyRowsEditor.getHTML(), /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd><\/dd><\/div>/);
+  assert.match(proseRowEditor.getHTML(), /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Text<\/dt><dd><\/dd><\/div>/);
+  assert.match(extraContentEditor.getHTML(), /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss Lost note<\/dd><\/div>/);
+  assert.match(directTextEditor.getHTML(), /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Loose text<\/dt><dd><\/dd><\/div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div>/);
+  assert.match(termOnlyExtraEditor.getHTML(), /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Lost note<\/dd><\/div>/);
+  assert.match(valueOnlyExtraEditor.getHTML(), /<div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><\/dt><dd>Value Lost note<\/dd><\/div>/);
+  valueOnlyEditor.destroy();
+  emptyRowsEditor.destroy();
+  proseRowEditor.destroy();
+  extraContentEditor.destroy();
+  directTextEditor.destroy();
+  termOnlyExtraEditor.destroy();
+  valueOnlyExtraEditor.destroy();
+});
+
+await test("raw infobox rows preserve image figure media extras", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><figure class="image"><img src="/seal.png" alt="Seal"></figure></div></dl></aside>');
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl>/);
+  assert.match(rendered, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img[^>]+src="\/seal\.png"[^>]*alt="Seal"[^>]*><\/figure>/);
+  assert.doesNotMatch(rendered, /<figure class="image">/);
+  editor.destroy();
+});
+
+await test("raw infobox rows insert extracted helpers before existing infobox helpers", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd><img src="/seal.png" alt="Seal"><figure class="image"><a href="/seal-full.png"><img src="/seal-full.png" alt="Seal full"></a><figcaption>Seal</figcaption></figure></div></dl><div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Existing notes.</p></div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/old.png" alt="Old"></figure></aside>');
+  const rendered = editor.getHTML();
+  const rowsIndex = rendered.indexOf('class="wiki-infobox__rows"');
+  const extractedImageIndex = rendered.indexOf('src="/seal.png"');
+  const extractedContentIndex = rendered.indexOf('src="/seal-full.png"');
+  const existingContentIndex = rendered.indexOf("Existing notes.");
+  const existingImageIndex = rendered.indexOf('src="/old.png"');
+
+  assert.ok(rowsIndex >= 0);
+  assert.ok(rowsIndex < extractedImageIndex);
+  assert.ok(extractedImageIndex < extractedContentIndex);
+  assert.ok(extractedContentIndex < existingContentIndex);
+  assert.ok(existingContentIndex < existingImageIndex);
+  editor.destroy();
+});
+
+await test("raw infobox rows preserve extracted row media DOM order", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt><img src="/term.png" alt="Term">House</dt><dd>Voss</dd><img src="/direct.png" alt="Direct"></div></dl></aside>');
+  const rendered = editor.getHTML();
+  const rowsIndex = rendered.indexOf('class="wiki-infobox__rows"');
+  const termImageIndex = rendered.indexOf('src="/term.png"');
+  const directImageIndex = rendered.indexOf('src="/direct.png"');
+
+  assert.match(rendered, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  assert.ok(rowsIndex >= 0);
+  assert.ok(rowsIndex < termImageIndex);
+  assert.ok(termImageIndex < directImageIndex);
+  editor.destroy();
+});
+
+await test("raw infobox rows preserve loose non-row block children", function () {
+  const paragraphOnlyEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><p>Loose row text</p></dl></aside>');
+  const mixedEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><p>Loose row text</p></dl></aside>');
+  const paragraphOnlyRendered = paragraphOnlyEditor.getHTML();
+  const mixedRendered = mixedEditor.getHTML();
+
+  assert.doesNotMatch(paragraphOnlyRendered, /wiki-infobox__rows|wiki-infobox__row|data-wiki-infobox-part="rows"|data-wiki-infobox-part="row"/);
+  assert.match(paragraphOnlyRendered, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Loose row text<\/p><\/div>/);
+  assert.match(mixedRendered, /<dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House<\/dt><dd>Voss<\/dd><\/div><\/dl><div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Loose row text<\/p><\/div>/);
+  paragraphOnlyEditor.destroy();
+  mixedEditor.destroy();
+});
+
+await test("raw infobox image helpers downgrade incompatible figures into content", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><a href="/seal-full.png"><img src="/seal.png" alt="Seal"></a><figcaption>Seal</figcaption></figure></aside>');
+  const rendered = editor.getHTML();
+
+  assert.doesNotMatch(rendered, /wiki-infobox__image|data-wiki-infobox-part="image"/);
+  assert.match(rendered, /<div class="wiki-infobox__content" data-wiki-infobox-part="content"><figure class="image" data-wiki-node="image-figure"><a href="\/seal-full\.png"><img[^>]+src="\/seal\.png"[^>]*alt="Seal"[^>]*><\/a><figcaption><p>Seal<\/p><\/figcaption><\/figure><\/div>/);
+  editor.destroy();
+});
+
+await test("wikiInfobox insert command creates starter infobox HTML", function () {
+  const editor = createEditor("<p>Start</p>");
+
+  editor.commands.setTextSelection(editor.state.doc.content.size);
+  assert.equal(editor.commands.insertWikiInfobox(), true);
+  assert.equal(editor.getJSON().content[0].type, "wikiInfobox");
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /data-wiki-node="infobox"/);
+  assert.match(rendered, /class="wiki-infobox__title" data-wiki-infobox-part="title">Untitled Infobox<\/div>/);
+  assert.match(rendered, /class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Label<\/dt><dd>Value<\/dd><\/div>/);
+  editor.destroy();
+});
+
+await test("wikiInfobox helper commands insert supported helper blocks inside the active infobox", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside>');
+
+  const titleRange = findTextRange(editor, "Selene");
+  editor.commands.setTextSelection(titleRange.from);
+  assert.equal(editor.commands.addWikiInfoboxSubtitle(), true);
+  assert.equal(editor.commands.addWikiInfoboxImage(), true);
+  assert.equal(editor.commands.addWikiInfoboxSection(), true);
+  assert.equal(editor.commands.addWikiInfoboxRow(), true);
+  assert.equal(editor.commands.addWikiInfoboxContent(), true);
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle"/);
+  assert.match(rendered, /class="wiki-infobox__image" data-wiki-infobox-part="image"/);
+  assert.doesNotMatch(rendered, /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><p>/);
+  assert.match(rendered, /class="wiki-infobox__section" data-wiki-infobox-part="section"/);
+  assert.match(rendered, /class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Label<\/dt><dd>Value<\/dd><\/div>/);
+  assert.match(rendered, /class="wiki-infobox__content" data-wiki-infobox-part="content"/);
+  editor.destroy();
+});
+
+await test("wikiInfobox image helper command selects the inserted image slot", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.addWikiInfoboxImage(), true);
+
+  assert.equal(editor.state.selection instanceof NodeSelection, true);
+  assert.equal(editor.state.selection.node.type.name, "wikiInfoboxImage");
+  assert.equal(editor.state.selection.node.childCount, 0);
+  editor.destroy();
+});
+
+await test("wikiInfobox command-authored HTML passes unsupported content detection", function () {
+  const editor = createEditor("<p>Start</p>");
+
+  assert.equal(editor.commands.insertWikiInfobox(), true);
+  editor.commands.setTextSelection(findTextRange(editor, "Untitled Infobox").from);
+  assert.equal(editor.commands.addWikiInfoboxSubtitle(), true);
+  assert.equal(editor.commands.addWikiInfoboxImage(), true);
+  assert.equal(editor.commands.addWikiInfoboxSection(), true);
+  assert.equal(editor.commands.addWikiInfoboxRow(), true);
+  assert.equal(editor.commands.addWikiInfoboxContent(), true);
+  assert.equal(detectUnsupportedContent(editor.getHTML()), "");
+  editor.destroy();
+});
+
+await test("wikiInfobox image command fills an empty image slot from title selection", function () {
+  const editor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"></figure><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside><p>After</p>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.setWikiInfoboxImage({ src: "/uploads/selene.png", alt: "Selene portrait" }), true);
+
+  const json = editor.getJSON();
+  assert.deepEqual(json.content.map((node) => node.type), ["paragraph", "wikiInfobox", "paragraph"]);
+  assert.equal(findJsonNodes(json, "wikiInfobox").length, 1);
+  assert.equal(findJsonNodes(json, "wikiInfoboxImage").length, 1);
+  assert.equal(findJsonNodes(json, "image").length, 1);
+  const image = findJsonNode(json, "image");
+  assert.equal(image.attrs.src, "/uploads/selene.png");
+  assert.equal(image.attrs.alt, "Selene portrait");
+  assert.match(editor.getHTML(), /<figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img[^>]+src="\/uploads\/selene\.png"[^>]*alt="Selene portrait"[^>]*><\/figure>/);
+  editor.destroy();
+});
+
+await test("wikiInfobox image command fills a selected empty image helper", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"></figure></aside>');
+  const imageHelperPos = findNodePositions(editor, "wikiInfoboxImage")[0];
+  editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, imageHelperPos)));
+
+  assert.equal(editor.commands.setWikiInfoboxImage({ src: "/uploads/portrait.png", alt: "Portrait" }), true);
+
+  const json = editor.getJSON();
+  assert.equal(json.content[0].type, "wikiInfobox");
+  assert.equal(json.content.some((node) => node.type === "image" || node.type === "wikiInfoboxImage"), false);
+  assert.equal(findJsonNodes(json, "wikiInfoboxImage").length, 1);
+  const image = findJsonNode(json, "image");
+  assert.equal(image.attrs.src, "/uploads/portrait.png");
+  assert.equal(image.attrs.alt, "Portrait");
+  editor.destroy();
+});
+
+await test("wikiInfobox image command appends an image helper when no slot exists", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.setWikiInfoboxImage({ src: "/uploads/new.png", alt: "New portrait" }), true);
+
+  const infobox = findJsonNode(editor.getJSON(), "wikiInfobox");
+  assert.deepEqual(infobox.content.map((node) => node.type), ["wikiInfoboxTitle", "wikiInfoboxImage"]);
+  const image = findJsonNode(infobox, "image");
+  assert.equal(image.attrs.src, "/uploads/new.png");
+  assert.equal(image.attrs.alt, "New portrait");
+  editor.destroy();
+});
+
+await test("empty infobox image helpers can be selected from their figure surface", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"></figure></aside>');
+  const slot = editor.view.dom.querySelector(".wiki-infobox__image");
+
+  assert.equal(selectInfoboxImageSlot(editor, slot, editor.view.dom), true);
+  assert.equal(editor.state.selection instanceof NodeSelection, true);
+  assert.equal(editor.state.selection.node.type.name, "wikiInfoboxImage");
+  editor.destroy();
+});
+
+await test("wikiInfobox helper movement commands reorder helper blocks", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Title").from);
+  assert.equal(editor.commands.moveWikiInfoboxHelperDown(), true);
+  let rendered = editor.getHTML();
+  assert.ok(rendered.indexOf("Subtitle") < rendered.indexOf("Title"));
+
+  editor.commands.setTextSelection(findTextRange(editor, "Title").from);
+  assert.equal(editor.commands.moveWikiInfoboxHelperUp(), true);
+  rendered = editor.getHTML();
+  assert.ok(rendered.indexOf("Title") < rendered.indexOf("Subtitle"));
+  editor.destroy();
+});
+
+await test("wikiInfobox delete helper command removes only the active helper block", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Title").from);
+  assert.equal(editor.commands.deleteWikiInfoboxHelper(), true);
+  const rendered = editor.getHTML();
+  assert.doesNotMatch(rendered, /Title/);
+  assert.match(rendered, /Subtitle/);
+  assert.match(rendered, /wiki-infobox/);
+  editor.destroy();
+});
+
+await test("wikiInfobox delete helper keeps selection active after deleting the last helper block", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Subtitle").from);
+  assert.equal(editor.commands.deleteWikiInfoboxHelper(), true);
+  let rendered = editor.getHTML();
+  assert.match(rendered, /Title/);
+  assert.doesNotMatch(rendered, /Subtitle/);
+  assert.equal(editor.isActive("wikiInfobox"), true);
+
+  assert.equal(editor.commands.addWikiInfoboxSubtitle(), true);
+  rendered = editor.getHTML();
+  assert.match(rendered, /Title/);
+  assert.match(rendered, /Subtitle/);
+  editor.destroy();
+});
+
+await test("wikiInfobox delete helper keeps an empty infobox selectable after deleting its only helper block", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Title").from);
+  assert.equal(editor.commands.deleteWikiInfoboxHelper(), true);
+  let rendered = editor.getHTML();
+  assert.match(rendered, /wiki-infobox/);
+  assert.doesNotMatch(rendered, /Title/);
+  assert.equal(editor.isActive("wikiInfobox"), true);
+
+  assert.equal(editor.commands.addWikiInfoboxTitle(), true);
+  rendered = editor.getHTML();
+  assert.match(rendered, /Title/);
+  assert.match(rendered, /wiki-infobox/);
+  editor.destroy();
+});
+
+await test("wikiInfobox helper commands support whole helper node selections", function () {
+  const moveEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+  const subtitlePos = findNodePositions(moveEditor, "wikiInfoboxSubtitle")[0];
+  moveEditor.view.dispatch(moveEditor.state.tr.setSelection(NodeSelection.create(moveEditor.state.doc, subtitlePos)));
+
+  assert.equal(moveEditor.commands.moveWikiInfoboxHelperUp(), true);
+  const moved = moveEditor.getHTML();
+  assert.ok(moved.indexOf("Subtitle") < moved.indexOf("Title"));
+  moveEditor.destroy();
+
+  const deleteEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+  const titlePos = findNodePositions(deleteEditor, "wikiInfoboxTitle")[0];
+  deleteEditor.view.dispatch(deleteEditor.state.tr.setSelection(NodeSelection.create(deleteEditor.state.doc, titlePos)));
+
+  assert.equal(deleteEditor.commands.deleteWikiInfoboxHelper(), true);
+  const deleted = deleteEditor.getHTML();
+  assert.doesNotMatch(deleted, /Title/);
+  assert.match(deleted, /Subtitle/);
+  assert.match(deleted, /wiki-infobox/);
+  deleteEditor.destroy();
+});
+
+await test("wikiInfobox helper commands reject text selections spanning multiple helper blocks", function () {
+  const deleteEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+  const deleteTitle = findTextRange(deleteEditor, "Title");
+  const deleteSubtitle = findTextRange(deleteEditor, "Subtitle");
+
+  deleteEditor.commands.setTextSelection({ from: deleteTitle.from, to: deleteSubtitle.to });
+  const beforeDelete = deleteEditor.getHTML();
+  assert.equal(deleteEditor.commands.deleteWikiInfoboxHelper(), false);
+  assert.equal(deleteEditor.getHTML(), beforeDelete);
+  assert.match(deleteEditor.getHTML(), /Title/);
+  assert.match(deleteEditor.getHTML(), /Subtitle/);
+  deleteEditor.destroy();
+
+  const moveEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
+  const moveTitle = findTextRange(moveEditor, "Title");
+  const moveSubtitle = findTextRange(moveEditor, "Subtitle");
+
+  moveEditor.commands.setTextSelection({ from: moveTitle.from, to: moveSubtitle.to });
+  const beforeMove = moveEditor.getHTML();
+  assert.equal(moveEditor.commands.moveWikiInfoboxHelperDown(), false);
+  assert.equal(moveEditor.getHTML(), beforeMove);
+  assert.ok(moveEditor.getHTML().indexOf("Title") < moveEditor.getHTML().indexOf("Subtitle"));
+  moveEditor.destroy();
+});
+
+await test("wikiInfobox commands return false outside an active infobox", function () {
+  const editor = createEditor("<p>Outside</p>");
+
+  editor.commands.setTextSelection(3);
+  [
+    "addWikiInfoboxTitle",
+    "addWikiInfoboxSubtitle",
+    "addWikiInfoboxImage",
+    "setWikiInfoboxImage",
+    "addWikiInfoboxSection",
+    "addWikiInfoboxRow",
+    "addWikiInfoboxContent",
+    "moveWikiInfoboxHelperUp",
+    "moveWikiInfoboxHelperDown",
+    "deleteWikiInfoboxHelper",
+    "unwrapWikiInfobox",
+    "deleteWikiInfobox"
+  ].forEach(function (commandName) {
+    assert.equal(editor.commands[commandName](), false, `${commandName} should return false outside an infobox`);
+  });
+  assert.equal(editor.getHTML(), "<p>Outside</p>");
+  editor.destroy();
+});
+
+await test("editor upload source tries infobox images before generic image insertion", function () {
+  const uploadBlockStart = editorBundleSource.indexOf("async function uploadFiles");
+  const uploadBlockEnd = editorBundleSource.indexOf("let editor;", uploadBlockStart);
+  const uploadBlock = editorBundleSource.slice(uploadBlockStart, uploadBlockEnd);
+  const infoboxImageIndex = uploadBlock.indexOf("setWikiInfoboxImage");
+  const genericImageIndex = uploadBlock.indexOf("setImage(");
+
+  assert.ok(infoboxImageIndex !== -1, "upload source should call setWikiInfoboxImage");
+  assert.ok(uploadBlock.includes('isActive("wikiInfobox")'), "upload source should avoid generic setImage fallback while the selection is in an infobox");
+  assert.ok(genericImageIndex !== -1, "upload source should still keep the generic setImage fallback");
+  assert.ok(infoboxImageIndex < genericImageIndex, "upload source should try setWikiInfoboxImage before setImage");
+});
+
+await test("wikiInfobox insert command returns false when helper schema nodes are not registered", function () {
+  const editor = createPartialInfoboxEditor("<p>Start</p>");
+
+  assert.equal(editor.commands.insertWikiInfobox(), false);
+  assert.equal(editor.getHTML(), "<p>Start</p>");
+  editor.destroy();
+});
+
+await test("wikiInfobox unwrap and delete commands only affect the active infobox", function () {
+  const unwrapEditor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside><p>After</p>');
+
+  unwrapEditor.commands.setTextSelection(findTextRange(unwrapEditor, "Selene").from);
+  assert.equal(unwrapEditor.commands.unwrapWikiInfobox(), true);
+  const unwrapped = unwrapEditor.getHTML();
+  assert.doesNotMatch(unwrapped, /<aside class="wiki-infobox"/);
+  assert.match(unwrapped, /<p>Before<\/p>/);
+  assert.match(unwrapped, /Selene/);
+  assert.match(unwrapped, /House/);
+  assert.match(unwrapped, /Voss/);
+  assert.match(unwrapped, /<p>After<\/p>/);
+  unwrapEditor.destroy();
+
+  const deleteEditor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside><p>After</p>');
+  deleteEditor.commands.setTextSelection(findTextRange(deleteEditor, "Selene").from);
+  assert.equal(deleteEditor.commands.deleteWikiInfobox(), true);
+  const deleted = deleteEditor.getHTML();
+  assert.doesNotMatch(deleted, /<aside class="wiki-infobox"/);
+  assert.doesNotMatch(deleted, /Selene/);
+  assert.match(deleted, /<p>Before<\/p>/);
+  assert.match(deleted, /<p>After<\/p>/);
+  deleteEditor.destroy();
+});
+
+await test("wikiInfobox unwrap preserves image helper content", function () {
+  const editor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div><figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="/uploads/selene.png" alt="Selene portrait"></figure><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside><p>After</p>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.unwrapWikiInfobox(), true);
+  const rendered = editor.getHTML();
+
+  assert.doesNotMatch(rendered, /<aside class="wiki-infobox"/);
+  assert.match(rendered, /<p>Before<\/p>/);
+  assert.match(rendered, /Selene/);
+  assert.match(rendered, /House/);
+  assert.match(rendered, /Voss/);
+  assert.match(rendered, /<img[^>]+src="\/uploads\/selene\.png"[^>]+alt="Selene portrait"[^>]*>/);
+  assert.match(rendered, /<p>After<\/p>/);
+  editor.destroy();
+});
+
+await test("wikiInfobox unwrap preserves inline marks from helper text", function () {
+  const editor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title"><strong>Selene</strong></div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd><em>Voss</em></dd></div></dl></aside><p>After</p>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Selene").from);
+  assert.equal(editor.commands.unwrapWikiInfobox(), true);
+  const rendered = editor.getHTML();
+
+  assert.doesNotMatch(rendered, /<aside class="wiki-infobox"/);
+  assert.match(rendered, /<p>Before<\/p>/);
+  assert.match(rendered, /<p><strong>Selene<\/strong><\/p>/);
+  assert.match(rendered, /<em>Voss<\/em>/);
+  assert.match(rendered, /<p>After<\/p>/);
+  editor.destroy();
+});
+
+await test("wikiInfobox unwrap and delete commands support whole-node selections", function () {
+  const unwrapEditor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside><p>After</p>');
+  const unwrapPos = findNodePositions(unwrapEditor, "wikiInfobox")[0];
+  unwrapEditor.view.dispatch(unwrapEditor.state.tr.setSelection(NodeSelection.create(unwrapEditor.state.doc, unwrapPos)));
+
+  assert.equal(unwrapEditor.commands.unwrapWikiInfobox(), true);
+  const unwrapped = unwrapEditor.getHTML();
+  assert.doesNotMatch(unwrapped, /<aside class="wiki-infobox"/);
+  assert.match(unwrapped, /<p>Before<\/p>/);
+  assert.match(unwrapped, /Selene/);
+  assert.match(unwrapped, /<p>After<\/p>/);
+  unwrapEditor.destroy();
+
+  const deleteEditor = createEditor('<p>Before</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene</div></aside><p>After</p>');
+  const deletePos = findNodePositions(deleteEditor, "wikiInfobox")[0];
+  deleteEditor.view.dispatch(deleteEditor.state.tr.setSelection(NodeSelection.create(deleteEditor.state.doc, deletePos)));
+
+  assert.equal(deleteEditor.commands.deleteWikiInfobox(), true);
+  const deleted = deleteEditor.getHTML();
+  assert.doesNotMatch(deleted, /<aside class="wiki-infobox"/);
+  assert.doesNotMatch(deleted, /Selene/);
+  assert.match(deleted, /<p>Before<\/p>/);
+  assert.match(deleted, /<p>After<\/p>/);
+  deleteEditor.destroy();
+});
+
+await test("wikiInfobox delete command removes only the active infobox", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">First</div></aside><p>Between</p><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Second</div></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Second").from);
+  assert.equal(editor.commands.deleteWikiInfobox(), true);
+  const rendered = editor.getHTML();
+
+  assert.match(rendered, /First/);
+  assert.match(rendered, /<p>Between<\/p>/);
+  assert.doesNotMatch(rendered, /Second/);
+  assert.equal((rendered.match(/<aside class="wiki-infobox"/g) || []).length, 1);
+  editor.destroy();
+});
+
 await test("wikiPoetryQuote insert command creates an attributed quote", function () {
   const editor = createEditor("<p>Start</p>");
 
@@ -2196,6 +3327,91 @@ await test("blockquote toolbar action inserts the attributed quote tool instead 
   assert.doesNotMatch(editorBundleSource, /id:\s*"blockquote"[\s\S]{0,260}toggleBlockquote/);
 });
 
+await test("production editor bundle wires infobox insertion into schema toolbar and slash commands", function () {
+  assert.match(editorBundleSource, /import\s+WikiInfobox,\s*\{[\s\S]*\}\s+from\s+"\.\/extensions\/wiki-infobox\.mjs"/);
+  assert.match(editorBundleSource, /import\s+WikiInfobox,\s*\{[\s\S]*WikiInfoboxTitle[\s\S]*\}\s+from\s+"\.\/extensions\/wiki-infobox\.mjs"/);
+  assert.match(editorBundleSource, /import\s+WikiInfobox,\s*\{[\s\S]*WikiInfoboxContent[\s\S]*\}\s+from\s+"\.\/extensions\/wiki-infobox\.mjs"/);
+  assert.match(editorBundleSource, /WikiPoetryQuote,\s*[\r\n\s]*WikiInfoboxTitle,\s*[\r\n\s]*WikiInfoboxSubtitle,\s*[\r\n\s]*WikiInfoboxImage,\s*[\r\n\s]*WikiInfoboxSection,\s*[\r\n\s]*WikiInfoboxRows,\s*[\r\n\s]*WikiInfoboxRow,\s*[\r\n\s]*WikiInfoboxTerm,\s*[\r\n\s]*WikiInfoboxValue,\s*[\r\n\s]*WikiInfoboxContent,\s*[\r\n\s]*WikiInfobox,\s*[\r\n\s]*WikiEditingKeymap,/);
+  assert.match(editorBundleSource, /"infobox-insert":\s*"fa-info-circle"/);
+  assert.match(editorBundleSource, /id:\s*"infobox-insert"[\s\S]*title:\s*"Insert infobox"[\s\S]*insertWikiInfobox\(\)/);
+  assert.match(editorBundleSource, /\{\s*id:\s*"infobox-insert",\s*label:\s*"Infobox",\s*aliases:\s*\["info box",\s*"sidebar",\s*"wiki box"\]\s*\}/);
+  assert.match(editorBundleSource, /"infobox-insert":\s*function\s*\(\)\s*\{[\s\S]*insertWikiInfobox\(\)\.run\(\);[\s\S]*\}/);
+});
+
+await test("infobox vertical rail source exposes all internal helper actions", function () {
+  assert.match(editorBundleSource, /function\s+createInfoboxContextToolbar\s*\(\s*surface,\s*editor,\s*uploadImage\s*\)/);
+  assert.match(editorBundleSource, /wiki-editor-infobox-rail/);
+  [
+    "infobox-add-title",
+    "infobox-add-subtitle",
+    "infobox-add-image",
+    "infobox-add-alignment-table",
+    "infobox-add-section",
+    "infobox-add-row",
+    "infobox-add-content",
+    "infobox-move-helper-up",
+    "infobox-move-helper-down",
+    "infobox-delete-helper",
+    "infobox-unwrap",
+    "infobox-delete"
+  ].forEach(function (id) {
+    assert.match(editorBundleSource, new RegExp(id));
+  });
+  assert.match(editorBundleSource, /editor\.can\(\)\.moveWikiInfoboxHelperUp\(\)/);
+  assert.match(editorBundleSource, /editor\.can\(\)\.moveWikiInfoboxHelperDown\(\)/);
+  assert.match(editorBundleSource, /editor\.can\(\)\.deleteWikiInfoboxHelper\(\)/);
+  assert.match(editorBundleSource, /function\s+addImageSlotAndUpload\s*\(\)\s*\{[\s\S]{0,360}addWikiInfoboxImage\(\)\.run\(\)[\s\S]{0,360}typeof uploadImage === "function"[\s\S]{0,180}uploadImage\(\)/);
+  assert.match(editorBundleSource, /id:\s*"infobox-add-image"[\s\S]{0,180}action:\s*addImageSlotAndUpload/);
+  assert.match(editorBundleSource, /id:\s*"infobox-add-alignment-table"[\s\S]{0,240}openAlignmentTableDialog\(\{ editor \}\)/);
+  assert.match(editorBundleSource, /createInfoboxContextToolbar\(editorMount,\s*editor,\s*pickAndUploadImage\)/);
+  assert.match(editorBundleSource, /selectInfoboxImageSlot\(editor,\s*target,\s*editorMount\)/);
+  assert.match(editorBundleSource, /pickAndUploadImage\(\)/);
+  assert.match(editorBundleSource, /querySelector\("\.wiki-editor__toolbar-mount"\)/);
+  assert.match(editorBundleSource, /viewportTop:\s*getInfoboxRailViewportTop\(surface\)/);
+});
+
+await test("infobox vertical rail follows the visible viewport segment of long infoboxes", async function () {
+  const { calculateInfoboxRailPosition } = await importEditorBundleForContract();
+
+  assert.equal(typeof calculateInfoboxRailPosition, "function");
+  assert.deepEqual(calculateInfoboxRailPosition({
+    surfaceRect: { left: 0, top: -420, right: 760, bottom: 1180, width: 760, height: 1600 },
+    boxRect: { left: 520, top: -360, right: 740, bottom: 1040, width: 220, height: 1400 },
+    panelWidth: 44,
+    panelHeight: 360,
+    viewportHeight: 700
+  }), {
+    left: 468,
+    top: 432
+  });
+  assert.deepEqual(calculateInfoboxRailPosition({
+    surfaceRect: { left: 0, top: 40, right: 760, bottom: 1240, width: 760, height: 1200 },
+    boxRect: { left: 520, top: 180, right: 740, bottom: 980, width: 220, height: 800 },
+    panelWidth: 44,
+    panelHeight: 360,
+    viewportHeight: 700
+  }), {
+    left: 468,
+    top: 140
+  });
+});
+
+await test("infobox vertical rail avoids the sticky main toolbar", async function () {
+  const { calculateInfoboxRailPosition } = await importEditorBundleForContract();
+
+  assert.deepEqual(calculateInfoboxRailPosition({
+    surfaceRect: { left: 0, top: -420, right: 760, bottom: 1180, width: 760, height: 1600 },
+    boxRect: { left: 520, top: -360, right: 740, bottom: 1040, width: 220, height: 1400 },
+    panelWidth: 44,
+    panelHeight: 360,
+    viewportHeight: 700,
+    viewportTop: 148
+  }), {
+    left: 468,
+    top: 568
+  });
+});
+
 await test("poetry quote floating toolbar exposes container toggle and unwrap actions", function () {
   assert.match(editorBundleSource, /wiki-editor-poetry-quote-tools/);
   assert.match(editorBundleSource, /poetry-quote-align-left/);
@@ -2305,6 +3521,8 @@ await test("main toolbar slash items are curated editor commands with aliases", 
   assert.equal(ids.includes("redo"), false);
   assert.equal(ids.includes("fullscreen-source"), false);
   assert.deepEqual(items.find(function (item) { return item.id === "dnd-alignment-table"; }).aliases, ["dnd", "alignment", "alignment table", "dungeons dragons"]);
+  assert.equal(items.find(function (item) { return item.id === "infobox-insert"; }).label, "Infobox");
+  assert.deepEqual(items.find(function (item) { return item.id === "infobox-insert"; }).aliases, ["info box", "sidebar", "wiki box"]);
   assert.equal(items.every(function (item) { return item.label && typeof item.run === "function"; }), true);
   editor.destroy();
 });
@@ -2482,6 +3700,7 @@ await test("top toolbar schema keeps wiki entity tools and table creation tools 
   const inlineFormatting = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "inline-formatting"; });
   const callouts = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "callouts"; });
   const media = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "links-media"; });
+  const blocks = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "blocks"; });
   const tables = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "tables"; });
   const view = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "view"; });
 
@@ -2491,6 +3710,8 @@ await test("top toolbar schema keeps wiki entity tools and table creation tools 
   assert.deepEqual(callouts.buttonIds, ["callout-info", "callout-success", "callout-warning", "callout-danger"]);
   assert.deepEqual(media.buttonIds, ["link", "wiki-page-link", "wiki-user-mention", "wiki-footnote", "image-upload", "media-row-2", "media-row-3"]);
   assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("wiki-namespace-link"), false);
+  assert.deepEqual(blocks.buttonIds, ["bullet-list", "ordered-list", "task-list", "blockquote", "code-block", "block-background", "horizontal-rule", "infobox-insert"]);
+  assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("infobox-insert"), true);
   assert.deepEqual(tables.buttonIds, ["table-insert", "dnd-alignment-table"]);
   assert.deepEqual(view.buttonIds, ["fullscreen-source"]);
   assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("fullscreen-source"), true);
@@ -2641,6 +3862,20 @@ await test("buildHeadingToc nests smaller headings under the nearest larger head
   assert.equal(toc[0].children[1].children[0].text, "Deep Direct");
   assert.equal(toc[1].text, "Next Root");
   assert.match(toc[0].id, /^wiki-editor-heading-/);
+  editor.destroy();
+});
+
+await test("buildHeadingToc excludes headings inside wiki infobox nodes", function () {
+  const editor = createEditor(
+    '<h1>Overview</h1><aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__content" data-wiki-infobox-part="content"><h2>Infobox Heading</h2><p>Details.</p></div></aside><h1>History</h1>'
+  );
+  const toc = buildHeadingToc(editor);
+
+  assert.equal(toc.length, 2);
+  assert.equal(toc[0].text, "Overview");
+  assert.equal(toc[1].text, "History");
+  assert.deepEqual(toc[0].children, []);
+  assert.deepEqual(toc[1].children, []);
   editor.destroy();
 });
 

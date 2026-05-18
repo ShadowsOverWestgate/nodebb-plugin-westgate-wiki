@@ -27,6 +27,13 @@
  *   --wiki-prose-media-iframe-border
  *   --wiki-prose-raw-embed-bg, --wiki-prose-raw-embed-border, --wiki-prose-raw-embed-color
  *
+ *   Infobox (read + editor content):
+ *   --wiki-infobox-bg, --wiki-infobox-border, --wiki-infobox-radius
+ *   --wiki-infobox-shadow, --wiki-infobox-color
+ *   --wiki-infobox-title-bg, --wiki-infobox-title-color
+ *   --wiki-infobox-section-bg, --wiki-infobox-section-color
+ *   --wiki-infobox-row-border, --wiki-infobox-label-color
+ *
  *   Compose only (editable surface):
  *   --wiki-compose-editable-bg, --wiki-compose-editable-border-color
  *   --wiki-compose-editable-focus-shadow
@@ -51,6 +58,8 @@
 
 /* --- Shared prose (article + Tiptap editable content) --- */
 .wiki-article-prose {
+  --wiki-infobox-reader-width: min(22rem, 42%);
+  --wiki-infobox-reader-gutter: 1.25rem;
   font-family: var(--wiki-prose-font-family, var(--bs-body-font-family, inherit));
   font-size: var(--wiki-prose-font-size, 1rem);
   color: var(--wiki-prose-color, var(--bs-body-color, inherit));
@@ -412,10 +421,44 @@
   --bs-table-border-color: var(--wiki-prose-table-border, var(--bs-border-color-translucent, var(--bs-border-color, #dee2e6)));
   --bs-table-hover-bg: var(--wiki-prose-table-hover-bg, var(--bs-secondary-bg, rgba(0, 0, 0, 0.04)));
   --bs-table-hover-color: var(--wiki-prose-table-hover-color, var(--bs-emphasis-color, inherit));
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   margin: 1rem 0;
   color: var(--wiki-prose-color, var(--bs-body-color, inherit));
   border-collapse: collapse;
+}
+
+@media (min-width: 768px) {
+  @supports selector(:has(> .wiki-infobox)) {
+    .wiki-article-prose:has(> .wiki-infobox) > table[style*="width:100%"],
+    .wiki-article-prose:has(> .wiki-infobox) > table[style*="width: 100%"] {
+      width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter)) !important;
+      max-width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
+    }
+
+    .wiki-article-prose > .card-body:has(> .wiki-infobox) > table[style*="width:100%"],
+    .wiki-article-prose > .card-body:has(> .wiki-infobox) > table[style*="width: 100%"] {
+      width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter)) !important;
+      max-width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
+    }
+  }
+
+  .wiki-article-prose .wiki-infobox ~ table[style*="width:100%"],
+  .wiki-article-prose .wiki-infobox ~ table[style*="width: 100%"] {
+    width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter)) !important;
+    max-width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
+  }
+
+  .wiki-article-prose .wiki-infobox ~ :where(.tableWrapper, .table-responsive, .table-responsive-md, figure.table) {
+    width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
+    max-width: calc(100% - var(--wiki-infobox-reader-width) - var(--wiki-infobox-reader-gutter));
+  }
+
+  .wiki-article-prose .wiki-infobox ~ :where(.tableWrapper, .table-responsive, .table-responsive-md, figure.table) > table[style*="width:100%"],
+  .wiki-article-prose .wiki-infobox ~ :where(.tableWrapper, .table-responsive, .table-responsive-md, figure.table) > table[style*="width: 100%"] {
+    width: 100% !important;
+    max-width: 100%;
+  }
 }
 
 .wiki-article-prose table.wiki-table-layout-auto {
@@ -909,6 +952,131 @@ content: "";
   --wiki-callout-rail: #10080a;
   --wiki-callout-icon-bg: #552121;
   --wiki-callout-icon: url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/duality-mask.svg");
+}
+
+.wiki-article-prose .wiki-infobox {
+  box-sizing: border-box;
+  float: right;
+  clear: right;
+  width: var(--wiki-infobox-reader-width);
+  margin: 0.25rem 0 1rem var(--wiki-infobox-reader-gutter);
+  border: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.38));
+  border-radius: var(--wiki-infobox-radius, var(--bs-border-radius, 0.5rem));
+  background: var(--wiki-infobox-bg, linear-gradient(145deg, rgba(31, 18, 35, 0.94), rgba(8, 7, 10, 0.96)));
+  box-shadow: var(--wiki-infobox-shadow, inset 0 1px 0 rgba(255, 244, 214, 0.06), 0 0.85rem 2rem rgba(0, 0, 0, 0.3));
+  color: var(--wiki-infobox-color, var(--wiki-prose-color, var(--bs-body-color, inherit)));
+  overflow: hidden;
+}
+
+.wiki-article-prose .wiki-infobox > :first-child {
+  margin-top: 0;
+}
+
+.wiki-article-prose .wiki-infobox > :last-child {
+  margin-bottom: 0;
+}
+
+.wiki-article-prose .wiki-infobox__title {
+  background: var(--wiki-infobox-title-bg, rgba(194, 163, 90, 0.12));
+  border-bottom: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.32));
+  color: var(--wiki-infobox-title-color, var(--wiki-prose-heading-color, inherit));
+  font-family: var(--wiki-prose-heading-font-family, var(--bs-heading-font-family, inherit));
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  padding: 0.65rem 0.8rem;
+  text-align: center;
+}
+
+.wiki-article-prose .wiki-infobox__subtitle {
+  color: var(--wiki-prose-caption-color, var(--bs-secondary-color, inherit));
+  font-size: 0.88rem;
+  padding: 0.45rem 0.8rem 0;
+  text-align: center;
+}
+
+.wiki-article-prose .wiki-infobox__image {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  box-sizing: border-box;
+  margin: 0;
+  max-width: 100%;
+  padding: 0.75rem 0.75rem 0;
+  width: 100%;
+}
+
+.wiki-article-prose .wiki-infobox__image img {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.wiki-article-prose .wiki-infobox__section {
+  background: var(--wiki-infobox-section-bg, rgba(194, 163, 90, 0.1));
+  border-top: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.22));
+  border-bottom: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.18));
+  color: var(--wiki-infobox-section-color, var(--wiki-prose-link-color, inherit));
+  font-family: var(--wiki-prose-heading-font-family, var(--bs-heading-font-family, inherit));
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0.75rem 0 0;
+  padding: 0.35rem 0.8rem;
+  text-align: center;
+}
+
+.wiki-article-prose .wiki-infobox__rows {
+  margin: 0;
+}
+
+.wiki-article-prose .wiki-infobox__row {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 42%) minmax(0, 1fr);
+  border-bottom: 1px solid var(--wiki-infobox-row-border, rgba(194, 163, 90, 0.12));
+}
+
+.wiki-article-prose .wiki-infobox__row > dt,
+.wiki-article-prose .wiki-infobox__row > dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  padding: 0.45rem 0.65rem;
+}
+
+.wiki-article-prose .wiki-infobox__row > dt {
+  color: var(--wiki-infobox-label-color, var(--wiki-prose-caption-color, inherit));
+  font-weight: 700;
+}
+
+.wiki-article-prose .wiki-infobox__row > dd {
+  min-width: 0;
+}
+
+.wiki-article-prose .wiki-infobox__content {
+  padding: 0.75rem 0.85rem;
+}
+
+.wiki-article-prose .wiki-infobox__content .wiki-alignment-table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.wiki-article-prose .wiki-infobox__content > :first-child {
+  margin-top: 0;
+}
+
+.wiki-article-prose .wiki-infobox__content > :last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 767.98px) {
+  .wiki-article-prose .wiki-infobox {
+    float: none;
+    clear: both;
+    width: 100%;
+    margin: 1rem 0;
+  }
 }
 
 .wiki-article-prose .wiki-poetry-quote {

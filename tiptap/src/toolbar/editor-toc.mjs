@@ -7,12 +7,30 @@ function slugPart(text) {
     .slice(0, 48) || "heading";
 }
 
+function isPositionInsideNode(editor, pos, nodeTypeName) {
+  if (!editor || !editor.state || !editor.state.doc) {
+    return false;
+  }
+
+  const doc = editor.state.doc;
+  const resolvedPos = doc.resolve(Math.max(0, Math.min(pos, doc.content.size)));
+  for (let depth = resolvedPos.depth; depth > 0; depth -= 1) {
+    if (resolvedPos.node(depth).type.name === nodeTypeName) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function buildHeadingToc(editor) {
   const roots = [];
   const stack = [];
 
   editor.state.doc.descendants(function (node, pos) {
     if (node.type.name !== "heading") {
+      return true;
+    }
+    if (isPositionInsideNode(editor, pos, "wikiInfobox")) {
       return true;
     }
 

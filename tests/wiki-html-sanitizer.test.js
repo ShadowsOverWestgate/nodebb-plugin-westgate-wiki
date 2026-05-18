@@ -170,6 +170,67 @@ test("sanitizeWikiHtml preserves wiki callout blocks and strips arbitrary styles
   assert.doesNotMatch(sanitized, /position:/);
 });
 
+test("sanitizeWikiHtml preserves wiki infobox structure and helper data attributes", function () {
+  const html = [
+    '<aside class="wiki-infobox unsafe-extra" data-wiki-node="infobox" onclick="alert(1)">',
+    '  <div class="wiki-infobox__title" data-wiki-infobox-part="title">Selene Voss</div>',
+    '  <div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Vampire Noble</div>',
+    '  <figure class="wiki-infobox__image" data-wiki-infobox-part="image"><img src="https://example.com/selene.png" alt="Selene"></figure>',
+    '  <div class="wiki-infobox__section" data-wiki-infobox-part="section">Details</div>',
+    '  <dl class="wiki-infobox__rows" data-wiki-infobox-part="rows">',
+    '    <div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div>',
+    '  </dl>',
+    '  <div class="wiki-infobox__content" data-wiki-infobox-part="content"><p>Optional notes.</p></div>',
+    '</aside>'
+  ].join("");
+  const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);
+
+  assert.match(sanitized, /<aside class="wiki-infobox unsafe-extra" data-wiki-node="infobox">/);
+  assert.match(sanitized, /class="wiki-infobox__title" data-wiki-infobox-part="title"/);
+  assert.match(sanitized, /class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle"/);
+  assert.match(sanitized, /class="wiki-infobox__image" data-wiki-infobox-part="image"/);
+  assert.match(sanitized, /class="wiki-infobox__section" data-wiki-infobox-part="section"/);
+  assert.match(sanitized, /class="wiki-infobox__rows" data-wiki-infobox-part="rows"/);
+  assert.match(sanitized, /class="wiki-infobox__row" data-wiki-infobox-part="row"/);
+  assert.match(sanitized, /<dt>House<\/dt><dd>Voss<\/dd>/);
+  assert.doesNotMatch(sanitized, /onclick/);
+});
+
+test("sanitizeWikiHtml hoists top-level infoboxes before article blocks", function () {
+  const html = [
+    '<p>Intro text.</p>',
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Shar</div>',
+    '</aside>',
+    '<p>Body text.</p>'
+  ].join("");
+  const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);
+
+  assert.ok(sanitized.indexOf('<aside class="wiki-infobox"') < sanitized.indexOf("<p>Intro text.</p>"));
+});
+
+test("renderReadOnlyWikiHtml hoists top-level infoboxes before article blocks", function () {
+  const html = [
+    '<p>Intro text.</p>',
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Shar</div>',
+    '</aside>',
+    '<p>Body text.</p>'
+  ].join("");
+  const rendered = wikiHtmlSanitizer.renderReadOnlyWikiHtml(html);
+
+  assert.ok(rendered.indexOf('<aside class="wiki-infobox"') < rendered.indexOf("<p>Intro text.</p>"));
+});
+
+test("sanitizeWikiHtml strips unsafe styles from wiki infoboxes", function () {
+  const html = '<aside class="wiki-infobox" data-wiki-node="infobox" style="position:fixed; color:#caa55a"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div></aside>';
+  const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);
+
+  assert.match(sanitized, /class="wiki-infobox"/);
+  assert.match(sanitized, /style="color:#caa55a"/);
+  assert.doesNotMatch(sanitized, /position:/);
+});
+
 test("sanitizeWikiHtml preserves topdata bot markers and generated HTML subset", function () {
   const html = [
     "<!-- sow-topdata-wiki:page=feat:power_attack -->",

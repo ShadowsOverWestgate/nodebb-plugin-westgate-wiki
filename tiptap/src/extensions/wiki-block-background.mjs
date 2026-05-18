@@ -9,7 +9,12 @@ const WIKI_BLOCK_BACKGROUND_TYPES = new Set([
   "blockquote",
   "listItem",
   "tableCell",
-  "tableHeader"
+  "tableHeader",
+  "wikiInfoboxSection",
+  "wikiInfoboxSubtitle",
+  "wikiInfoboxTerm",
+  "wikiInfoboxTitle",
+  "wikiInfoboxValue"
 ]);
 
 function applyBlockBackground({ state, dispatch, color }) {
