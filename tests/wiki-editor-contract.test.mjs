@@ -2595,7 +2595,7 @@ await test("wikiCallout css uses themed icon callout bars in articles and editor
   const pluginJson = JSON.parse(pluginJsonSource);
   assert.equal(pluginJson.staticDirs["game-icons"], "public/game-icons");
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*--wiki-callout-icon:\s*url\("\/assets\/plugins\/nodebb-plugin-westgate-wiki\/game-icons\/scroll-unfurled\.svg"\)/);
-  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*display:\s*block/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*display:\s*flow-root/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*min-height:\s*calc\(3\.5rem\s*\+\s*1\.9rem\)/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*border-left:\s*0\.85rem\s+solid\s+var\(--wiki-callout-rail\)/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*background:\s*var\(--wiki-callout-bg\)/);
@@ -2618,6 +2618,9 @@ await test("wikiCallout css uses themed icon callout bars in articles and editor
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout > :where\(ul, ol\) > li::marker\s*\{[\s\S]*color:\s*currentColor/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout li > p\s*\{[\s\S]*display:\s*inline/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout\s*\{[\s\S]*--wiki-callout-icon:\s*url\("\/assets\/plugins\/nodebb-plugin-westgate-wiki\/game-icons\/scroll-unfurled\.svg"\)/);
+  [editorCss, vendoredEditorCss].forEach(function (css) {
+    assert.match(css, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout\s*\{[\s\S]*display:\s*flow-root/);
+  });
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout\s*\{[\s\S]*min-height:\s*calc\(3\.5rem\s*\+\s*1\.9rem\)/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout::before\s*\{[\s\S]*float:\s*left/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout > p\s*\{[\s\S]*display:\s*block/);

@@ -1449,7 +1449,7 @@
   --wiki-callout-icon: url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/scroll-unfurled.svg");
   --wiki-callout-text: #ece7df;
   position: relative;
-  display: block;
+  display: flow-root;
   min-height: calc(3.5rem + 1.9rem);
   box-sizing: border-box;
   border: 0;
