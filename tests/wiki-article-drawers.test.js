@@ -101,6 +101,8 @@ test("small drawer viewports become bottom sheets with horizontal trigger button
   assert.match(smallDrawerCss, /\.wiki-article-drawer--nav\s+\.wiki-article-drawer__tab\s*{[^}]*left:\s*var\(--wiki-article-drawer-sheet-gutter\)/);
   assert.match(smallDrawerCss, /\.wiki-article-drawer--toc\s+\.wiki-article-drawer__tab\s*{[^}]*left:\s*calc\(var\(--wiki-article-drawer-sheet-gutter\)\s*\+\s*var\(--wiki-article-drawer-trigger-width\)\s*\+\s*var\(--wiki-article-drawer-trigger-gap\)\)/);
   assert.match(smallDrawerCss, /html\.wiki-article-drawer-modal-open\s+\.wiki-article-drawer__tab\s*{[^}]*visibility:\s*hidden/);
+  assert.match(smallDrawerCss, /html\.wiki-article-drawer-modal-open\s+\.wiki-article-drawer\s*{[^}]*z-index:\s*var\(--wiki-article-drawer-modal-layer,\s*1050\)/);
+  assert.match(smallDrawerCss, /html\.wiki-article-drawer-modal-open\s+\.wiki-article-drawer-backdrop\s*{[^}]*z-index:\s*var\(--wiki-article-drawer-modal-backdrop-layer,\s*1049\)/);
   assert.match(smallDrawerCss, /\.wiki-article-drawer__tab-label\s*{[^}]*writing-mode:\s*horizontal-tb/);
 });
 

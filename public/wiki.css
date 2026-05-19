@@ -945,6 +945,14 @@
     visibility: hidden;
   }
 
+  html.wiki-article-drawer-modal-open .wiki-article-drawer {
+    z-index: var(--wiki-article-drawer-modal-layer, 1050);
+  }
+
+  html.wiki-article-drawer-modal-open .wiki-article-drawer-backdrop {
+    z-index: var(--wiki-article-drawer-modal-backdrop-layer, 1049);
+  }
+
   .wiki-article-drawer-backdrop {
     z-index: var(--wiki-article-drawer-backdrop-layer, 1033);
   }
