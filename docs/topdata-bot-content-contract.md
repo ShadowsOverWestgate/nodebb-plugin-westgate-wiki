@@ -57,7 +57,7 @@ unsafe inline event handlers, scripts, iframes, or raw editor-only Tiptap JSON.
   </tbody>
 </table>
 <!-- sow-topdata-wiki:managed:end -->
-<!-- sow-topdata-wiki:manual:start id="notes" -->
-<h2>Notes</h2><p></p>
-<!-- sow-topdata-wiki:manual:end id="notes" -->
+<!-- sow-topdata-wiki:manual:start id="user_bottom" -->
+<p></p>
+<!-- sow-topdata-wiki:manual:end id="user_bottom" -->
 ```
