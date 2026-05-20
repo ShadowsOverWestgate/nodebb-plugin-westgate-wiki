@@ -43,6 +43,14 @@ The topdata bot may generate:
 The generated subset must not use DokuWiki syntax, Markdown comment markers,
 unsafe inline event handlers, scripts, iframes, or raw editor-only Tiptap JSON.
 
+Generated wiki-link markers may use typed topdata page IDs such as
+`[[feat:brew:potion]]` or `[[class:fighter]]`. The wiki plugin resolves the
+first segment against configured wiki namespaces, including simple singular or
+plural aliases, then resolves the remaining colon-separated value as the target
+page slug/title inside that namespace. Existing generated content therefore may
+keep typed page IDs while public article links render to canonical wiki paths
+such as `/wiki/feats/brew-potion`.
+
 ## Fixture
 
 ```html

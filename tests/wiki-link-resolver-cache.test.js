@@ -180,6 +180,54 @@ const config = require("../lib/config");
     "bare leaf links should resolve to a unique subpage leaf and render with segmented title-path markup"
   );
 
+  state.settings = {
+    categoryIds: "1, 4, 5",
+    includeChildCategories: "0"
+  };
+  state.categories = new Map([
+    [1, { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 0 }],
+    [4, { cid: 4, name: "Classes", slug: "4/classes", parentCid: 1, topic_count: 1 }],
+    [5, { cid: 5, name: "Feats", slug: "5/feats", parentCid: 1, topic_count: 1 }]
+  ]);
+  state.topics = new Map([
+    [40, { tid: 40, cid: 4, title: "Fighter", titleRaw: "Fighter", slug: "40/fighter", deleted: 0, scheduled: 0 }],
+    [50, { tid: 50, cid: 5, title: "Brew Potion", titleRaw: "Brew Potion", slug: "50/brew-potion", deleted: 0, scheduled: 0 }]
+  ]);
+  state.tidsByCid = new Map([[4, [40]], [5, [50]]]);
+  require("../lib/config").invalidateSettingsCache();
+  require("../lib/wiki-paths").invalidateNamespaceIndexCache({ skipSettingsInvalidation: true });
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  const generatedLinkHtml = await wikiLinks.replaceWikiLinks(
+    [
+      "[[feat:brew:potion]]",
+      "[[feat:brew:potion|Brew Potion]]",
+      "[[feat:new:thing]]",
+      "[[class:fighter]]"
+    ].join(" "),
+    4,
+    await config.getSettings({ bustCache: true })
+  );
+  assert.match(
+    generatedLinkHtml,
+    /<a class="wiki-internal-link" href="\/wiki\/feats\/brew-potion">Brew Potion<\/a>/,
+    "typed generated feat page IDs should resolve across namespaces"
+  );
+  assert.strictEqual(
+    (generatedLinkHtml.match(/<a class="wiki-internal-link" href="\/wiki\/feats\/brew-potion">Brew Potion<\/a>/g) || []).length,
+    2,
+    "explicit labels on typed generated page IDs should be preserved"
+  );
+  assert.match(
+    generatedLinkHtml,
+    /class="wiki-redlink" href="\/wiki\/feats\?create=new%3Athing&amp;redlink=1&amp;cid=5"/,
+    "missing typed generated page IDs should redlink in the resolved target namespace"
+  );
+  assert.match(
+    generatedLinkHtml,
+    /<a class="wiki-internal-link" href="\/wiki\/classes\/fighter">Fighter<\/a>/,
+    "singular typed namespace aliases should resolve to plural namespace categories"
+  );
+
   console.log("wiki-link resolver cache tests passed");
 })().catch((err) => {
   console.error(err);
