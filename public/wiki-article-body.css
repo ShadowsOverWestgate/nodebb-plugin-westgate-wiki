@@ -964,7 +964,7 @@ content: "";
   float: right;
   clear: right;
   width: var(--wiki-infobox-reader-width);
-  margin: 0.25rem 0 1rem var(--wiki-infobox-reader-gutter);
+  margin: 0 0 1rem var(--wiki-infobox-reader-gutter);
   border: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.38));
   border-radius: var(--wiki-infobox-radius, var(--bs-border-radius, 0.5rem));
   background: var(--wiki-infobox-bg, linear-gradient(145deg, rgba(31, 18, 35, 0.94), rgba(8, 7, 10, 0.96)));

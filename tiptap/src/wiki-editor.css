@@ -1202,7 +1202,7 @@
   float: right;
   clear: right;
   width: min(22rem, 42%);
-  margin: 0.25rem 0 1rem 1.25rem;
+  margin: 0 0 1rem 1.25rem;
   border: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.38));
   border-radius: var(--wiki-infobox-radius, var(--bs-border-radius, 0.5rem));
   background: var(--wiki-infobox-bg, linear-gradient(145deg, rgba(31, 18, 35, 0.94), rgba(8, 7, 10, 0.96)));
