@@ -138,6 +138,12 @@
       </div>
     </div>
 
+    <div class="wiki-article-drawers wiki-article-drawers--nav-only" data-wiki-article-drawers>
+      <!-- IMPORT partials/wiki/page-nav-drawer.tpl -->
+
+      <button type="button" class="wiki-article-drawer-backdrop" data-wiki-drawer-backdrop hidden aria-label="Close article navigation drawers"></button>
+    </div>
+
     <nav class="wiki-fab-dock wiki-fab-dock--floating" aria-label="Namespace tools">
       <div class="wiki-fab-dock-inner">
         <!-- IF canCreatePage -->

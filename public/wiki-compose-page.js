@@ -3,6 +3,12 @@
 
 /** Must match `MAX_WIKI_MAIN_BODY_UTF8_BYTES` in lib/wiki-page-validation.js */
 const MAX_WIKI_MAIN_BODY_UTF8_BYTES = 512 * 1024;
+const WIKI_COMPOSE_BLOCKING_SAVE_STATUSES = new Set([
+  "namespace-collision",
+  "namespace-page-collision",
+  "page-collision",
+  "reserved-path-segment"
+]);
 
 function utf8ByteLength(str) {
   if (typeof TextEncoder !== "undefined") {
@@ -37,6 +43,128 @@ function setStatus(el, text) {
       el.classList.add("text-muted");
     }
   }
+}
+
+function getApiResponseMessage(body, fallback) {
+  return (
+    (body && body.response && body.response.message) ||
+    (body && body.status && body.status.message) ||
+    fallback ||
+    "Unexpected API response"
+  );
+}
+
+function getBlockingWikiResponse(body) {
+  const response = body && body.response;
+  if (!response || response.ok !== false) {
+    return null;
+  }
+
+  const status = String(response.status || "");
+  return WIKI_COMPOSE_BLOCKING_SAVE_STATUSES.has(status) ? response : null;
+}
+
+function createBlockingWikiError(response, fallback) {
+  const err = new Error((response && response.message) || fallback || "This page cannot be saved.");
+  err.wikiComposeBlockingResponse = response || {};
+  return err;
+}
+
+function getRelativeWikiHref(relativePath, wikiPath) {
+  const path = String(wikiPath || "");
+  if (!path) {
+    return "";
+  }
+  const prefix = String(relativePath || "").replace(/\/$/, "");
+  return `${prefix}${path.charAt(0) === "/" ? path : `/${path}`}`;
+}
+
+function showComposeErrorModal(options) {
+  const details = options || {};
+  const existing = document.querySelector(".wiki-compose-error-dialog-shell");
+  if (existing && existing.parentNode) {
+    existing.parentNode.removeChild(existing);
+  }
+
+  const restoreFocusTarget = details.restoreFocus || document.activeElement;
+  const shell = document.createElement("div");
+  shell.className = "wiki-compose-error-dialog-shell";
+
+  const dialog = document.createElement("div");
+  dialog.className = "wiki-compose-error-dialog";
+  dialog.setAttribute("role", "dialog");
+  dialog.setAttribute("aria-modal", "true");
+  dialog.setAttribute("aria-labelledby", "wiki-compose-error-dialog-title");
+  dialog.setAttribute("aria-describedby", "wiki-compose-error-dialog-message");
+
+  const title = document.createElement("h2");
+  title.id = "wiki-compose-error-dialog-title";
+  title.className = "wiki-compose-error-dialog__title";
+  title.textContent = details.title || "Page cannot be saved";
+
+  const message = document.createElement("p");
+  message.id = "wiki-compose-error-dialog-message";
+  message.className = "wiki-compose-error-dialog__message";
+  message.textContent = details.message || "Resolve the page title or URL conflict before saving.";
+
+  const actions = document.createElement("div");
+  actions.className = "wiki-compose-error-dialog__actions";
+
+  const closeButton = document.createElement("button");
+  closeButton.type = "button";
+  closeButton.className = "btn btn-primary";
+  closeButton.textContent = "Close";
+
+  dialog.appendChild(title);
+  dialog.appendChild(message);
+
+  if (details.wikiPath) {
+    const pathNote = document.createElement("p");
+    pathNote.className = "wiki-compose-error-dialog__path";
+    pathNote.appendChild(document.createTextNode("Conflicting path: "));
+
+    const pathLink = document.createElement("a");
+    pathLink.href = getRelativeWikiHref(details.relativePath, details.wikiPath);
+    pathLink.textContent = details.wikiPath;
+    pathNote.appendChild(pathLink);
+    dialog.appendChild(pathNote);
+  }
+
+  actions.appendChild(closeButton);
+  dialog.appendChild(actions);
+  shell.appendChild(dialog);
+
+  let closed = false;
+  function closeDialog() {
+    if (closed) {
+      return;
+    }
+    closed = true;
+    document.removeEventListener("keydown", handleKeydown);
+    if (shell.parentNode) {
+      shell.parentNode.removeChild(shell);
+    }
+    if (restoreFocusTarget && typeof restoreFocusTarget.focus === "function") {
+      restoreFocusTarget.focus();
+    }
+  }
+
+  function handleKeydown(event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeDialog();
+    }
+  }
+
+  closeButton.addEventListener("click", closeDialog);
+  shell.addEventListener("click", function (event) {
+    if (event.target === shell) {
+      closeDialog();
+    }
+  });
+  document.addEventListener("keydown", handleKeydown);
+  document.body.appendChild(shell);
+  closeButton.focus();
 }
 
 function escapeHtml(value) {
@@ -520,15 +648,25 @@ async function initWikiComposePage() {
             params.set("tid", String(payload.tid));
           }
           const checkRes = await fetch(`${payload.pageTitleCheckUrl}?${params.toString()}`, {
-            credentials: "same-origin"
+            credentials: "same-origin",
+            cache: "no-store"
           });
-          const checkBody = await checkRes.json();
+          let checkBody = null;
+          try {
+            checkBody = await checkRes.json();
+          } catch (err) {
+            checkBody = null;
+          }
+          const blockingTitleResponse = getBlockingWikiResponse(checkBody);
+          if (blockingTitleResponse) {
+            throw createBlockingWikiError(blockingTitleResponse, "This title cannot be published at a clean wiki URL.");
+          }
           if (!checkRes.ok) {
-            const msg = (checkBody && checkBody.status && checkBody.status.message) || checkRes.statusText;
+            const msg = getApiResponseMessage(checkBody, checkRes.statusText);
             throw new Error(msg);
           }
           if (checkBody && checkBody.response && checkBody.response.ok === false) {
-            throw new Error(checkBody.response.message || "This title cannot be published at a clean wiki URL.");
+            throw new Error(getApiResponseMessage(checkBody, "This title cannot be published at a clean wiki URL."));
           }
         }
 
@@ -585,12 +723,20 @@ async function initWikiComposePage() {
           body = await res.json();
         }
 
+        const blockingSaveResponse = getBlockingWikiResponse(body);
+        if (blockingSaveResponse) {
+          throw createBlockingWikiError(blockingSaveResponse, "This page cannot be saved.");
+        }
+
         if (!res.ok) {
-          const msg = (body && body.status && body.status.message) || res.statusText;
+          const msg = getApiResponseMessage(body, res.statusText);
           throw new Error(msg);
         }
 
         const responsePayload = body.response;
+        if (responsePayload && responsePayload.ok === false) {
+          throw new Error(getApiResponseMessage(body, "This page cannot be saved."));
+        }
         let wikiSlug = null;
         const savedTid = (
           responsePayload &&
@@ -745,7 +891,16 @@ async function initWikiComposePage() {
         );
         submitBtn.disabled = false;
       } catch (err) {
-        setStatus(statusEl, (err && err.message) || String(err), "error");
+        const message = (err && err.message) || String(err);
+        if (err && err.wikiComposeBlockingResponse) {
+          showComposeErrorModal({
+            message: message,
+            wikiPath: err.wikiComposeBlockingResponse.wikiPath,
+            relativePath: payload.relativePath,
+            restoreFocus: titleInput || submitBtn
+          });
+        }
+        setStatus(statusEl, message, "error");
         submitBtn.disabled = false;
       }
     });

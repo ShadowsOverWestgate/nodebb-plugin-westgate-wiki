@@ -428,6 +428,11 @@
   border-collapse: collapse;
 }
 
+.wiki-article-prose .tableWrapper {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 @media (min-width: 768px) {
   @supports selector(:has(> .wiki-infobox)) {
     .wiki-article-prose:has(> .wiki-infobox) > table[style*="width:100%"],
@@ -826,7 +831,7 @@
   --wiki-callout-icon: url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/scroll-unfurled.svg");
   --wiki-callout-text: #ece7df;
   position: relative;
-  display: block;
+  display: flow-root;
   min-height: calc(3.5rem + 1.9rem);
   box-sizing: border-box;
   border: 0;
@@ -1096,6 +1101,11 @@ content: "";
   margin-right: 0;
 }
 
+.wiki-article-prose .wiki-poetry-quote--full {
+  display: flow-root;
+  width: auto;
+}
+
 .wiki-article-prose .wiki-poetry-quote__body {
   position: relative;
   border: 1px solid var(--wiki-poetry-quote-border, rgba(194, 163, 90, 0.46));
@@ -1136,7 +1146,6 @@ content: "";
 .wiki-article-prose .wiki-poetry-quote--plain {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
 }
 
 .wiki-article-prose .wiki-poetry-quote--plain::before {

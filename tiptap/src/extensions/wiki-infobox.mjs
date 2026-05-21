@@ -1,11 +1,13 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { DOMParser, Fragment } from "@tiptap/pm/model";
-import { NodeSelection, Selection } from "@tiptap/pm/state";
+import { NodeSelection, Plugin, Selection } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 
 import { getMergedAttrsForElement } from "../shared/preserved-attrs.mjs";
 
 const INFOBOX_NODE_NAME = "wikiInfobox";
 const INFOBOX_CONTENT_EXPRESSION = "wikiInfoboxPart*";
+const ACTIVE_INFOBOX_BLOCK_CLASS = "wiki-infobox__block--active";
 const INFOBOX_HELPER_NODE_NAMES = new Set([
   "wikiInfoboxTitle",
   "wikiInfoboxSubtitle",
@@ -41,6 +43,14 @@ function findActiveInfobox(state) {
   return null;
 }
 
+function isInfoboxRowsNode(node) {
+  return !!(node && node.type.name === "wikiInfoboxRows");
+}
+
+function isInfoboxRowNode(node) {
+  return !!(node && node.type.name === "wikiInfoboxRow");
+}
+
 function isInfoboxHelperNode(node) {
   return !!(node && INFOBOX_HELPER_NODE_NAMES.has(node.type.name));
 }
@@ -63,12 +73,65 @@ function findInfoboxHelperChild(context, childPos) {
   return result;
 }
 
+function findInfoboxRowChild(rowsContext, childPos) {
+  let result = null;
+  rowsContext.node.forEach(function (child, offset, index) {
+    if (result) {
+      return;
+    }
+    const pos = rowsContext.pos + 1 + offset;
+    if (pos === childPos) {
+      result = {
+        index,
+        node: child,
+        pos
+      };
+    }
+  });
+  return result;
+}
+
+function findInfoboxRowByPos(infoboxContext, rowPos) {
+  let result = null;
+  infoboxContext.node.forEach(function (child, offset, rowsIndex) {
+    if (result || !isInfoboxRowsNode(child)) {
+      return;
+    }
+
+    const rowsPos = infoboxContext.pos + 1 + offset;
+    const row = findInfoboxRowChild({ node: child, pos: rowsPos }, rowPos);
+    if (row) {
+      result = {
+        infobox: infoboxContext,
+        rows: {
+          index: rowsIndex,
+          node: child,
+          pos: rowsPos
+        },
+        row
+      };
+    }
+  });
+  return result;
+}
+
 function findDirectInfoboxHelperAtResolvedPos(context, $pos) {
   for (let depth = $pos.depth; depth > 0; depth -= 1) {
     const ancestor = $pos.node(depth);
     const parent = depth > 0 ? $pos.node(depth - 1) : null;
     if (isInfoboxHelperNode(ancestor) && parent && parent.type.name === INFOBOX_NODE_NAME) {
       return findInfoboxHelperChild(context, $pos.before(depth));
+    }
+  }
+  return null;
+}
+
+function findDirectInfoboxRowAtResolvedPos(context, $pos) {
+  for (let depth = $pos.depth; depth > 0; depth -= 1) {
+    const ancestor = $pos.node(depth);
+    const parent = depth > 0 ? $pos.node(depth - 1) : null;
+    if (isInfoboxRowNode(ancestor) && isInfoboxRowsNode(parent)) {
+      return findInfoboxRowByPos(context, $pos.before(depth));
     }
   }
   return null;
@@ -103,6 +166,60 @@ function findActiveInfoboxHelper(state) {
   };
 }
 
+function findActiveInfoboxRow(state) {
+  const context = findActiveInfobox(state);
+  if (!context) {
+    return null;
+  }
+
+  const { $from, $to, from, node } = state.selection;
+  if (isInfoboxRowNode(node)) {
+    return findInfoboxRowByPos(context, from);
+  }
+
+  const fromRow = findDirectInfoboxRowAtResolvedPos(context, $from);
+  const toRow = findDirectInfoboxRowAtResolvedPos(context, $to);
+  if (!fromRow || !toRow || fromRow.rows.pos !== toRow.rows.pos || fromRow.row.pos !== toRow.row.pos) {
+    return null;
+  }
+
+  return fromRow;
+}
+
+function helperIsWholeNodeSelection(state, context) {
+  return !!(
+    state.selection instanceof NodeSelection &&
+    context &&
+    context.helper &&
+    state.selection.from === context.helper.pos &&
+    state.selection.node === context.helper.node
+  );
+}
+
+function findActiveInfoboxBlockTarget(state) {
+  const row = findActiveInfoboxRow(state);
+  if (row) {
+    return {
+      type: "row",
+      context: row
+    };
+  }
+
+  const helper = findActiveInfoboxHelper(state);
+  if (!helper) {
+    return null;
+  }
+
+  if (isInfoboxRowsNode(helper.helper.node) && !helperIsWholeNodeSelection(state, helper)) {
+    return null;
+  }
+
+  return {
+    type: "helper",
+    context: helper
+  };
+}
+
 function setSelectionNear(tr, pos, bias) {
   const selectionPos = Math.max(0, Math.min(pos, tr.doc.content.size));
   return tr.setSelection(Selection.near(tr.doc.resolve(selectionPos), bias || 1));
@@ -124,8 +241,7 @@ function getInfoboxChildPos(infoboxContext, children, index) {
   return pos;
 }
 
-function moveActiveInfoboxHelper(state, dispatch, direction) {
-  const context = findActiveInfoboxHelper(state);
+function moveInfoboxHelperTarget(state, dispatch, context, direction) {
   if (!context) {
     return false;
   }
@@ -152,8 +268,45 @@ function moveActiveInfoboxHelper(state, dispatch, direction) {
   return true;
 }
 
-function deleteActiveInfoboxHelper(state, dispatch) {
-  const context = findActiveInfoboxHelper(state);
+function moveInfoboxRowTarget(state, dispatch, context, direction) {
+  if (!context) {
+    return false;
+  }
+
+  const fromIndex = context.row.index;
+  const toIndex = fromIndex + direction;
+  const rows = getInfoboxChildNodes(context.rows.node);
+  const target = rows[toIndex];
+  if (!isInfoboxRowNode(target)) {
+    return false;
+  }
+
+  if (dispatch) {
+    const moved = rows[fromIndex];
+    rows[fromIndex] = target;
+    rows[toIndex] = moved;
+    const tr = state.tr.replaceWith(
+      context.rows.pos + 1,
+      context.rows.pos + context.rows.node.nodeSize - 1,
+      Fragment.fromArray(rows)
+    );
+    dispatch(setSelectionNear(tr, getInfoboxChildPos(context.rows, rows, toIndex) + 1).scrollIntoView());
+  }
+  return true;
+}
+
+function moveActiveInfoboxHelper(state, dispatch, direction) {
+  const target = findActiveInfoboxBlockTarget(state);
+  if (!target) {
+    return false;
+  }
+
+  return target.type === "row"
+    ? moveInfoboxRowTarget(state, dispatch, target.context, direction)
+    : moveInfoboxHelperTarget(state, dispatch, target.context, direction);
+}
+
+function deleteInfoboxHelperTarget(state, dispatch, context) {
   if (!context) {
     return false;
   }
@@ -170,6 +323,61 @@ function deleteActiveInfoboxHelper(state, dispatch) {
     dispatch(tr.scrollIntoView());
   }
   return true;
+}
+
+function deleteInfoboxRowTarget(state, dispatch, context) {
+  if (!context) {
+    return false;
+  }
+
+  if (dispatch) {
+    if (context.rows.node.childCount <= 1) {
+      const tr = state.tr.delete(context.rows.pos, context.rows.pos + context.rows.node.nodeSize);
+      const updatedInfobox = tr.doc.nodeAt(context.infobox.pos);
+      if (updatedInfobox && updatedInfobox.type.name === INFOBOX_NODE_NAME && updatedInfobox.childCount === 0) {
+        tr.setSelection(NodeSelection.create(tr.doc, context.infobox.pos));
+      } else {
+        setSelectionNear(tr, context.rows.pos, -1);
+      }
+      dispatch(tr.scrollIntoView());
+      return true;
+    }
+
+    const tr = state.tr.delete(context.row.pos, context.row.pos + context.row.node.nodeSize);
+    const deletingLastRow = context.row.index >= context.rows.node.childCount - 1;
+    setSelectionNear(tr, context.row.pos, deletingLastRow ? -1 : 1);
+    dispatch(tr.scrollIntoView());
+  }
+  return true;
+}
+
+function deleteActiveInfoboxHelper(state, dispatch) {
+  const target = findActiveInfoboxBlockTarget(state);
+  if (!target) {
+    return false;
+  }
+
+  return target.type === "row"
+    ? deleteInfoboxRowTarget(state, dispatch, target.context)
+    : deleteInfoboxHelperTarget(state, dispatch, target.context);
+}
+
+function getActiveInfoboxBlockDecorations(state) {
+  const target = findActiveInfoboxBlockTarget(state);
+  if (!target) {
+    return DecorationSet.empty;
+  }
+
+  const block = target.type === "row" ? target.context.row : target.context.helper;
+  if (!block || !block.node || !Number.isFinite(block.pos)) {
+    return DecorationSet.empty;
+  }
+
+  return DecorationSet.create(state.doc, [
+    Decoration.node(block.pos, block.pos + block.node.nodeSize, {
+      class: ACTIVE_INFOBOX_BLOCK_CLASS
+    })
+  ]);
 }
 
 function appendNodeToActiveInfobox(state, dispatch, node) {
@@ -1240,6 +1448,15 @@ const WikiInfobox = Node.create({
           return true;
         }
     };
+  },
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        props: {
+          decorations: getActiveInfoboxBlockDecorations
+        }
+      })
+    ];
   }
 });
 

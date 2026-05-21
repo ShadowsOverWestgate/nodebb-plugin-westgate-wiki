@@ -180,6 +180,7 @@ const BUTTON_ICONS = {
   "poetry-quote-align-left": "fa-align-left",
   "poetry-quote-align-center": "fa-align-center",
   "poetry-quote-align-right": "fa-align-right",
+  "poetry-quote-align-full": "fa-arrows-h",
   "poetry-quote-container": "fa-square-o",
   "poetry-quote-unwrap": "fa-outdent",
   "image-align-center": "fa-align-center",
@@ -2632,6 +2633,16 @@ function createPoetryQuoteContextToolbar(surface, editor) {
       button.classList.toggle("active", editor.getAttributes("wikiPoetryQuote").position === "right");
     }
   });
+  const alignFull = createButton({
+    id: "poetry-quote-align-full",
+    title: "Position quote full width",
+    action: function () {
+      editor.chain().focus().setWikiPoetryQuotePosition("full").run();
+    },
+    applyState: function (button) {
+      button.classList.toggle("active", editor.getAttributes("wikiPoetryQuote").position === "full");
+    }
+  });
   const container = createButton({
     id: "poetry-quote-container",
     title: "Toggle quote container",
@@ -2653,6 +2664,7 @@ function createPoetryQuoteContextToolbar(surface, editor) {
   panel.appendChild(alignLeft);
   panel.appendChild(alignCenter);
   panel.appendChild(alignRight);
+  panel.appendChild(alignFull);
   panel.appendChild(container);
   panel.appendChild(unwrap);
 
@@ -2666,9 +2678,11 @@ function createPoetryQuoteContextToolbar(surface, editor) {
     alignLeft.disabled = false;
     alignCenter.disabled = false;
     alignRight.disabled = false;
+    alignFull.disabled = false;
     alignLeft.classList.toggle("active", activePosition === "left");
     alignCenter.classList.toggle("active", activePosition === "center");
     alignRight.classList.toggle("active", activePosition === "right");
+    alignFull.classList.toggle("active", activePosition === "full");
     container.classList.remove("active");
     container.disabled = false;
     unwrap.disabled = false;

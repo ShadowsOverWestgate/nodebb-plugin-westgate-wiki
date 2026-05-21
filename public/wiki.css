@@ -851,6 +851,15 @@
     --wiki-article-drawer-trigger-width: calc((100vw - (var(--wiki-article-drawer-sheet-gutter) * 2) - var(--wiki-article-drawer-trigger-gap)) / 2);
   }
 
+  .wiki-article-drawers--nav-only {
+    --wiki-article-drawer-trigger-width: calc(100vw - (var(--wiki-article-drawer-sheet-gutter) * 2));
+  }
+
+  .wiki-article-drawers--nav-only .wiki-article-drawer--nav .wiki-article-drawer__tab {
+    border-bottom-right-radius: var(--wiki-chrome-radius, var(--bs-border-radius-lg, 0.5rem));
+    border-top-right-radius: var(--wiki-chrome-radius, var(--bs-border-radius-lg, 0.5rem));
+  }
+
   .wiki-article-drawer {
     bottom: auto;
     inset: 0;
@@ -943,6 +952,14 @@
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
+  }
+
+  html.wiki-article-drawer-modal-open .wiki-article-drawer {
+    z-index: var(--wiki-article-drawer-modal-layer, 1050);
+  }
+
+  html.wiki-article-drawer-modal-open .wiki-article-drawer-backdrop {
+    z-index: var(--wiki-article-drawer-modal-backdrop-layer, 1049);
   }
 
   .wiki-article-drawer-backdrop {
@@ -1786,6 +1803,56 @@ a[href*="/wiki/"][href*="redlink=1"] {
 .westgate-wiki-compose .wiki-compose-css-tools {
   display: flex;
   justify-content: flex-start;
+}
+
+.wiki-compose-error-dialog-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 1060;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 10, 24, 0.72);
+}
+
+.wiki-compose-error-dialog {
+  width: min(100%, 34rem);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid var(--wiki-chrome-border-color, var(--bs-border-color, #dee2e6));
+  border-radius: var(--bs-border-radius-lg, 0.5rem);
+  background: var(--wiki-chrome-bg, var(--bs-body-bg, #fff));
+  color: var(--wiki-chrome-text-color, var(--bs-body-color, #212529));
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.45);
+}
+
+.wiki-compose-error-dialog__title {
+  margin: 0 0 0.75rem;
+  color: var(--wiki-chrome-heading-color, var(--bs-emphasis-color, inherit));
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+
+.wiki-compose-error-dialog__message,
+.wiki-compose-error-dialog__path {
+  margin: 0 0 0.85rem;
+}
+
+.wiki-compose-error-dialog__path {
+  color: var(--wiki-muted-color, var(--bs-secondary-color, inherit));
+  font-size: 0.9375rem;
+}
+
+.wiki-compose-error-dialog__path a {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.wiki-compose-error-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.1rem;
 }
 
 .wiki-compose-css-dialog {

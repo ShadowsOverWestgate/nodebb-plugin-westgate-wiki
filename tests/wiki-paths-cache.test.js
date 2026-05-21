@@ -37,6 +37,13 @@ require.main.require = function requireNodebbStub(id) {
       },
       getChildrenCids: async () => []
     },
+    "./src/database": {
+      getObject: async () => ({}),
+      getObjectField: async () => null,
+      getSortedSetRange: async () => [],
+      getSortedSetRevRange: async () => []
+    },
+    "./src/controllers/helpers": {},
     "./src/meta": {
       settings: {
         get: async () => state.settings,
@@ -45,11 +52,23 @@ require.main.require = function requireNodebbStub(id) {
       }
     },
     "./src/slugify": slugify,
+    "./src/privileges": {
+      categories: { isAdminOrMod: async () => false },
+      topics: { get: async () => ({ "topics:read": true }) }
+    },
     "./src/topics": {
       getTopicData: async (tid) => {
         state.topicDataCalls += 1;
         return state.topics.get(parseInt(tid, 10)) || null;
-      }
+      },
+      getTopicsFields: async (tids) => tids.map((tid) => state.topics.get(parseInt(tid, 10))).filter(Boolean)
+    },
+    "./src/utils": {
+      isNumber: (value) => value !== null && value !== "" && !Number.isNaN(Number(value))
+    },
+    "./src/user": {
+      isAdministrator: async () => false,
+      isGlobalModerator: async () => false
     }
   };
 

@@ -50,6 +50,7 @@ require.main.require = function requireNodebbStub(id) {
       getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
       getChildrenCids: async () => []
     },
+    "./src/controllers/helpers": {},
     "./src/database": {
       getObject: async () => ({}),
       getObjectField: async (key, field) => getObject(key)[field],
@@ -85,6 +86,7 @@ require.main.require = function requireNodebbStub(id) {
       getPostFields: async (pid) => state.posts.get(parseInt(pid, 10)) || null
     },
     "./src/privileges": {
+      categories: { isAdminOrMod: async () => false },
       topics: {
         get: async (tid, uid) => ({
           "topics:read": !state.deniedUids.has(parseInt(uid, 10)),
@@ -99,11 +101,16 @@ require.main.require = function requireNodebbStub(id) {
       getTopicFields: async (tid) => state.topics.get(parseInt(tid, 10)) || null
     },
     "./src/user": {
+      isAdministrator: async () => false,
+      isGlobalModerator: async () => false,
       getUidByUserslug: async (userslug) => {
         const row = state.usersBySlug.get(userslug);
         return row ? row.uid : null;
       },
       getUserFields: async (uid) => state.usersByUid.get(parseInt(uid, 10)) || null
+    },
+    "./src/utils": {
+      isNumber: (value) => value !== null && value !== "" && !Number.isNaN(Number(value))
     }
   };
 

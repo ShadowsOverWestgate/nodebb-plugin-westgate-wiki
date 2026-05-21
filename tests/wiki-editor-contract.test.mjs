@@ -970,6 +970,9 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content \.wiki-alignment-table\s*\{[^}]*margin-left:\s*auto[^}]*margin-right:\s*auto/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :first-child\s*\{[^}]*margin-top:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :last-child\s*\{[^}]*margin-bottom:\s*0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row\.wiki-infobox__block--active\s*\{/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__title\.wiki-infobox__block--active,/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__block--active\s*\{/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*position:\s*absolute/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*z-index:\s*22/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*flex-direction:\s*column/);
@@ -983,6 +986,9 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty\s*\{[^}]*cursor:\s*pointer[^}]*min-height:\s*4rem/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty:{1,2}before\s*\{[^}]*content:\s*"Upload image"[^}]*letter-spacing:\s*0/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content \.wiki-alignment-table\s*\{[^}]*margin-left:\s*auto[^}]*margin-right:\s*auto/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row\.wiki-infobox__block--active\s*\{/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__title\.wiki-infobox__block--active,/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__block--active\s*\{/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*max-height:\s*min\(calc\(100vh\s*-\s*2rem\),\s*28rem\)[^}]*overflow-y:\s*auto/);
 });
@@ -1007,6 +1013,7 @@ await test("table cell paragraphs have no margins in article and editor prose", 
 await test("article tables can shrink or fill beside floated infoboxes", function () {
   assert.match(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*width:\s*auto/s);
   assert.match(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*max-width:\s*100%/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+\.tableWrapper\s*\{[^}]*max-width:\s*100%[^}]*overflow-x:\s*auto/s);
   assert.doesNotMatch(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*\n\s*width:\s*100%/s);
   assert.doesNotMatch(articleBodyCss, /\.wiki-article-prose\s+table\[style\*="width:100%"\],\s*\.wiki-article-prose\s+table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*auto\s*!important/s);
   assert.match(articleBodyCss, /\.wiki-article-prose\s*\{[^}]*--wiki-infobox-reader-width:\s*min\(22rem,\s*42%\)/s);
@@ -1451,6 +1458,14 @@ await test("normalizeLegacyHtmlForTiptap preserves saved poetry quote positionin
   assert.match(normalized, /wiki-poetry-quote--right/);
 });
 
+await test("normalizeLegacyHtmlForTiptap preserves saved full-width poetry quote positioning", function () {
+  const savedHtml = '<figure class="wiki-poetry-quote wiki-poetry-quote--full" data-wiki-node="poetry-quote" data-wiki-quote-position="full"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>';
+  const normalized = normalizeLegacyHtmlForTiptap(savedHtml);
+
+  assert.match(normalized, /data-wiki-quote-position="full"/);
+  assert.match(normalized, /wiki-poetry-quote--full/);
+});
+
 await test("saved containerless poetry quotes reopen as editable quote widgets", function () {
   const savedHtml = '<figure class="wiki-poetry-quote wiki-poetry-quote--plain" data-wiki-node="poetry-quote" data-wiki-quote-container="false"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>';
   const editor = createEditor(normalizeLegacyHtmlForTiptap(savedHtml));
@@ -1472,6 +1487,18 @@ await test("saved positioned poetry quotes reopen with their block position", fu
   assert.equal(editor.getJSON().content[0].attrs.position, "center");
   assert.match(rendered, /data-wiki-quote-position="center"/);
   assert.match(rendered, /wiki-poetry-quote--center/);
+  editor.destroy();
+});
+
+await test("saved full-width poetry quotes reopen with their block position", function () {
+  const savedHtml = '<figure class="wiki-poetry-quote wiki-poetry-quote--full" data-wiki-node="poetry-quote" data-wiki-quote-position="full"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>';
+  const editor = createEditor(normalizeLegacyHtmlForTiptap(savedHtml));
+  const rendered = editor.getHTML();
+
+  assert.equal(editor.state.doc.child(0).type.name, "wikiPoetryQuote");
+  assert.equal(editor.getJSON().content[0].attrs.position, "full");
+  assert.match(rendered, /data-wiki-quote-position="full"/);
+  assert.match(rendered, /wiki-poetry-quote--full/);
   editor.destroy();
 });
 
@@ -2641,7 +2668,7 @@ await test("wikiCallout css uses themed icon callout bars in articles and editor
   const pluginJson = JSON.parse(pluginJsonSource);
   assert.equal(pluginJson.staticDirs["game-icons"], "public/game-icons");
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*--wiki-callout-icon:\s*url\("\/assets\/plugins\/nodebb-plugin-westgate-wiki\/game-icons\/scroll-unfurled\.svg"\)/);
-  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*display:\s*block/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*display:\s*flow-root/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*min-height:\s*calc\(3\.5rem\s*\+\s*1\.9rem\)/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*border-left:\s*0\.85rem\s+solid\s+var\(--wiki-callout-rail\)/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*background:\s*var\(--wiki-callout-bg\)/);
@@ -2664,6 +2691,9 @@ await test("wikiCallout css uses themed icon callout bars in articles and editor
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout > :where\(ul, ol\) > li::marker\s*\{[\s\S]*color:\s*currentColor/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout li > p\s*\{[\s\S]*display:\s*inline/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout\s*\{[\s\S]*--wiki-callout-icon:\s*url\("\/assets\/plugins\/nodebb-plugin-westgate-wiki\/game-icons\/scroll-unfurled\.svg"\)/);
+  [editorCss, vendoredEditorCss].forEach(function (css) {
+    assert.match(css, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout\s*\{[\s\S]*display:\s*flow-root/);
+  });
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout\s*\{[\s\S]*min-height:\s*calc\(3\.5rem\s*\+\s*1\.9rem\)/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout::before\s*\{[\s\S]*float:\s*left/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-callout > p\s*\{[\s\S]*display:\s*block/);
@@ -3086,6 +3116,95 @@ await test("wikiInfobox helper commands support whole helper node selections", f
   deleteEditor.destroy();
 });
 
+await test("wikiInfobox row movement commands reorder only the active key-value row", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Age</dt><dd>Ancient</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Status</dt><dd>Missing</dd></div></dl></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Age").from);
+  assert.equal(editor.commands.moveWikiInfoboxHelperUp(), true);
+  let rendered = editor.getHTML();
+  assert.ok(rendered.indexOf("Age") < rendered.indexOf("House"));
+  assert.ok(rendered.indexOf("House") < rendered.indexOf("Status"));
+
+  editor.commands.setTextSelection(findTextRange(editor, "Age").from);
+  assert.equal(editor.commands.moveWikiInfoboxHelperDown(), true);
+  rendered = editor.getHTML();
+  assert.ok(rendered.indexOf("House") < rendered.indexOf("Age"));
+  assert.ok(rendered.indexOf("Age") < rendered.indexOf("Status"));
+  assert.equal((rendered.match(/class="wiki-infobox__rows"/g) || []).length, 1);
+  editor.destroy();
+});
+
+await test("wikiInfobox active block decoration marks the row that move and delete commands will target", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Age</dt><dd>Ancient</dd></div></dl></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Age").from);
+  let active = editor.view.dom.querySelector(".wiki-infobox__block--active");
+  assert.ok(active, "selection inside a row should mark an active infobox block");
+  assert.equal(active.classList.contains("wiki-infobox__row"), true);
+  assert.match(active.textContent, /Age/);
+  assert.doesNotMatch(active.textContent, /House/);
+
+  editor.commands.setTextSelection(findTextRange(editor, "Title").from);
+  active = editor.view.dom.querySelector(".wiki-infobox__block--active");
+  assert.ok(active, "selection inside a helper should mark an active infobox block");
+  assert.equal(active.classList.contains("wiki-infobox__title"), true);
+  assert.match(active.textContent, /Title/);
+  assert.doesNotMatch(active.textContent, /Age/);
+  editor.destroy();
+});
+
+await test("wikiInfobox row delete command removes only the active key-value row", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Age</dt><dd>Ancient</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Status</dt><dd>Missing</dd></div></dl></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Age").from);
+  assert.equal(editor.commands.deleteWikiInfoboxHelper(), true);
+  const rendered = editor.getHTML();
+  assert.match(rendered, /House/);
+  assert.doesNotMatch(rendered, /Age/);
+  assert.doesNotMatch(rendered, /Ancient/);
+  assert.match(rendered, /Status/);
+  assert.match(rendered, /class="wiki-infobox__rows" data-wiki-infobox-part="rows"/);
+  assert.equal((rendered.match(/class="wiki-infobox__row"/g) || []).length, 2);
+  editor.destroy();
+});
+
+await test("wikiInfobox row delete command removes the rows helper when deleting the only row", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "House").from);
+  assert.equal(editor.commands.deleteWikiInfoboxHelper(), true);
+  const rendered = editor.getHTML();
+  assert.match(rendered, /Title/);
+  assert.doesNotMatch(rendered, /House/);
+  assert.doesNotMatch(rendered, /wiki-infobox__rows/);
+  assert.match(rendered, /wiki-infobox/);
+  assert.equal(editor.isActive("wikiInfobox"), true);
+  editor.destroy();
+});
+
+await test("wikiInfobox whole rows helper selection still moves and deletes the rows block", function () {
+  const moveEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Age</dt><dd>Ancient</dd></div></dl></aside>');
+  const rowsPos = findNodePositions(moveEditor, "wikiInfoboxRows")[0];
+  moveEditor.view.dispatch(moveEditor.state.tr.setSelection(NodeSelection.create(moveEditor.state.doc, rowsPos)));
+
+  assert.equal(moveEditor.commands.moveWikiInfoboxHelperUp(), true);
+  let rendered = moveEditor.getHTML();
+  assert.ok(rendered.indexOf("House") < rendered.indexOf("Title"));
+  assert.match(rendered, /Age/);
+  moveEditor.destroy();
+
+  const deleteEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Age</dt><dd>Ancient</dd></div></dl></aside>');
+  const deleteRowsPos = findNodePositions(deleteEditor, "wikiInfoboxRows")[0];
+  deleteEditor.view.dispatch(deleteEditor.state.tr.setSelection(NodeSelection.create(deleteEditor.state.doc, deleteRowsPos)));
+
+  assert.equal(deleteEditor.commands.deleteWikiInfoboxHelper(), true);
+  rendered = deleteEditor.getHTML();
+  assert.match(rendered, /Title/);
+  assert.doesNotMatch(rendered, /House|Age|Voss|Ancient/);
+  assert.doesNotMatch(rendered, /wiki-infobox__rows/);
+  deleteEditor.destroy();
+});
+
 await test("wikiInfobox helper commands reject text selections spanning multiple helper blocks", function () {
   const deleteEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><div class="wiki-infobox__subtitle" data-wiki-infobox-part="subtitle">Subtitle</div></aside>');
   const deleteTitle = findTextRange(deleteEditor, "Title");
@@ -3344,6 +3463,22 @@ await test("wikiPoetryQuote stores horizontal block position without changing pa
   editor.destroy();
 });
 
+await test("wikiPoetryQuote stores full-width block position as a fourth position", function () {
+  const editor = createEditor('<figure class="wiki-poetry-quote" data-wiki-node="poetry-quote"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>');
+
+  editor.commands.setTextSelection(3);
+  assert.equal(editor.commands.setWikiPoetryQuotePosition("full"), true);
+  assert.equal(editor.getJSON().content[0].attrs.position, "full");
+  assert.match(editor.getHTML(), /data-wiki-quote-position="full"/);
+  assert.match(editor.getHTML(), /wiki-poetry-quote--full/);
+
+  assert.equal(editor.commands.setWikiPoetryQuotePosition("left"), true);
+  assert.equal(editor.getJSON().content[0].attrs.position, "left");
+  assert.doesNotMatch(editor.getHTML(), /data-wiki-quote-position="full"/);
+  assert.doesNotMatch(editor.getHTML(), /wiki-poetry-quote--full/);
+  editor.destroy();
+});
+
 await test("poetry quote css renders a speech-like quote panel with attribution", function () {
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote\s*\{[\s\S]*margin:\s*1rem\s+0/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote\s*\{[\s\S]*width:\s*fit-content/);
@@ -3351,13 +3486,14 @@ await test("poetry quote css renders a speech-like quote panel with attribution"
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--center\s*\{[\s\S]*margin-right:\s*auto/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--right\s*\{[\s\S]*margin-left:\s*auto/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--right\s*\{[\s\S]*margin-right:\s*0/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--full\s*\{[\s\S]*display:\s*flow-root/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--full\s*\{[\s\S]*width:\s*auto/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body\s*\{[\s\S]*background:\s*var\(--wiki-poetry-quote-bg,[\s\S]*#1b101d/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body\s*\{[\s\S]*border:\s*1px\s+solid\s+var\(--wiki-poetry-quote-border/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body::before\s*\{[\s\S]*content:\s*"\\201C"/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body::after\s*\{[\s\S]*content:\s*"\\201D"/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__attribution\s*\{[\s\S]*text-align:\s*left/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--plain\s*\{[\s\S]*position:\s*relative/);
-  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--plain\s*\{[\s\S]*overflow:\s*hidden/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--plain::before\s*\{[\s\S]*content:\s*""/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--plain::before\s*\{[\s\S]*inset:\s*-5%\s+1%/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--plain::before\s*\{[\s\S]*background:\s*#00000059/);
@@ -3463,9 +3599,11 @@ await test("poetry quote floating toolbar exposes container toggle and unwrap ac
   assert.match(editorBundleSource, /poetry-quote-align-left/);
   assert.match(editorBundleSource, /poetry-quote-align-center/);
   assert.match(editorBundleSource, /poetry-quote-align-right/);
+  assert.match(editorBundleSource, /poetry-quote-align-full/);
   assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("left"\)/);
   assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("center"\)/);
   assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("right"\)/);
+  assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("full"\)/);
   assert.match(editorBundleSource, /toggleWikiPoetryQuoteContainer/);
   assert.match(editorBundleSource, /unsetWikiPoetryQuote/);
   assert.match(editorBundleSource, /figure\.wiki-poetry-quote/);
