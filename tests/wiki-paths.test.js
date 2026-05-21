@@ -175,7 +175,10 @@ function reset(settings, categories, topics) {
   assert.strictEqual((await wikiPaths.resolveArticlePath("acolyte")).status, "page-collision");
   assert.strictEqual((await wikiPaths.validatePageTitlePath(1, "Acolyte")).status, "page-collision");
   assert.strictEqual((await wikiPaths.validatePageTitlePath(1, "Acolyte", { omitTid: 10 })).status, "page-collision");
+  assert.strictEqual((await wikiPaths.validatePageTitlePath(1, "Acolyte", { pageSlug: "alternate-acolyte" })).status, "ok");
   assert.strictEqual((await wikiPaths.validatePageTitlePath(1, "New Page")).path, "/wiki/new-page");
+  assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Hardiness vs. Enchantments"), "hardiness-vs-enchantments");
+  assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Asdf :: A sub page :: Baby page"), "asdf-a-sub-page-baby-page");
 
   reset(
     { categoryIds: "1, 2" },
@@ -230,6 +233,32 @@ function reset(settings, categories, topics) {
     await wikiLinks.replaceWikiLinks("[[module-development-setup-on-windows]]", 3, await require("../lib/config").getSettings()),
     /href="\/wiki\/development\/guides\/module-development-setup-on-windows"/
   );
+
+  reset(
+    { categoryIds: "1, 2" },
+    [
+      { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0 },
+      { cid: 2, name: "Feats", slug: "2/feats", parentCid: 1, topic_count: 1 }
+    ],
+    [
+      {
+        tid: 35,
+        cid: 2,
+        title: "Hardiness vs. Enchantments",
+        titleRaw: "Hardiness vs. Enchantments",
+        slug: "35/hardiness-vs.-enchantments",
+        deleted: 0,
+        scheduled: 0,
+        postcount: 1
+      }
+    ]
+  );
+  assert.strictEqual(
+    await wikiPaths.getArticlePath(state.topics.get(35)),
+    "/wiki/feats/hardiness-vs-enchantments"
+  );
+  assert.strictEqual((await wikiPaths.resolveArticlePath("feats/hardiness-vs-enchantments")).status, "ok");
+  assert.strictEqual((await wikiPaths.resolveArticlePath("feats/hardiness-vs.-enchantments")).status, "page-not-found");
 
   reset(
     { categoryIds: "1, 2, 3" },

@@ -49,6 +49,36 @@ assert.deepStrictEqual(
   "move payload should preserve a full explicit title when no parent is supplied"
 );
 
+assert.deepStrictEqual(
+  actions.getGeneratedPageValidationOptions({
+    getTopdataWikiPageSlug() {
+      return "pdk-fear";
+    }
+  }, "<!-- sow-topdata-wiki:page=spells:pdk:fear wiki_slug=pdk-fear -->", {
+    westgateWikiPageSlug: "stored-fear"
+  }, 42),
+  {
+    omitTid: 42,
+    pageSlug: "pdk-fear"
+  },
+  "save validation should prefer the generated wiki_slug marker in edited content"
+);
+
+assert.deepStrictEqual(
+  actions.getGeneratedPageValidationOptions({
+    getTopdataWikiPageSlug() {
+      return "";
+    }
+  }, null, {
+    westgateWikiPageSlug: "spectre-shadow-attack"
+  }, 43),
+  {
+    omitTid: 43,
+    pageSlug: "spectre-shadow-attack"
+  },
+  "move validation should retain a persisted generated page slug"
+);
+
 const template = fs.readFileSync(path.join(root, "templates/wiki-page.tpl"), "utf8");
 const routes = fs.readFileSync(path.join(root, "routes/wiki.js"), "utf8");
 
