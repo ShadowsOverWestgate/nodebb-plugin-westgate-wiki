@@ -119,6 +119,9 @@ require.main.require = function requireNodebbStub(id) {
     "./src/user": {
       getUidByUserslug: async () => null,
       getUserFields: async (uid) => state.usersByUid.get(parseInt(uid, 10)) || null
+    },
+    "./src/utils": {
+      isNumber: (value) => value !== null && value !== "" && !Number.isNaN(Number(value))
     }
   };
 

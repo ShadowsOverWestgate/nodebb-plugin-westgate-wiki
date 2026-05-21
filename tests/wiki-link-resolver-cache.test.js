@@ -151,6 +151,39 @@ const config = require("../lib/config");
   assert.strictEqual(state.topicFieldCalls, 1, "per-post resolver should hydrate each target namespace once");
   assert(state.categoryDataCalls <= 3, "per-post resolver should reuse effective category rows and namespace paths");
 
+  state.topics.set(13, {
+    tid: 13,
+    cid: 2,
+    title: "CKEditor Page",
+    titleRaw: "CKEditor Page",
+    slug: "13/ckeditor-page",
+    deleted: 0,
+    scheduled: 0
+  });
+  state.topics.set(14, {
+    tid: 14,
+    cid: 2,
+    title: "CKEditor Page.................",
+    titleRaw: "CKEditor Page.................",
+    slug: "14/ckeditor-page",
+    westgateWikiPageSlug: "ckeditor-page-dotted",
+    deleted: 0,
+    scheduled: 0
+  });
+  state.tidsByCid.set(2, [10, 11, 13, 14]);
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  const punctuatedTitleHtml = await wikiLinks.replaceWikiLinks(
+    '<p><span class="wiki-entity wiki-entity--page" data-wiki-entity="page" data-wiki-target="CKEditor Page................." data-wiki-label="CKEditor Page.................">CKEditor Page.................</span></p>',
+    2,
+    settings
+  );
+  assert.match(
+    punctuatedTitleHtml,
+    /<a class="wiki-internal-link" href="\/wiki\/development\/ckeditor-page-dotted">CKEditor Page\.+<\/a>/,
+    "selected Tiptap page entities should resolve exact punctuation-heavy titles before slug-collision fallback"
+  );
+  assert.doesNotMatch(punctuatedTitleHtml, /wiki-redlink/);
+
   state.topics.set(12, {
     tid: 12,
     cid: 2,

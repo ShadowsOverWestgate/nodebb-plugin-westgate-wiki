@@ -181,6 +181,20 @@ function reset(settings, categories, topics) {
   assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Asdf :: A sub page :: Baby page"), "asdf-a-sub-page-baby-page");
 
   reset(
+    { categoryIds: "1" },
+    [
+      { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 2 }
+    ],
+    [
+      { tid: 12, cid: 1, title: "Ckeditor Page", titleRaw: "Ckeditor Page", slug: "12/ckeditor-page", deleted: 0, scheduled: 0, postcount: 1 },
+      { tid: 13, cid: 1, title: "CKEditor Page.................", titleRaw: "CKEditor Page.................", slug: "13/ckeditor-page", deleted: 0, scheduled: 0, postcount: 1 }
+    ]
+  );
+  assert.strictEqual((await wikiPaths.resolveArticlePath("ckeditor-page")).status, "page-collision");
+  assert.strictEqual(await wikiPaths.getArticlePath(state.topics.get(12)), "/wiki/12/ckeditor-page");
+  assert.strictEqual(await wikiPaths.getArticlePath(state.topics.get(13)), "/wiki/13/ckeditor-page");
+
+  reset(
     { categoryIds: "1, 2" },
     [
       { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0 },

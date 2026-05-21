@@ -851,6 +851,15 @@
     --wiki-article-drawer-trigger-width: calc((100vw - (var(--wiki-article-drawer-sheet-gutter) * 2) - var(--wiki-article-drawer-trigger-gap)) / 2);
   }
 
+  .wiki-article-drawers--nav-only {
+    --wiki-article-drawer-trigger-width: calc(100vw - (var(--wiki-article-drawer-sheet-gutter) * 2));
+  }
+
+  .wiki-article-drawers--nav-only .wiki-article-drawer--nav .wiki-article-drawer__tab {
+    border-bottom-right-radius: var(--wiki-chrome-radius, var(--bs-border-radius-lg, 0.5rem));
+    border-top-right-radius: var(--wiki-chrome-radius, var(--bs-border-radius-lg, 0.5rem));
+  }
+
   .wiki-article-drawer {
     bottom: auto;
     inset: 0;
