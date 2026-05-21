@@ -231,7 +231,22 @@
   font-weight: 600;
 }
 
+.wiki-article-prose pre code .hljs-keyword,
+.wiki-article-prose pre code .hljs-selector-tag,
+.wiki-article-prose pre code .hljs-built_in,
+.wiki-article-prose pre code .hljs-type,
+.wiki-article-prose pre code .hljs-literal {
+  color: var(--wiki-code-token-keyword, #c084fc);
+  font-weight: 600;
+}
+
 .wiki-article-prose pre code .wiki-code-token--string {
+  color: var(--wiki-code-token-string, #86efac);
+}
+
+.wiki-article-prose pre code .hljs-string,
+.wiki-article-prose pre code .hljs-regexp,
+.wiki-article-prose pre code .hljs-symbol {
   color: var(--wiki-code-token-string, #86efac);
 }
 
@@ -240,11 +255,30 @@
   font-style: italic;
 }
 
+.wiki-article-prose pre code .hljs-comment,
+.wiki-article-prose pre code .hljs-quote {
+  color: var(--wiki-code-token-comment, #94a3b8);
+  font-style: italic;
+}
+
 .wiki-article-prose pre code .wiki-code-token--number {
   color: var(--wiki-code-token-number, #fbbf24);
 }
 
+.wiki-article-prose pre code .hljs-number,
+.wiki-article-prose pre code .hljs-attr,
+.wiki-article-prose pre code .hljs-attribute {
+  color: var(--wiki-code-token-number, #fbbf24);
+}
+
 .wiki-article-prose pre code .wiki-code-token--variable {
+  color: var(--wiki-code-token-variable, #67e8f9);
+}
+
+.wiki-article-prose pre code .hljs-variable,
+.wiki-article-prose pre code .hljs-title,
+.wiki-article-prose pre code .hljs-property,
+.wiki-article-prose pre code .hljs-name {
   color: var(--wiki-code-token-variable, #67e8f9);
 }
 

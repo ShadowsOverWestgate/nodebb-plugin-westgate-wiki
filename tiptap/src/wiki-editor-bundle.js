@@ -3407,6 +3407,10 @@ function compactSourceHtml(html) {
     .trim();
 }
 
+function isSourceWhitespacePreservingElement(node) {
+  return /^(pre|code|script|style|textarea)$/i.test(node && node.nodeName || "");
+}
+
 function sourceNodeHtml(node) {
   if (!node) {
     return "";
@@ -3416,6 +3420,9 @@ function sourceNodeHtml(node) {
   }
   if (node.nodeType === Node.COMMENT_NODE) {
     return `<!--${node.textContent || ""}-->`;
+  }
+  if (isSourceWhitespacePreservingElement(node)) {
+    return String(node.outerHTML || "").trim();
   }
   return compactSourceHtml(node.outerHTML || "");
 }

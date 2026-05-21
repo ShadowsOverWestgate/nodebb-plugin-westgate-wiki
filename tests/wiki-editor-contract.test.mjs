@@ -125,6 +125,7 @@ const { getReadableTextColor, normalizeHexColor } = colorContrastModule;
 const articleBodyCss = readFileSync(new URL("../public/wiki-article-body.css", import.meta.url), "utf8");
 const pluginJsonSource = readFileSync(new URL("../plugin.json", import.meta.url), "utf8");
 const wikiJsSource = readFileSync(new URL("../public/wiki.js", import.meta.url), "utf8");
+const wikiHtmlSanitizerSource = readFileSync(new URL("../lib/wiki-html-sanitizer.js", import.meta.url), "utf8");
 const editorCss = readFileSync(new URL("../tiptap/src/wiki-editor.css", import.meta.url), "utf8");
 const vendoredEditorCss = readFileSync(new URL("../public/vendor/tiptap/wiki-tiptap.css", import.meta.url), "utf8");
 const editorBundleSource = readFileSync(new URL("../tiptap/src/wiki-editor-bundle.js", import.meta.url), "utf8");
@@ -1019,7 +1020,7 @@ await test("article tables can shrink or fill beside floated infoboxes", functio
   assert.match(articleBodyCss, /\.wiki-article-prose\s*\{[^}]*--wiki-infobox-reader-width:\s*min\(22rem,\s*42%\)/s);
   assert.match(articleBodyCss, /\.wiki-article-prose\s*\{[^}]*--wiki-infobox-reader-gutter:\s*1\.25rem/s);
   assert.match(articleBodyCss, /\.wiki-article-prose\s+\.wiki-infobox\s*\{[^}]*width:\s*var\(--wiki-infobox-reader-width\)/s);
-  assert.match(articleBodyCss, /\.wiki-article-prose\s+\.wiki-infobox\s*\{[^}]*margin:\s*0\.25rem\s+0\s+1rem\s+var\(--wiki-infobox-reader-gutter\)/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+\.wiki-infobox\s*\{[^}]*margin:\s*0\s+0\s+1rem\s+var\(--wiki-infobox-reader-gutter\)/s);
   assert.match(articleBodyCss, /@media\s*\(min-width:\s*768px\)\s*\{[\s\S]*\.wiki-article-prose\s+\.wiki-infobox\s*~\s*table\[style\*="width:100%"\],\s*\.wiki-article-prose\s+\.wiki-infobox\s*~\s*table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)\s*!important[^}]*max-width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)/s);
   assert.match(articleBodyCss, /@media\s*\(min-width:\s*768px\)\s*\{[\s\S]*\.wiki-article-prose\s+\.wiki-infobox\s*~\s*:where\(\.tableWrapper,\s*\.table-responsive,\s*\.table-responsive-md,\s*figure\.table\)\s*\{[^}]*width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)[^}]*max-width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)\s*-\s*var\(--wiki-infobox-reader-gutter\)\)/s);
   assert.match(articleBodyCss, /@media\s*\(min-width:\s*768px\)\s*\{[\s\S]*\.wiki-article-prose\s+\.wiki-infobox\s*~\s*:where\(\.tableWrapper,\s*\.table-responsive,\s*\.table-responsive-md,\s*figure\.table\)\s*>\s*table\[style\*="width:100%"\],\s*\.wiki-article-prose\s+\.wiki-infobox\s*~\s*:where\(\.tableWrapper,\s*\.table-responsive,\s*\.table-responsive-md,\s*figure\.table\)\s*>\s*table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*100%\s*!important[^}]*max-width:\s*100%/s);
@@ -3793,19 +3794,22 @@ await test("slash command actions receive the active menu button as context", fu
   mount.remove();
 });
 
-await test("wiki code block preserves only supported syntax language classes", function () {
+await test("wiki code block preserves registered syntax language classes", function () {
   const editor = createEditor([
     '<pre><code class="language-bash">echo "$HOME"</code></pre>',
-    '<pre><code class="language-javascript">console.log("nope")</code></pre>'
+    '<pre><code class="language-javascript">console.log("ok")</code></pre>',
+    '<pre><code class="language-not-real">console.log("nope")</code></pre>'
   ].join(""));
 
   const json = editor.getJSON();
   assert.equal(json.content[0].attrs.language, "bash");
-  assert.equal(json.content[1].attrs.language, null);
+  assert.equal(json.content[1].attrs.language, "javascript");
+  assert.equal(json.content[2].attrs.language, null);
 
   const rendered = editor.getHTML();
   assert.match(rendered, /<code class="language-bash">echo "\$HOME"<\/code>/);
-  assert.doesNotMatch(rendered, /language-javascript/);
+  assert.match(rendered, /<code class="language-javascript">console\.log\("ok"\)<\/code>/);
+  assert.doesNotMatch(rendered, /language-not-real/);
   editor.destroy();
 });
 
@@ -3822,35 +3826,62 @@ await test("wiki code block language command updates the active code block", fun
   assert.match(editor.getHTML(), /<code class="language-csharp">Get-ChildItem<\/code>/);
 
   assert.equal(editor.commands.setCodeBlockLanguage("javascript"), true);
-  assert.equal(editor.getJSON().content[0].attrs.language, null);
-  assert.doesNotMatch(editor.getHTML(), /language-javascript|language-csharp/);
+  assert.equal(editor.getJSON().content[0].attrs.language, "javascript");
+  assert.match(editor.getHTML(), /<code class="language-javascript">Get-ChildItem<\/code>/);
+  editor.destroy();
+});
+
+await test("wiki code block supports common lowlight languages", function () {
+  const editor = createEditor([
+    '<pre><code class="language-javascript">const value = 1;</code></pre>',
+    '<pre><code class="language-typescript">type Count = number;</code></pre>',
+    '<pre><code class="language-json">{"enabled": true}</code></pre>'
+  ].join(""));
+
+  const json = editor.getJSON();
+  assert.equal(json.content[0].attrs.language, "javascript");
+  assert.equal(json.content[1].attrs.language, "typescript");
+  assert.equal(json.content[2].attrs.language, "json");
+
+  const rendered = editor.getHTML();
+  assert.match(rendered, /<code class="language-javascript">const value = 1;<\/code>/);
+  assert.match(rendered, /<code class="language-typescript">type Count = number;<\/code>/);
+  assert.match(rendered, /<code class="language-json">\{"enabled": true\}<\/code>/);
+  assert.ok(
+    editor.view.dom.querySelector(".hljs-keyword, .hljs-attr, .hljs-built_in"),
+    "lowlight token decorations should render in the editor DOM"
+  );
   editor.destroy();
 });
 
 await test("wiki code block language applies editor syntax token decorations", function () {
   const editor = createEditor('<pre><code class="language-csharp">public static void Main() { return 0; }</code></pre>');
 
-  assert.equal(editor.view.dom.querySelectorAll(".wiki-code-token--keyword").length >= 4, true);
-  assert.equal(editor.view.dom.querySelectorAll(".wiki-code-token--number").length, 1);
+  assert.equal(editor.view.dom.querySelectorAll(".hljs-keyword").length >= 4, true);
+  assert.equal(editor.view.dom.querySelectorAll(".hljs-number").length, 1);
   assert.match(editor.getHTML(), /<code class="language-csharp">public static void Main\(\) \{ return 0; \}<\/code>/);
-  assert.doesNotMatch(editor.getHTML(), /wiki-code-token/);
+  assert.doesNotMatch(editor.getHTML(), /hljs-/);
   editor.destroy();
 });
 
 await test("wiki code block syntax highlighting avoids selection-only rebuilds", function () {
   const wikiCodeBlockSource = readFileSync(new URL("../tiptap/src/extensions/wiki-code-block.mjs", import.meta.url), "utf8");
 
-  assert.match(wikiCodeBlockSource, /function\s+transactionTouchesCodeBlock\s*\(/);
-  assert.match(wikiCodeBlockSource, /if\s*\(\s*!transaction\.docChanged\s*\|\|\s*!transactionTouchesCodeBlock/);
+  assert.match(wikiCodeBlockSource, /CodeBlockLowlight/);
+  assert.match(wikiCodeBlockSource, /createLowlight\(common\)/);
+  assert.doesNotMatch(wikiCodeBlockSource, /function\s+tokenizeCodeBlock\s*\(/);
+  assert.doesNotMatch(wikiCodeBlockSource, /TOKEN_KEYWORDS/);
   assert.doesNotMatch(wikiCodeBlockSource, /transaction\.selectionSet/);
 });
 
 await test("read-only wiki pages apply syntax token highlighting to language code blocks", function () {
   assert.match(wikiJsSource, /function\s+highlightReadOnlyWikiCodeBlocks\s*\(/);
-  assert.match(wikiJsSource, /wiki-code-token wiki-code-token--/);
   assert.match(wikiJsSource, /querySelectorAll\('\.wiki-article-prose pre code\[class\*="language-"\]'\)/);
   assert.match(wikiJsSource, /highlightReadOnlyWikiCodeBlocks\(\)/);
-  assert.match(articleBodyCss, /\.wiki-article-prose\s+pre\s+code\s+\.wiki-code-token--keyword/);
+  assert.match(wikiHtmlSanitizerSource, /require\("highlight\.js\/lib\/common"\)/);
+  assert.match(wikiHtmlSanitizerSource, /function\s+highlightReadOnlyCodeBlocks\s*\(/);
+  assert.match(wikiHtmlSanitizerSource, /data-wiki-code-highlighted/);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+pre\s+code\s+\.hljs-keyword/);
 });
 
 await test("top toolbar schema excludes contextual image layout and size controls", function () {
@@ -3937,6 +3968,33 @@ await test("fullscreen source mode has guarded editable source synchronization",
   assert.match(editorBundleSource, /root\.addEventListener\("wiki-editor-toc-navigate",\s*handleTocNavigate\)/);
   assert.match(editorBundleSource, /root\.removeEventListener\("wiki-editor-toc-navigate",\s*handleTocNavigate\)/);
   assert.match(editorBundleSource, /sourceTextarea\.scrollTo\(\{[\s\S]*behavior:\s*"smooth"/);
+});
+
+await test("fullscreen source mode preserves code block whitespace while formatting source", async function () {
+  const { createWikiEditor } = await importEditorBundleForContract();
+  const host = document.createElement("div");
+  host.className = "westgate-wiki-compose";
+  document.body.appendChild(host);
+
+  const wikiEditor = await createWikiEditor(host, {
+    initialData: [
+      '<pre><code class="language-javascript">',
+      "function example() {",
+      "\tconst value = 1;",
+      "  return value;",
+      "}",
+      "</code></pre>"
+    ].join("\n")
+  });
+
+  const toolbarMount = host.querySelector(".wiki-editor__toolbar-mount");
+  toolbarMount.__wikiToggleFullscreenSource();
+  const sourceTextarea = document.querySelector(".wiki-editor__fullscreen-source-input");
+
+  assert.match(sourceTextarea.value, /function example\(\) \{\n\tconst value = 1;\n  return value;\n\}/);
+
+  wikiEditor.destroy();
+  host.remove();
 });
 
 await test("editor ToC updates are debounced and avoid transaction-only DOM rewrites", function () {

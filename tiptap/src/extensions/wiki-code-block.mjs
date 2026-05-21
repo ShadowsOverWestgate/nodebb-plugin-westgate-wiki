@@ -1,243 +1,93 @@
-import { mergeAttributes } from "@tiptap/core";
-import CodeBlock from "@tiptap/extension-code-block";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { mergeAttributes, textblockTypeInputRule } from "@tiptap/core";
+import { backtickInputRegex, tildeInputRegex } from "@tiptap/extension-code-block";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import powershell from "highlight.js/lib/languages/powershell";
+import { common, createLowlight } from "lowlight";
+
+export const codeBlockLowlight = createLowlight(common);
+codeBlockLowlight.register({ powershell });
 
 export const CODE_BLOCK_LANGUAGE_OPTIONS = [
   { value: "", label: "Plain text" },
-  { value: "bash", label: "Bash" },
+  { value: "bash", label: "Bash / shell" },
   { value: "powershell", label: "PowerShell" },
-  { value: "csharp", label: "C#" }
+  { value: "javascript", label: "JavaScript" },
+  { value: "typescript", label: "TypeScript" },
+  { value: "json", label: "JSON" },
+  { value: "html", label: "HTML / XML" },
+  { value: "css", label: "CSS" },
+  { value: "scss", label: "SCSS" },
+  { value: "csharp", label: "C#" },
+  { value: "c", label: "C" },
+  { value: "cpp", label: "C++" },
+  { value: "java", label: "Java" },
+  { value: "python", label: "Python" },
+  { value: "php", label: "PHP" },
+  { value: "ruby", label: "Ruby" },
+  { value: "go", label: "Go" },
+  { value: "rust", label: "Rust" },
+  { value: "sql", label: "SQL" },
+  { value: "yaml", label: "YAML" },
+  { value: "markdown", label: "Markdown" },
+  { value: "diff", label: "Diff" },
+  { value: "ini", label: "INI / TOML" },
+  { value: "lua", label: "Lua" },
+  { value: "plaintext", label: "Plain text" }
 ];
 
 const CODE_BLOCK_LANGUAGE_ALIASES = new Map([
-  ["bash", "bash"],
+  ["text", "plaintext"],
+  ["txt", "plaintext"],
+  ["plain", "plaintext"],
   ["sh", "bash"],
   ["shell", "bash"],
-  ["powershell", "powershell"],
+  ["zsh", "bash"],
   ["pwsh", "powershell"],
+  ["ps", "powershell"],
   ["ps1", "powershell"],
-  ["csharp", "csharp"],
+  ["js", "javascript"],
+  ["jsx", "javascript"],
+  ["mjs", "javascript"],
+  ["cjs", "javascript"],
+  ["ts", "typescript"],
+  ["tsx", "typescript"],
+  ["mts", "typescript"],
+  ["cts", "typescript"],
+  ["htm", "html"],
+  ["xhtml", "html"],
+  ["xml", "html"],
+  ["svg", "html"],
   ["cs", "csharp"],
-  ["c#", "csharp"]
+  ["c#", "csharp"],
+  ["cc", "cpp"],
+  ["c++", "cpp"],
+  ["cxx", "cpp"],
+  ["hpp", "cpp"],
+  ["py", "python"],
+  ["rb", "ruby"],
+  ["rs", "rust"],
+  ["golang", "go"],
+  ["yml", "yaml"],
+  ["md", "markdown"],
+  ["mkd", "markdown"],
+  ["patch", "diff"],
+  ["toml", "ini"]
 ]);
 
-const TOKEN_KEYWORDS = {
-  bash: new Set([
-    "case", "do", "done", "elif", "else", "esac", "fi", "for", "function",
-    "if", "in", "local", "return", "select", "then", "until", "while"
-  ]),
-  powershell: new Set([
-    "begin", "break", "catch", "class", "continue", "data", "do", "dynamicparam",
-    "else", "elseif", "end", "exit", "filter", "finally", "for", "foreach",
-    "from", "function", "if", "in", "param", "process", "return", "switch",
-    "throw", "trap", "try", "until", "using", "while"
-  ]),
-  csharp: new Set([
-    "abstract", "as", "base", "bool", "break", "byte", "case", "catch",
-    "char", "checked", "class", "const", "continue", "decimal", "default",
-    "delegate", "do", "double", "else", "enum", "event", "explicit", "extern",
-    "false", "finally", "fixed", "float", "for", "foreach", "goto", "if",
-    "implicit", "in", "int", "interface", "internal", "is", "lock", "long",
-    "namespace", "new", "null", "object", "operator", "out", "override",
-    "params", "private", "protected", "public", "readonly", "ref", "return",
-    "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string",
-    "struct", "switch", "this", "throw", "true", "try", "typeof", "uint",
-    "ulong", "unchecked", "unsafe", "ushort", "using", "virtual", "void",
-    "volatile", "while"
-  ])
-};
+CODE_BLOCK_LANGUAGE_OPTIONS.forEach(function (option) {
+  if (option.value) {
+    CODE_BLOCK_LANGUAGE_ALIASES.set(option.value, option.value);
+  }
+});
 
 export function normalizeCodeBlockLanguage(value) {
   const key = String(value || "").trim().toLowerCase();
-  return CODE_BLOCK_LANGUAGE_ALIASES.get(key) || null;
-}
-
-function pushToken(tokens, from, to, type) {
-  if (to > from) {
-    tokens.push({ from, to, type });
-  }
-}
-
-function readQuoted(text, start) {
-  const quote = text[start];
-  let index = start + 1;
-  while (index < text.length) {
-    if (text[index] === "\\") {
-      index += 2;
-      continue;
-    }
-    if (text[index] === quote) {
-      return index + 1;
-    }
-    index += 1;
-  }
-  return text.length;
-}
-
-function tokenizeCodeBlock(text, language) {
-  const normalizedLanguage = normalizeCodeBlockLanguage(language);
-  const keywords = TOKEN_KEYWORDS[normalizedLanguage];
-  if (!keywords) {
-    return [];
+  if (!key) {
+    return null;
   }
 
-  const tokens = [];
-  const wordPattern = normalizedLanguage === "powershell" ? /-?[A-Za-z_][\w-]*/y : /[A-Za-z_]\w*/y;
-  let index = 0;
-  while (index < text.length) {
-    const char = text[index];
-    const next = text[index + 1];
-
-    if (char === "\"" || char === "'") {
-      const end = readQuoted(text, index);
-      pushToken(tokens, index, end, "string");
-      index = end;
-      continue;
-    }
-
-    if (normalizedLanguage === "csharp" && char === "/" && next === "/") {
-      const end = text.indexOf("\n", index);
-      const commentEnd = end === -1 ? text.length : end;
-      pushToken(tokens, index, commentEnd, "comment");
-      index = commentEnd;
-      continue;
-    }
-
-    if (normalizedLanguage === "csharp" && char === "/" && next === "*") {
-      const end = text.indexOf("*/", index + 2);
-      const commentEnd = end === -1 ? text.length : end + 2;
-      pushToken(tokens, index, commentEnd, "comment");
-      index = commentEnd;
-      continue;
-    }
-
-    if ((normalizedLanguage === "bash" || normalizedLanguage === "powershell") && char === "#") {
-      const end = text.indexOf("\n", index);
-      const commentEnd = end === -1 ? text.length : end;
-      pushToken(tokens, index, commentEnd, "comment");
-      index = commentEnd;
-      continue;
-    }
-
-    if ((normalizedLanguage === "bash" || normalizedLanguage === "powershell") && char === "$") {
-      const match = /^\$[{]?[A-Za-z_][\w:.-]*[}]?/.exec(text.slice(index));
-      if (match) {
-        pushToken(tokens, index, index + match[0].length, "variable");
-        index += match[0].length;
-        continue;
-      }
-    }
-
-    if (/\d/.test(char)) {
-      const match = /^\d+(?:\.\d+)?/.exec(text.slice(index));
-      if (match) {
-        pushToken(tokens, index, index + match[0].length, "number");
-        index += match[0].length;
-        continue;
-      }
-    }
-
-    wordPattern.lastIndex = index;
-    const wordMatch = wordPattern.exec(text);
-    if (wordMatch) {
-      const word = wordMatch[0].replace(/^-/, "").toLowerCase();
-      if (keywords.has(word)) {
-        pushToken(tokens, index, index + wordMatch[0].length, "keyword");
-      }
-      index += wordMatch[0].length;
-      continue;
-    }
-
-    index += 1;
-  }
-
-  return tokens;
-}
-
-function buildSyntaxDecorations(doc) {
-  const decorations = [];
-  doc.descendants(function (node, pos) {
-    if (node.type.name !== "codeBlock") {
-      return true;
-    }
-
-    const language = normalizeCodeBlockLanguage(node.attrs.language);
-    if (!language) {
-      return false;
-    }
-
-    const text = node.textContent || "";
-    const contentStart = pos + 1;
-    tokenizeCodeBlock(text, language).forEach(function (token) {
-      decorations.push(Decoration.inline(contentStart + token.from, contentStart + token.to, {
-        class: `wiki-code-token wiki-code-token--${token.type}`
-      }));
-    });
-    return false;
-  });
-  return DecorationSet.create(doc, decorations);
-}
-
-function isCodeBlockNode(node) {
-  return !!(node && node.type && node.type.name === "codeBlock");
-}
-
-function positionTouchesCodeBlock(doc, pos) {
-  const clampedPos = Math.max(0, Math.min(pos, doc.content.size));
-  const directNode = doc.nodeAt(clampedPos);
-  if (isCodeBlockNode(directNode)) {
-    return true;
-  }
-
-  const resolved = doc.resolve(clampedPos);
-  for (let depth = resolved.depth; depth > 0; depth -= 1) {
-    if (isCodeBlockNode(resolved.node(depth))) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function rangeTouchesCodeBlock(doc, from, to) {
-  const start = Math.max(0, Math.min(from, doc.content.size));
-  const end = Math.max(start, Math.min(to, doc.content.size));
-  if (positionTouchesCodeBlock(doc, start) || positionTouchesCodeBlock(doc, end)) {
-    return true;
-  }
-
-  let touched = false;
-  doc.nodesBetween(start, end, function (node) {
-    if (isCodeBlockNode(node)) {
-      touched = true;
-      return false;
-    }
-    return !touched;
-  });
-  return touched;
-}
-
-function transactionTouchesCodeBlock(transaction, oldState, newState) {
-  let touched = false;
-  transaction.mapping.maps.forEach(function (map) {
-    map.forEach(function (oldStart, oldEnd, newStart, newEnd) {
-      if (
-        rangeTouchesCodeBlock(oldState.doc, oldStart, oldEnd) ||
-        rangeTouchesCodeBlock(newState.doc, newStart, newEnd)
-      ) {
-        touched = true;
-      }
-    });
-  });
-
-  if (touched) {
-    return true;
-  }
-
-  return transaction.steps.some(function (step) {
-    return Number.isInteger(step.pos) &&
-      (positionTouchesCodeBlock(oldState.doc, step.pos) || positionTouchesCodeBlock(newState.doc, step.pos));
-  });
+  const language = CODE_BLOCK_LANGUAGE_ALIASES.get(key) || key;
+  return codeBlockLowlight.registered(language) ? language : null;
 }
 
 function readLanguageFromElement(element, prefix) {
@@ -259,11 +109,14 @@ function readLanguageFromElement(element, prefix) {
   return null;
 }
 
-const WikiCodeBlock = CodeBlock.extend({
+const WikiCodeBlock = CodeBlockLowlight.extend({
   addOptions() {
     return {
       ...this.parent?.(),
-      languageClassPrefix: "language-"
+      lowlight: codeBlockLowlight,
+      languageClassPrefix: "language-",
+      enableTabIndentation: true,
+      tabSize: 2
     };
   },
 
@@ -307,25 +160,21 @@ const WikiCodeBlock = CodeBlock.extend({
     };
   },
 
-  addProseMirrorPlugins() {
+  addInputRules() {
     return [
-      ...(this.parent?.() || []),
-      new Plugin({
-        key: new PluginKey("wikiCodeBlockSyntaxHighlighting"),
-        state: {
-          init: (_, state) => buildSyntaxDecorations(state.doc),
-          apply: (transaction, oldDecorations, oldState, newState) => {
-            if (!transaction.docChanged || !transactionTouchesCodeBlock(transaction, oldState, newState)) {
-              return oldDecorations.map(transaction.mapping, transaction.doc);
-            }
-            return buildSyntaxDecorations(transaction.doc);
-          }
-        },
-        props: {
-          decorations(state) {
-            return this.getState(state);
-          }
-        }
+      textblockTypeInputRule({
+        find: backtickInputRegex,
+        type: this.type,
+        getAttributes: match => ({
+          language: normalizeCodeBlockLanguage(match[1])
+        })
+      }),
+      textblockTypeInputRule({
+        find: tildeInputRegex,
+        type: this.type,
+        getAttributes: match => ({
+          language: normalizeCodeBlockLanguage(match[1])
+        })
       })
     ];
   }
