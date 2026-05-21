@@ -43,10 +43,19 @@ The topdata bot may generate:
 The generated subset must not use DokuWiki syntax, Markdown comment markers,
 unsafe inline event handlers, scripts, iframes, or raw editor-only Tiptap JSON.
 
+Generated page markers carry topdata page identity and the effective public
+wiki slug, for example
+`<!-- sow-topdata-wiki:page=feat:power_attack wiki_slug=power-attack -->`.
+Generated page-to-page `[[...]]` markers target the public namespace and page
+slug, such as `[[feat/power-attack|Power Attack]]`; typed page IDs stay in
+generated identity metadata and old stored content only. The plugin keeps
+best-effort typed-ID link resolution until topdata pages are refreshed, but new
+generated output must not depend on key fragments matching public title slugs.
+
 ## Fixture
 
 ```html
-<!-- sow-topdata-wiki:page=feat:power_attack -->
+<!-- sow-topdata-wiki:page=feat:power_attack wiki_slug=power-attack -->
 <!-- sow-topdata-wiki:managed:start hash="sha256:fixture" -->
 <h1>Power Attack</h1>
 <p class="wiki-callout wiki-callout--status">This feat has been altered from vanilla.</p>
@@ -57,7 +66,7 @@ unsafe inline event handlers, scripts, iframes, or raw editor-only Tiptap JSON.
   </tbody>
 </table>
 <!-- sow-topdata-wiki:managed:end -->
-<!-- sow-topdata-wiki:manual:start id="notes" -->
-<h2>Notes</h2><p></p>
-<!-- sow-topdata-wiki:manual:end id="notes" -->
+<!-- sow-topdata-wiki:manual:start id="user_bottom" -->
+<p></p>
+<!-- sow-topdata-wiki:manual:end id="user_bottom" -->
 ```

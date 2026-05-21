@@ -660,6 +660,35 @@
   vertical-align: super;
 }
 
+.westgate-wiki-compose .wiki-editor__content .wiki-topdata-marker {
+  margin: 0.75rem 0;
+  border: 1px dashed color-mix(in srgb, var(--bs-secondary-color, #6c757d) 58%, transparent);
+  border-radius: var(--bs-border-radius-sm, 0.25rem);
+  background: color-mix(in srgb, var(--bs-secondary-bg, #e9ecef) 70%, transparent);
+  color: var(--bs-secondary-color, #6c757d);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+  padding: 0.35rem 0.5rem;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-topdata-marker > p {
+  margin: 0;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-topdata-marker--manual-start,
+.westgate-wiki-compose .wiki-editor__content .wiki-topdata-marker--manual-end {
+  border-color: color-mix(in srgb, var(--bs-success, #198754) 62%, transparent);
+  background: color-mix(in srgb, var(--bs-success, #198754) 10%, transparent);
+  color: color-mix(in srgb, var(--bs-success, #198754) 82%, var(--bs-body-color, #212529));
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-topdata-marker--managed-start,
+.westgate-wiki-compose .wiki-editor__content .wiki-topdata-marker--managed-end {
+  border-color: color-mix(in srgb, var(--bs-warning, #ffc107) 72%, transparent);
+  background: color-mix(in srgb, var(--bs-warning, #ffc107) 12%, transparent);
+}
+
 .wiki-editor-entity-dialog-shell {
   position: fixed;
   inset: 0;

@@ -84,7 +84,13 @@ require.main.require = function requireNodebbStub(id) {
         const topic = state.topics.get(parseInt(tid, 10));
         return topic ? topic[field] : null;
       },
-      getTopicFields: async (tid) => state.topics.get(parseInt(tid, 10)) || null
+      getTopicFields: async (tid) => state.topics.get(parseInt(tid, 10)) || null,
+      setTopicField: async (tid, field, value) => {
+        const topic = state.topics.get(parseInt(tid, 10));
+        if (topic) {
+          topic[field] = value;
+        }
+      }
     },
     "./src/utils": {
       generateUUID: () => `token-${state.now}`
@@ -153,6 +159,22 @@ function resetRuntime() {
     });
     assert.equal(data.post.content, '<table><tbody><tr><td style="text-align:right"><p>Updated</p></td></tr></tbody></table>');
     assert.equal(data.post.sourceContent, data.post.content);
+  }
+
+  resetRuntime();
+  {
+    const lock = await wikiEditLocks.acquireLock(10, 2);
+    await wikiPageValidation.validatePostEdit({
+      uid: 2,
+      data: { pid: 100, wikiEditLockToken: lock.token },
+      post: {
+        content: [
+          "<!-- sow-topdata-wiki:page=spells:pdk:fear wiki_slug=pdk-fear -->",
+          "<p>Updated</p>"
+        ].join("\n")
+      }
+    });
+    assert.equal(state.topics.get(10).westgateWikiPageSlug, "pdk-fear");
   }
 
   resetRuntime();

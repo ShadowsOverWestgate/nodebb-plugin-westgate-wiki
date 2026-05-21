@@ -661,6 +661,14 @@ await test("editor toolbar active buttons keep icon color readable", function ()
   });
 });
 
+await test("editor renders visible topdata preservation markers", function () {
+  [editorCss, vendoredEditorCss].forEach(function (css) {
+    assert.match(css, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-topdata-marker\s*\{/);
+    assert.match(css, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-topdata-marker--manual-start/);
+    assert.match(css, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-topdata-marker--managed-start/);
+  });
+});
+
 await test("editor image resize handles are scoped and draggable from the corners", function () {
   [editorCss, vendoredEditorCss].forEach(function (css) {
     assert.match(css, /\.westgate-wiki-compose \.wiki-editor-image-resize\s*{/);
@@ -1111,6 +1119,44 @@ await test("createWikiEditor mounts table authoring UI on the editor surface and
   assert.equal(host.querySelector(".wiki-editor-table-sticky-row"), null);
   assert.equal(host.querySelector(".wiki-editor-table-cell-popover"), null);
   assert.equal(editorRoot.style.getPropertyValue("--wiki-editor-main-toolbar-height"), "");
+  host.remove();
+});
+
+await test("createWikiEditor shows topdata preserved-section markers while storing them as comments", async function () {
+  const { createWikiEditor } = await importEditorBundleForContract();
+  const host = document.createElement("div");
+  host.className = "westgate-wiki-compose";
+  document.body.appendChild(host);
+
+  const wikiEditor = await createWikiEditor(host, {
+    initialData: [
+      "<!-- sow-topdata-wiki:page=classes:fighter -->",
+      '<!-- sow-topdata-wiki:managed:start hash="sha256:fixture" -->',
+      "<h1>Fighter</h1>",
+      '<!-- sow-topdata-wiki:manual:start id="user_top" -->',
+      "<p>User text.</p>",
+      '<!-- sow-topdata-wiki:manual:end id="user_top" -->',
+      "<!-- sow-topdata-wiki:managed:end -->"
+    ].join("\n")
+  });
+
+  const markers = Array.from(host.querySelectorAll(".wiki-topdata-marker"));
+  assert.equal(markers.length, 5);
+  assert.match(markers[2].textContent, /Editable section starts: user_top/);
+  assert.match(markers[3].textContent, /Editable section ends: user_top/);
+
+  const stored = wikiEditor.getHTML();
+  assert.match(stored, /<!-- sow-topdata-wiki:manual:start id="user_top" -->/);
+  assert.match(stored, /<p>User text\.<\/p>/);
+  assert.doesNotMatch(stored, /wiki-topdata-marker/);
+
+  const toolbarMount = host.querySelector(".wiki-editor__toolbar-mount");
+  toolbarMount.__wikiToggleFullscreenSource();
+  const sourceTextarea = document.querySelector(".wiki-editor__fullscreen-source-input");
+  assert.match(sourceTextarea.value, /<!-- sow-topdata-wiki:manual:start id="user_top" -->/);
+  assert.doesNotMatch(sourceTextarea.value, /wiki-topdata-marker/);
+
+  wikiEditor.destroy();
   host.remove();
 });
 
@@ -3838,7 +3884,7 @@ await test("fullscreen source mode has guarded editable source synchronization",
   assert.match(editorBundleSource, /window\.setTimeout\(function \(\) \{[\s\S]*syncSourceFromEditor\(\);[\s\S]*\},\s*SOURCE_SYNC_DELAY_MS\)/);
   assert.match(editorBundleSource, /syncingSource\s*\|\|\s*sourceDirty\s*\|\|\s*!fullscreen\s*\|\|\s*sourceHidden/);
   assert.match(editorBundleSource, /new DOMParser\(\)\.parseFromString/);
-  assert.match(editorBundleSource, /sourceTextarea\.value\s*=\s*formatSourceHtml\(sanitizeHtml\(editor\.getHTML\(\)\)\)/);
+  assert.match(editorBundleSource, /sourceTextarea\.value\s*=\s*formatSourceHtml\(restoreTopdataEditorMarkers\(sanitizeHtml\(editor\.getHTML\(\)\)\)\)/);
   assert.match(editorBundleSource, /normalizeSourceHtmlForEditor\(sourceTextarea\.value\)/);
   assert.match(editorBundleSource, /function\s+applySourceToEditor\s*\(/);
   assert.match(editorBundleSource, /editor\.commands\.setContent\([^,]+,\s*false\)/);
