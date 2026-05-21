@@ -80,6 +80,10 @@
       "method": "clearWikiPostParseCache"
     },
     {
+      "hook": "action:topic.post",
+      "method": "syncPostedTopdataWikiPageSlug"
+    },
+    {
       "hook": "action:post.save",
       "method": "handleWikiMentionPostSave",
       "priority": 1

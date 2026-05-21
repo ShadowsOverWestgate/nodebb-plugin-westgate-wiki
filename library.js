@@ -231,6 +231,7 @@ plugin.wikiMarkdownBeforeParse = wikiHtmlParse.markdownBeforeParse;
 plugin.filterWikiDiscussionTopicBuild = wikiDiscussionPlaceholder.filterTopicBuild;
 plugin.filterWikiDiscussionTopicReply = wikiDiscussionSettings.filterTopicReply;
 plugin.clearWikiPostParseCache = cacheService.clearWikiPostParseCache;
+plugin.syncPostedTopdataWikiPageSlug = wikiPageValidation.syncPostedTopdataWikiPageSlug;
 plugin.clearWikiPostEditCache = cacheService.clearWikiPostEditCache;
 plugin.onWikiTopicDelete = wikiTopicPurge.onTopicDelete;
 plugin.wikiFilterTopicPost = wikiPageValidation.validateTopicPost;
