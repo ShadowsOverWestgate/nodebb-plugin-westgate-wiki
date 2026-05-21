@@ -1,4 +1,4 @@
-<div id="westgate-wiki-compose" class="westgate-wiki westgate-wiki-compose py-4">
+<div id="westgate-wiki-compose" class="westgate-wiki westgate-wiki-compose">
   <header class="wiki-page-header mb-3">
     <!-- IMPORT partials/wiki/breadcrumb-trail.tpl -->
     <div class="wiki-page-heading">
