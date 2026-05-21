@@ -178,6 +178,12 @@ function reset(settings, categories, topics) {
   assert.strictEqual((await wikiPaths.validatePageTitlePath(1, "Acolyte", { pageSlug: "alternate-acolyte" })).status, "ok");
   assert.strictEqual((await wikiPaths.validatePageTitlePath(1, "New Page")).path, "/wiki/new-page");
   assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Hardiness vs. Enchantments"), "hardiness-vs-enchantments");
+  assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Grandmaster's Battle Momentum"), "grandmasters-battle-momentum");
+  assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Bigby’s Clenched Fist"), "bigbys-clenched-fist");
+  assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Élite &amp; Noble Houses"), "elite-noble-houses");
+  assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Alpha!@#$%^&*()[]-=_+/?.,<>`~|\\Omega"), "alpha-omega");
+  assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Æther Œuvre Øresund Straße Þorn Łódź Đelta"), "aether-oeuvre-oresund-strasse-thorn-lodz-delta");
+  assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("你好, world!"), "ni-hao-world");
   assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Asdf :: A sub page :: Baby page"), "asdf-a-sub-page-baby-page");
 
   reset(
