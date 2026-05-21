@@ -75,6 +75,13 @@ Wiki pages are still NodeBB topics. That means:
 
 Internal links are resolved against wiki namespaces, not forum routes. Missing targets become redlinks. Clicking a redlink opens a prefilled page create flow in the target namespace.
 
+Wiki page slugs are derived from titles with the same normalization used by the
+topdata wiki generator: lowercase ASCII letters and numbers, accented Latin
+text normalized to ASCII where possible, common Latin characters such as `Æ`,
+`Œ`, `Ø`, `ß`, `Þ`, `Ł`, and `Đ` expanded, symbols and separator punctuation
+collapsed to `-`, and quote/apostrophe punctuation dropped inside words so
+possessives such as `Grandmaster's` resolve as `grandmasters`.
+
 ## Development
 
 ### Repository Shape

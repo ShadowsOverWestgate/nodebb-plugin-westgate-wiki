@@ -23,12 +23,16 @@ test("extractHeadingToc matches article ToC ids for plain and duplicate headings
     <p>Ignored</p>
     <h3>Advanced Setup</h3>
     <h4>Élite &amp; Noble Houses</h4>
+    <h4>Grandmaster's Battle Momentum</h4>
+    <h4>Æther Œuvre Øresund Straße Þorn Łódź Đelta</h4>
   `);
 
   assert.deepStrictEqual(headings, [
     { id: "advanced-setup", text: "Advanced Setup", level: 2 },
     { id: "advanced-setup-2", text: "Advanced Setup", level: 3 },
-    { id: "elite-noble-houses", text: "Élite & Noble Houses", level: 4 }
+    { id: "elite-noble-houses", text: "Élite & Noble Houses", level: 4 },
+    { id: "grandmasters-battle-momentum", text: "Grandmaster's Battle Momentum", level: 4 },
+    { id: "aether-oeuvre-oresund-strasse-thorn-lodz-delta", text: "Æther Œuvre Øresund Straße Þorn Łódź Đelta", level: 4 }
   ]);
 });
 
