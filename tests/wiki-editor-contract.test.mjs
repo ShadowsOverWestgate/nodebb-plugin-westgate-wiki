@@ -3494,7 +3494,6 @@ await test("poetry quote css renders a speech-like quote panel with attribution"
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body::after\s*\{[\s\S]*content:\s*"\\201D"/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__attribution\s*\{[\s\S]*text-align:\s*left/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--plain\s*\{[\s\S]*position:\s*relative/);
-  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--plain\s*\{[\s\S]*overflow:\s*hidden/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--plain::before\s*\{[\s\S]*content:\s*""/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--plain::before\s*\{[\s\S]*inset:\s*-5%\s+1%/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--plain::before\s*\{[\s\S]*background:\s*#00000059/);

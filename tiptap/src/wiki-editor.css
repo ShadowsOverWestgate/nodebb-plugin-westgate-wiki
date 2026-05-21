@@ -156,8 +156,15 @@
 
 .westgate-wiki-compose .wiki-editor__fullscreen-source-highlight {
   color: #d1d5db;
-  overflow: hidden;
+  overflow: auto;
   pointer-events: none;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.westgate-wiki-compose .wiki-editor__fullscreen-source-highlight::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .westgate-wiki-compose .wiki-editor__fullscreen-source-input {
