@@ -132,6 +132,47 @@ const editorBundleSource = readFileSync(new URL("../tiptap/src/wiki-editor-bundl
 const vendoredEditorBundleSource = readFileSync(new URL("../public/vendor/tiptap/wiki-tiptap.bundle.js", import.meta.url), "utf8");
 const tableAuthoringSource = readFileSync(new URL("../tiptap/src/table/table-authoring-ui.mjs", import.meta.url), "utf8");
 
+function assertCodeTokenThemeCoverage(css, selectorPrefix) {
+  [
+    "--wiki-code-token-function",
+    "--wiki-code-token-class",
+    "--wiki-code-token-params",
+    "--wiki-code-token-property",
+    "--wiki-code-token-tag",
+    "--wiki-code-token-meta",
+    "--wiki-code-token-section",
+    "--wiki-code-token-operator",
+    "--wiki-code-token-punctuation",
+    "--wiki-code-token-addition",
+    "--wiki-code-token-deletion"
+  ].forEach(function (tokenVariable) {
+    assert.match(css, new RegExp(tokenVariable));
+  });
+
+  [
+    ".hljs-title.function_",
+    ".hljs-title.class_",
+    ".hljs-params",
+    ".hljs-property",
+    ".hljs-tag",
+    ".hljs-meta",
+    ".hljs-doctag",
+    ".hljs-section",
+    ".hljs-selector-class",
+    ".hljs-template-variable",
+    ".hljs-operator",
+    ".hljs-punctuation",
+    ".hljs-subst",
+    ".hljs-addition",
+    ".hljs-deletion",
+    ".hljs-emphasis",
+    ".hljs-strong"
+  ].forEach(function (tokenSelector) {
+    const escapedSelector = `${selectorPrefix} ${tokenSelector}`.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    assert.match(css, new RegExp(escapedSelector));
+  });
+}
+
 let editorBundleContractImportCount = 0;
 
 async function importEditorBundleForContract() {
@@ -3882,6 +3923,12 @@ await test("read-only wiki pages apply syntax token highlighting to language cod
   assert.match(wikiHtmlSanitizerSource, /function\s+highlightReadOnlyCodeBlocks\s*\(/);
   assert.match(wikiHtmlSanitizerSource, /data-wiki-code-highlighted/);
   assert.match(articleBodyCss, /\.wiki-article-prose\s+pre\s+code\s+\.hljs-keyword/);
+});
+
+await test("wiki code block CSS maps common highlight.js scopes to the Westgate token palette", function () {
+  assertCodeTokenThemeCoverage(articleBodyCss, ".wiki-article-prose pre code");
+  assertCodeTokenThemeCoverage(editorCss, ".westgate-wiki-compose .wiki-editor__content");
+  assertCodeTokenThemeCoverage(vendoredEditorCss, ".westgate-wiki-compose .wiki-editor__content");
 });
 
 await test("top toolbar schema excludes contextual image layout and size controls", function () {

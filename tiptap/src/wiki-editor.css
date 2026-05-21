@@ -552,60 +552,163 @@
   min-width: 11rem;
 }
 
+.westgate-wiki-compose .wiki-editor__content pre {
+  --wiki-code-token-keyword: #d9b76f;
+  --wiki-code-token-type: #caa4e6;
+  --wiki-code-token-literal: #d59a73;
+  --wiki-code-token-string: #9fca92;
+  --wiki-code-token-comment: #8f8298;
+  --wiki-code-token-number: #e2a95a;
+  --wiki-code-token-variable: #c9b8dc;
+  --wiki-code-token-function: #8fb7c9;
+  --wiki-code-token-class: #d7c58a;
+  --wiki-code-token-params: #b8a7c4;
+  --wiki-code-token-property: #c9948d;
+  --wiki-code-token-attribute: #d7a96d;
+  --wiki-code-token-tag: #b78ad3;
+  --wiki-code-token-meta: #b7a27a;
+  --wiki-code-token-section: #dbc173;
+  --wiki-code-token-operator: #c9a6a6;
+  --wiki-code-token-punctuation: #8f8498;
+  --wiki-code-token-addition: #8fbf9f;
+  --wiki-code-token-deletion: #c87979;
+}
+
 .westgate-wiki-compose .wiki-editor__content .wiki-code-token--keyword {
-  color: var(--wiki-code-token-keyword, #c084fc);
+  color: var(--wiki-code-token-keyword);
   font-weight: 600;
 }
 
 .westgate-wiki-compose .wiki-editor__content .hljs-keyword,
-.westgate-wiki-compose .wiki-editor__content .hljs-selector-tag,
-.westgate-wiki-compose .wiki-editor__content .hljs-built_in,
-.westgate-wiki-compose .wiki-editor__content .hljs-type,
-.westgate-wiki-compose .wiki-editor__content .hljs-literal {
-  color: var(--wiki-code-token-keyword, #c084fc);
+.westgate-wiki-compose .wiki-editor__content .hljs-selector-tag {
+  color: var(--wiki-code-token-keyword);
   font-weight: 600;
 }
 
+.westgate-wiki-compose .wiki-editor__content .hljs-type,
+.westgate-wiki-compose .wiki-editor__content .hljs-literal {
+  color: var(--wiki-code-token-type);
+  font-weight: 600;
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-built_in {
+  color: var(--wiki-code-token-literal);
+}
+
 .westgate-wiki-compose .wiki-editor__content .wiki-code-token--string {
-  color: var(--wiki-code-token-string, #86efac);
+  color: var(--wiki-code-token-string);
 }
 
 .westgate-wiki-compose .wiki-editor__content .hljs-string,
 .westgate-wiki-compose .wiki-editor__content .hljs-regexp,
-.westgate-wiki-compose .wiki-editor__content .hljs-symbol {
-  color: var(--wiki-code-token-string, #86efac);
+.westgate-wiki-compose .wiki-editor__content .hljs-symbol,
+.westgate-wiki-compose .wiki-editor__content .hljs-bullet {
+  color: var(--wiki-code-token-string);
 }
 
 .westgate-wiki-compose .wiki-editor__content .wiki-code-token--comment {
-  color: var(--wiki-code-token-comment, #94a3b8);
+  color: var(--wiki-code-token-comment);
   font-style: italic;
 }
 
 .westgate-wiki-compose .wiki-editor__content .hljs-comment,
 .westgate-wiki-compose .wiki-editor__content .hljs-quote {
-  color: var(--wiki-code-token-comment, #94a3b8);
+  color: var(--wiki-code-token-comment);
   font-style: italic;
 }
 
-.westgate-wiki-compose .wiki-editor__content .wiki-code-token--number {
-  color: var(--wiki-code-token-number, #fbbf24);
+.westgate-wiki-compose .wiki-editor__content .hljs-doctag {
+  color: var(--wiki-code-token-meta);
+  font-weight: 600;
 }
 
-.westgate-wiki-compose .wiki-editor__content .hljs-number,
+.westgate-wiki-compose .wiki-editor__content .wiki-code-token--number {
+  color: var(--wiki-code-token-number);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-number {
+  color: var(--wiki-code-token-number);
+}
+
 .westgate-wiki-compose .wiki-editor__content .hljs-attr,
 .westgate-wiki-compose .wiki-editor__content .hljs-attribute {
-  color: var(--wiki-code-token-number, #fbbf24);
+  color: var(--wiki-code-token-attribute);
 }
 
 .westgate-wiki-compose .wiki-editor__content .wiki-code-token--variable {
-  color: var(--wiki-code-token-variable, #67e8f9);
+  color: var(--wiki-code-token-variable);
 }
 
 .westgate-wiki-compose .wiki-editor__content .hljs-variable,
+.westgate-wiki-compose .wiki-editor__content .hljs-template-variable {
+  color: var(--wiki-code-token-variable);
+}
+
 .westgate-wiki-compose .wiki-editor__content .hljs-title,
-.westgate-wiki-compose .wiki-editor__content .hljs-property,
-.westgate-wiki-compose .wiki-editor__content .hljs-name {
-  color: var(--wiki-code-token-variable, #67e8f9);
+.westgate-wiki-compose .wiki-editor__content .hljs-title.function_,
+.westgate-wiki-compose .wiki-editor__content .hljs-function .hljs-title {
+  color: var(--wiki-code-token-function);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-title.class_,
+.westgate-wiki-compose .wiki-editor__content .hljs-class .hljs-title {
+  color: var(--wiki-code-token-class);
+  font-weight: 600;
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-params {
+  color: var(--wiki-code-token-params);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-property {
+  color: var(--wiki-code-token-property);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-name,
+.westgate-wiki-compose .wiki-editor__content .hljs-tag {
+  color: var(--wiki-code-token-tag);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-meta {
+  color: var(--wiki-code-token-meta);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-section,
+.westgate-wiki-compose .wiki-editor__content .hljs-selector-class,
+.westgate-wiki-compose .wiki-editor__content .hljs-selector-id {
+  color: var(--wiki-code-token-section);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-selector-attr,
+.westgate-wiki-compose .wiki-editor__content .hljs-selector-pseudo {
+  color: var(--wiki-code-token-attribute);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-operator,
+.westgate-wiki-compose .wiki-editor__content .hljs-subst {
+  color: var(--wiki-code-token-operator);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-punctuation {
+  color: var(--wiki-code-token-punctuation);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-addition {
+  background: color-mix(in srgb, var(--wiki-code-token-addition) 14%, transparent);
+  color: var(--wiki-code-token-addition);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-deletion {
+  background: color-mix(in srgb, var(--wiki-code-token-deletion) 12%, transparent);
+  color: var(--wiki-code-token-deletion);
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-emphasis {
+  font-style: italic;
+}
+
+.westgate-wiki-compose .wiki-editor__content .hljs-strong {
+  font-weight: 700;
 }
 
 .westgate-wiki-compose .wiki-editor__body {
