@@ -1,6 +1,6 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 
-const QUOTE_POSITIONS = new Set(["left", "center", "right"]);
+const QUOTE_POSITIONS = new Set(["left", "center", "right", "full"]);
 
 function normalizeQuoteText(value, fallback) {
   const text = String(value || "").replace(/\s+/g, " ").trim();
@@ -27,6 +27,9 @@ function parseQuotePosition(element) {
   }
   if (element.classList.contains("wiki-poetry-quote--center")) {
     return "center";
+  }
+  if (element.classList.contains("wiki-poetry-quote--full")) {
+    return "full";
   }
   return "left";
 }

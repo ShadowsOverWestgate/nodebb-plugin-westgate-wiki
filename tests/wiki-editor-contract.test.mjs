@@ -1013,6 +1013,7 @@ await test("table cell paragraphs have no margins in article and editor prose", 
 await test("article tables can shrink or fill beside floated infoboxes", function () {
   assert.match(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*width:\s*auto/s);
   assert.match(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*max-width:\s*100%/s);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s+\.tableWrapper\s*\{[^}]*max-width:\s*100%[^}]*overflow-x:\s*auto/s);
   assert.doesNotMatch(articleBodyCss, /\.wiki-article-prose\s+table\s*\{[^}]*\n\s*width:\s*100%/s);
   assert.doesNotMatch(articleBodyCss, /\.wiki-article-prose\s+table\[style\*="width:100%"\],\s*\.wiki-article-prose\s+table\[style\*="width: 100%"\]\s*\{[^}]*width:\s*auto\s*!important/s);
   assert.match(articleBodyCss, /\.wiki-article-prose\s*\{[^}]*--wiki-infobox-reader-width:\s*min\(22rem,\s*42%\)/s);
@@ -1457,6 +1458,14 @@ await test("normalizeLegacyHtmlForTiptap preserves saved poetry quote positionin
   assert.match(normalized, /wiki-poetry-quote--right/);
 });
 
+await test("normalizeLegacyHtmlForTiptap preserves saved full-width poetry quote positioning", function () {
+  const savedHtml = '<figure class="wiki-poetry-quote wiki-poetry-quote--full" data-wiki-node="poetry-quote" data-wiki-quote-position="full"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>';
+  const normalized = normalizeLegacyHtmlForTiptap(savedHtml);
+
+  assert.match(normalized, /data-wiki-quote-position="full"/);
+  assert.match(normalized, /wiki-poetry-quote--full/);
+});
+
 await test("saved containerless poetry quotes reopen as editable quote widgets", function () {
   const savedHtml = '<figure class="wiki-poetry-quote wiki-poetry-quote--plain" data-wiki-node="poetry-quote" data-wiki-quote-container="false"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>';
   const editor = createEditor(normalizeLegacyHtmlForTiptap(savedHtml));
@@ -1478,6 +1487,18 @@ await test("saved positioned poetry quotes reopen with their block position", fu
   assert.equal(editor.getJSON().content[0].attrs.position, "center");
   assert.match(rendered, /data-wiki-quote-position="center"/);
   assert.match(rendered, /wiki-poetry-quote--center/);
+  editor.destroy();
+});
+
+await test("saved full-width poetry quotes reopen with their block position", function () {
+  const savedHtml = '<figure class="wiki-poetry-quote wiki-poetry-quote--full" data-wiki-node="poetry-quote" data-wiki-quote-position="full"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>';
+  const editor = createEditor(normalizeLegacyHtmlForTiptap(savedHtml));
+  const rendered = editor.getHTML();
+
+  assert.equal(editor.state.doc.child(0).type.name, "wikiPoetryQuote");
+  assert.equal(editor.getJSON().content[0].attrs.position, "full");
+  assert.match(rendered, /data-wiki-quote-position="full"/);
+  assert.match(rendered, /wiki-poetry-quote--full/);
   editor.destroy();
 });
 
@@ -3442,6 +3463,22 @@ await test("wikiPoetryQuote stores horizontal block position without changing pa
   editor.destroy();
 });
 
+await test("wikiPoetryQuote stores full-width block position as a fourth position", function () {
+  const editor = createEditor('<figure class="wiki-poetry-quote" data-wiki-node="poetry-quote"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>');
+
+  editor.commands.setTextSelection(3);
+  assert.equal(editor.commands.setWikiPoetryQuotePosition("full"), true);
+  assert.equal(editor.getJSON().content[0].attrs.position, "full");
+  assert.match(editor.getHTML(), /data-wiki-quote-position="full"/);
+  assert.match(editor.getHTML(), /wiki-poetry-quote--full/);
+
+  assert.equal(editor.commands.setWikiPoetryQuotePosition("left"), true);
+  assert.equal(editor.getJSON().content[0].attrs.position, "left");
+  assert.doesNotMatch(editor.getHTML(), /data-wiki-quote-position="full"/);
+  assert.doesNotMatch(editor.getHTML(), /wiki-poetry-quote--full/);
+  editor.destroy();
+});
+
 await test("poetry quote css renders a speech-like quote panel with attribution", function () {
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote\s*\{[\s\S]*margin:\s*1rem\s+0/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote\s*\{[\s\S]*width:\s*fit-content/);
@@ -3449,6 +3486,8 @@ await test("poetry quote css renders a speech-like quote panel with attribution"
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--center\s*\{[\s\S]*margin-right:\s*auto/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--right\s*\{[\s\S]*margin-left:\s*auto/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--right\s*\{[\s\S]*margin-right:\s*0/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--full\s*\{[\s\S]*display:\s*flow-root/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--full\s*\{[\s\S]*width:\s*auto/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body\s*\{[\s\S]*background:\s*var\(--wiki-poetry-quote-bg,[\s\S]*#1b101d/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body\s*\{[\s\S]*border:\s*1px\s+solid\s+var\(--wiki-poetry-quote-border/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body::before\s*\{[\s\S]*content:\s*"\\201C"/);
@@ -3561,9 +3600,11 @@ await test("poetry quote floating toolbar exposes container toggle and unwrap ac
   assert.match(editorBundleSource, /poetry-quote-align-left/);
   assert.match(editorBundleSource, /poetry-quote-align-center/);
   assert.match(editorBundleSource, /poetry-quote-align-right/);
+  assert.match(editorBundleSource, /poetry-quote-align-full/);
   assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("left"\)/);
   assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("center"\)/);
   assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("right"\)/);
+  assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("full"\)/);
   assert.match(editorBundleSource, /toggleWikiPoetryQuoteContainer/);
   assert.match(editorBundleSource, /unsetWikiPoetryQuote/);
   assert.match(editorBundleSource, /figure\.wiki-poetry-quote/);

@@ -222,6 +222,24 @@ test("renderReadOnlyWikiHtml hoists top-level infoboxes before article blocks", 
   assert.ok(rendered.indexOf('<aside class="wiki-infobox"') < rendered.indexOf("<p>Intro text.</p>"));
 });
 
+test("renderReadOnlyWikiHtml wraps top-level tables for editor-matching responsive layout", function () {
+  const html = [
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Shar</div>',
+    '</aside>',
+    '<table class="wiki-table-layout-fixed"><tbody><tr><td>Blade</td><td>Ward</td></tr></tbody></table>',
+    '<aside class="wiki-infobox" data-wiki-node="infobox">',
+    '<div class="wiki-infobox__title" data-wiki-infobox-part="title">Second</div>',
+    '<div class="wiki-infobox__content" data-wiki-infobox-part="content"><table><tbody><tr><td>Nested</td></tr></tbody></table></div>',
+    '</aside>'
+  ].join("");
+  const rendered = wikiHtmlSanitizer.renderReadOnlyWikiHtml(html);
+
+  assert.match(rendered, /<div class="tableWrapper"><table class="wiki-table-layout-fixed"><tbody><tr><td>Blade<\/td><td>Ward<\/td><\/tr><\/tbody><\/table><\/div>/);
+  assert.match(rendered, /wiki-infobox__content" data-wiki-infobox-part="content"><table><tbody><tr><td>Nested<\/td><\/tr><\/tbody><\/table><\/div>/);
+  assert.equal((rendered.match(/class="tableWrapper"/g) || []).length, 1);
+});
+
 test("sanitizeWikiHtml strips unsafe styles from wiki infoboxes", function () {
   const html = '<aside class="wiki-infobox" data-wiki-node="infobox" style="position:fixed; color:#caa55a"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div></aside>';
   const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);
