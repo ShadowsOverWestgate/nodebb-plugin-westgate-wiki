@@ -492,6 +492,91 @@ function decodeBase64Utf8(value) {
   }
 }
 
+function encodeBase64Utf8(value) {
+  const text = String(value || "");
+  if (!text) {
+    return "";
+  }
+  if (window.btoa && window.TextEncoder) {
+    const bytes = new TextEncoder().encode(text);
+    let binary = "";
+    bytes.forEach(function (byte) {
+      binary += String.fromCharCode(byte);
+    });
+    return window.btoa(binary);
+  }
+  return btoa(unescape(encodeURIComponent(text)));
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function topdataCommentLabel(comment) {
+  const text = String(comment || "");
+  const manualMatch = text.match(/sow-topdata-wiki:manual:(start|end)\s+id=(["'])([^"']+)\2/i);
+  if (manualMatch) {
+    return `Editable section ${manualMatch[1] === "start" ? "starts" : "ends"}: ${manualMatch[3]}`;
+  }
+  if (/sow-topdata-wiki:managed:start/i.test(text)) {
+    return "Generated content starts";
+  }
+  if (/sow-topdata-wiki:managed:end/i.test(text)) {
+    return "Generated content ends";
+  }
+  if (/sow-topdata-wiki:page=/i.test(text)) {
+    return "Generated page marker";
+  }
+  return "Topdata marker";
+}
+
+function topdataCommentClass(comment) {
+  const text = String(comment || "");
+  if (/sow-topdata-wiki:manual:start/i.test(text)) {
+    return "wiki-topdata-marker--manual-start";
+  }
+  if (/sow-topdata-wiki:manual:end/i.test(text)) {
+    return "wiki-topdata-marker--manual-end";
+  }
+  if (/sow-topdata-wiki:managed:start/i.test(text)) {
+    return "wiki-topdata-marker--managed-start";
+  }
+  if (/sow-topdata-wiki:managed:end/i.test(text)) {
+    return "wiki-topdata-marker--managed-end";
+  }
+  return "wiki-topdata-marker--meta";
+}
+
+function exposeTopdataCommentsForEditor(html) {
+  return String(html || "").replace(/<!--\s*sow-topdata-wiki:[\s\S]*?-->/g, function (comment) {
+    return [
+      `<div class="wiki-topdata-marker ${topdataCommentClass(comment)}" data-wiki-topdata-comment-b64="${encodeBase64Utf8(comment)}" title="${escapeHtml(topdataCommentLabel(comment))}">`,
+      `<p>${escapeHtml(topdataCommentLabel(comment))}</p>`,
+      "</div>"
+    ].join("");
+  });
+}
+
+function restoreTopdataEditorMarkers(html) {
+  const source = String(html || "");
+  if (!/wiki-topdata-marker/.test(source) || typeof DOMParser === "undefined") {
+    return source;
+  }
+  const doc = new DOMParser().parseFromString(`<body>${source}</body>`, "text/html");
+  Array.from(doc.body.querySelectorAll(".wiki-topdata-marker[data-wiki-topdata-comment-b64]")).forEach(function (element) {
+    const comment = decodeBase64Utf8(element.getAttribute("data-wiki-topdata-comment-b64")).trim();
+    if (!/^<!--\s*sow-topdata-wiki:[\s\S]*-->$/.test(comment)) {
+      return;
+    }
+    element.parentNode.replaceChild(doc.createComment(comment.replace(/^<!--/, "").replace(/-->$/, "")), element);
+  });
+  return doc.body.innerHTML.trim();
+}
+
 function openWikiEntityDialog({ editor, type, options, initial, replaceMark }) {
   const existing = document.querySelector(".wiki-editor-entity-dialog-shell");
   if (existing) {
@@ -3548,7 +3633,7 @@ function createFullscreenSourceMode(root, editor, sourcePanel, sourceTextarea, s
     if (syncingSource || sourceDirty || !fullscreen || sourceHidden) {
       return;
     }
-    sourceTextarea.value = formatSourceHtml(sanitizeHtml(editor.getHTML()));
+    sourceTextarea.value = formatSourceHtml(restoreTopdataEditorMarkers(sanitizeHtml(editor.getHTML())));
     renderSourceHighlight();
     setSourceDirty(false);
   }
@@ -3570,7 +3655,7 @@ function createFullscreenSourceMode(root, editor, sourcePanel, sourceTextarea, s
     }
     syncingSource = true;
     try {
-      const html = sanitizeHtml(normalizeLegacyHtmlForTiptap(normalizeSourceHtmlForEditor(sourceTextarea.value)));
+      const html = sanitizeHtml(normalizeLegacyHtmlForTiptap(exposeTopdataCommentsForEditor(normalizeSourceHtmlForEditor(sourceTextarea.value))));
       editor.commands.setContent(html, false);
       onChange();
       setSourceDirty(false);
@@ -3856,7 +3941,7 @@ async function uploadImageFile(relativePath, csrfToken, file) {
 export async function createWikiEditor(element, options) {
   const { relativePath, csrfToken, initialData = "" } = options || {};
   const onChange = options && typeof options.onChange === "function" ? options.onChange : function () {};
-  const normalizedInitialData = normalizeLegacyHtmlForTiptap(initialData);
+  const normalizedInitialData = normalizeLegacyHtmlForTiptap(exposeTopdataCommentsForEditor(initialData));
   let pendingUploads = 0;
 
   const root = document.createElement("div");
@@ -4269,19 +4354,19 @@ export async function createWikiEditor(element, options) {
 
   return {
     getHTML: function () {
-      return sanitizeHtml(editor.getHTML());
+      return restoreTopdataEditorMarkers(sanitizeHtml(editor.getHTML()));
     },
     getJSON: function () {
       return editor.getJSON();
     },
     getMarkdown: function () {
-      return htmlToMarkdown(editor.getHTML());
+      return htmlToMarkdown(restoreTopdataEditorMarkers(sanitizeHtml(editor.getHTML())));
     },
     hasPendingUploads: function () {
       return pendingUploads > 0;
     },
     setHTML: function (html) {
-      editor.commands.setContent(sanitizeHtml(normalizeLegacyHtmlForTiptap(html)), false);
+      editor.commands.setContent(sanitizeHtml(normalizeLegacyHtmlForTiptap(exposeTopdataCommentsForEditor(html))), false);
     },
     setMarkdown: function (markdown) {
       editor.commands.setContent(markdownToHtml(markdown), false);

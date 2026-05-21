@@ -33,7 +33,16 @@ const ContainerBlock = Node.create({
       id: createPreservedAttribute("id"),
       lang: createPreservedAttribute("lang"),
       style: createPreservedAttribute("style"),
-      title: createPreservedAttribute("title")
+      title: createPreservedAttribute("title"),
+      topdataCommentB64: {
+        default: null,
+        parseHTML: function (element) {
+          return element.getAttribute("data-wiki-topdata-comment-b64") || null;
+        },
+        renderHTML: function (attributes) {
+          return attributes.topdataCommentB64 ? { "data-wiki-topdata-comment-b64": attributes.topdataCommentB64 } : {};
+        }
+      }
     };
   },
   parseHTML() {
