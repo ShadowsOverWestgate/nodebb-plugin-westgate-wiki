@@ -1146,7 +1146,6 @@ content: "";
 .wiki-article-prose .wiki-poetry-quote--plain {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
 }
 
 .wiki-article-prose .wiki-poetry-quote--plain::before {
