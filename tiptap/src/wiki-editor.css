@@ -1277,6 +1277,23 @@
   border-bottom: 1px solid var(--wiki-infobox-row-border, rgba(194, 163, 90, 0.12));
 }
 
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__block--active {
+  position: relative;
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__row.wiki-infobox__block--active {
+  background: color-mix(in srgb, var(--wiki-editor-focus-border, var(--bs-primary, #0d6efd)) 9%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wiki-editor-focus-border, var(--bs-primary, #0d6efd)) 42%, transparent);
+}
+
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__title.wiki-infobox__block--active,
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__subtitle.wiki-infobox__block--active,
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__section.wiki-infobox__block--active,
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__content.wiki-infobox__block--active,
+.westgate-wiki-compose .wiki-editor__content .wiki-infobox__rows.wiki-infobox__block--active {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wiki-editor-focus-border, var(--bs-primary, #0d6efd)) 44%, transparent);
+}
+
 .westgate-wiki-compose .wiki-editor__content .wiki-infobox__row > dt,
 .westgate-wiki-compose .wiki-editor__content .wiki-infobox__row > dd {
   margin: 0;

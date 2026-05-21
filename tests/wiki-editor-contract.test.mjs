@@ -962,6 +962,9 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content \.wiki-alignment-table\s*\{[^}]*margin-left:\s*auto[^}]*margin-right:\s*auto/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :first-child\s*\{[^}]*margin-top:\s*0/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content > :last-child\s*\{[^}]*margin-bottom:\s*0/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row\.wiki-infobox__block--active\s*\{/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__title\.wiki-infobox__block--active,/);
+  assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__block--active\s*\{/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*position:\s*absolute/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*z-index:\s*22/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*flex-direction:\s*column/);
@@ -975,6 +978,9 @@ await test("wikiInfobox css defines reader float, narrow full-width layout, and 
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty\s*\{[^}]*cursor:\s*pointer[^}]*min-height:\s*4rem/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__image:empty:{1,2}before\s*\{[^}]*content:\s*"Upload image"[^}]*letter-spacing:\s*0/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__content \.wiki-alignment-table\s*\{[^}]*margin-left:\s*auto[^}]*margin-right:\s*auto/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__row\.wiki-infobox__block--active\s*\{/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__title\.wiki-infobox__block--active,/);
+  assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-infobox__block--active\s*\{/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{/);
   assert.match(vendoredEditorCss, /\.westgate-wiki-compose \.wiki-editor-infobox-rail\s*\{[^}]*max-height:\s*min\(calc\(100vh\s*-\s*2rem\),\s*28rem\)[^}]*overflow-y:\s*auto/);
 });
@@ -3040,6 +3046,95 @@ await test("wikiInfobox helper commands support whole helper node selections", f
   assert.doesNotMatch(deleted, /Title/);
   assert.match(deleted, /Subtitle/);
   assert.match(deleted, /wiki-infobox/);
+  deleteEditor.destroy();
+});
+
+await test("wikiInfobox row movement commands reorder only the active key-value row", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Age</dt><dd>Ancient</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Status</dt><dd>Missing</dd></div></dl></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Age").from);
+  assert.equal(editor.commands.moveWikiInfoboxHelperUp(), true);
+  let rendered = editor.getHTML();
+  assert.ok(rendered.indexOf("Age") < rendered.indexOf("House"));
+  assert.ok(rendered.indexOf("House") < rendered.indexOf("Status"));
+
+  editor.commands.setTextSelection(findTextRange(editor, "Age").from);
+  assert.equal(editor.commands.moveWikiInfoboxHelperDown(), true);
+  rendered = editor.getHTML();
+  assert.ok(rendered.indexOf("House") < rendered.indexOf("Age"));
+  assert.ok(rendered.indexOf("Age") < rendered.indexOf("Status"));
+  assert.equal((rendered.match(/class="wiki-infobox__rows"/g) || []).length, 1);
+  editor.destroy();
+});
+
+await test("wikiInfobox active block decoration marks the row that move and delete commands will target", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Age</dt><dd>Ancient</dd></div></dl></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Age").from);
+  let active = editor.view.dom.querySelector(".wiki-infobox__block--active");
+  assert.ok(active, "selection inside a row should mark an active infobox block");
+  assert.equal(active.classList.contains("wiki-infobox__row"), true);
+  assert.match(active.textContent, /Age/);
+  assert.doesNotMatch(active.textContent, /House/);
+
+  editor.commands.setTextSelection(findTextRange(editor, "Title").from);
+  active = editor.view.dom.querySelector(".wiki-infobox__block--active");
+  assert.ok(active, "selection inside a helper should mark an active infobox block");
+  assert.equal(active.classList.contains("wiki-infobox__title"), true);
+  assert.match(active.textContent, /Title/);
+  assert.doesNotMatch(active.textContent, /Age/);
+  editor.destroy();
+});
+
+await test("wikiInfobox row delete command removes only the active key-value row", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Age</dt><dd>Ancient</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Status</dt><dd>Missing</dd></div></dl></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "Age").from);
+  assert.equal(editor.commands.deleteWikiInfoboxHelper(), true);
+  const rendered = editor.getHTML();
+  assert.match(rendered, /House/);
+  assert.doesNotMatch(rendered, /Age/);
+  assert.doesNotMatch(rendered, /Ancient/);
+  assert.match(rendered, /Status/);
+  assert.match(rendered, /class="wiki-infobox__rows" data-wiki-infobox-part="rows"/);
+  assert.equal((rendered.match(/class="wiki-infobox__row"/g) || []).length, 2);
+  editor.destroy();
+});
+
+await test("wikiInfobox row delete command removes the rows helper when deleting the only row", function () {
+  const editor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div></dl></aside>');
+
+  editor.commands.setTextSelection(findTextRange(editor, "House").from);
+  assert.equal(editor.commands.deleteWikiInfoboxHelper(), true);
+  const rendered = editor.getHTML();
+  assert.match(rendered, /Title/);
+  assert.doesNotMatch(rendered, /House/);
+  assert.doesNotMatch(rendered, /wiki-infobox__rows/);
+  assert.match(rendered, /wiki-infobox/);
+  assert.equal(editor.isActive("wikiInfobox"), true);
+  editor.destroy();
+});
+
+await test("wikiInfobox whole rows helper selection still moves and deletes the rows block", function () {
+  const moveEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Age</dt><dd>Ancient</dd></div></dl></aside>');
+  const rowsPos = findNodePositions(moveEditor, "wikiInfoboxRows")[0];
+  moveEditor.view.dispatch(moveEditor.state.tr.setSelection(NodeSelection.create(moveEditor.state.doc, rowsPos)));
+
+  assert.equal(moveEditor.commands.moveWikiInfoboxHelperUp(), true);
+  let rendered = moveEditor.getHTML();
+  assert.ok(rendered.indexOf("House") < rendered.indexOf("Title"));
+  assert.match(rendered, /Age/);
+  moveEditor.destroy();
+
+  const deleteEditor = createEditor('<aside class="wiki-infobox" data-wiki-node="infobox"><div class="wiki-infobox__title" data-wiki-infobox-part="title">Title</div><dl class="wiki-infobox__rows" data-wiki-infobox-part="rows"><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>House</dt><dd>Voss</dd></div><div class="wiki-infobox__row" data-wiki-infobox-part="row"><dt>Age</dt><dd>Ancient</dd></div></dl></aside>');
+  const deleteRowsPos = findNodePositions(deleteEditor, "wikiInfoboxRows")[0];
+  deleteEditor.view.dispatch(deleteEditor.state.tr.setSelection(NodeSelection.create(deleteEditor.state.doc, deleteRowsPos)));
+
+  assert.equal(deleteEditor.commands.deleteWikiInfoboxHelper(), true);
+  rendered = deleteEditor.getHTML();
+  assert.match(rendered, /Title/);
+  assert.doesNotMatch(rendered, /House|Age|Voss|Ancient/);
+  assert.doesNotMatch(rendered, /wiki-infobox__rows/);
   deleteEditor.destroy();
 });
 
