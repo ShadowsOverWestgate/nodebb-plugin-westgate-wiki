@@ -4,6 +4,12 @@ import { sanitizeStyleAttribute } from "../shared/sanitizer-contract.mjs";
 
 const QUOTE_POSITIONS = new Set(["left", "center", "right", "full"]);
 const QUOTE_SPACING_SIDES = ["top", "right", "bottom", "left"];
+const DEFAULT_QUOTE_MARGIN = {
+  top: "1rem",
+  right: "0",
+  bottom: "1rem",
+  left: "0"
+};
 const QUOTE_SPACING_CONFIG = {
   margin: {
     tagName: "figure",
@@ -77,7 +83,7 @@ function sanitizeSpacingValue(value, type, side) {
   const propertyName = `${type}-${side}`;
   const sanitized = sanitizeStyleAttribute(`${propertyName}: ${normalized}`, config.tagName);
   const match = sanitized.match(new RegExp(`(?:^|;\\s*)${propertyName}:\\s*([^;]+)`, "i"));
-  return match ? match[1].trim() : null;
+  return match ? normalizeSpacingValue(match[1].trim(), type) : null;
 }
 
 function getQuoteBodyElement(element) {
@@ -86,13 +92,13 @@ function getQuoteBodyElement(element) {
 
 function readSpacingValue(element, type, side) {
   if (!element || !element.style) {
-    return null;
+    return type === "margin" ? DEFAULT_QUOTE_MARGIN[side] : null;
   }
   const value = sanitizeSpacingValue(element.style.getPropertyValue(`${type}-${side}`), type, side);
   if (value || type !== "margin" || (side !== "right" && side !== "left")) {
-    return value;
+    return value || (type === "margin" ? DEFAULT_QUOTE_MARGIN[side] : null);
   }
-  return sanitizeSpacingValue(element.style.getPropertyValue(`--wiki-poetry-quote-margin-${side}`), type, side);
+  return sanitizeSpacingValue(element.style.getPropertyValue(`--wiki-poetry-quote-margin-${side}`), type, side) || DEFAULT_QUOTE_MARGIN[side];
 }
 
 function createSpacingAttributes() {
@@ -100,7 +106,7 @@ function createSpacingAttributes() {
   ["margin", "padding"].forEach(function (type) {
     QUOTE_SPACING_SIDES.forEach(function (side) {
       attrs[getSpacingAttrName(type, side)] = {
-        default: null,
+        default: type === "margin" ? DEFAULT_QUOTE_MARGIN[side] : null,
         parseHTML: function (element) {
           return readSpacingValue(type === "margin" ? element : getQuoteBodyElement(element), type, side);
         }
@@ -120,7 +126,7 @@ function getSpacingStyle(attrs, type) {
       if (!(type === "margin" && useHorizontalInsets && (side === "right" || side === "left"))) {
         entries.push(`${type}-${side}: ${value}`);
       }
-      if (type === "margin" && (side === "right" || side === "left")) {
+      if (type === "margin" && useHorizontalInsets && (side === "right" || side === "left")) {
         entries.push(`--wiki-poetry-quote-margin-${side}: ${value}`);
       }
     }
@@ -146,7 +152,7 @@ function getSpacingClearAttrs(type) {
     return null;
   }
   return Object.fromEntries(QUOTE_SPACING_SIDES.map(function (side) {
-    return [getSpacingAttrName(type, side), null];
+    return [getSpacingAttrName(type, side), type === "margin" ? DEFAULT_QUOTE_MARGIN[side] : null];
   }));
 }
 
