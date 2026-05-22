@@ -178,6 +178,40 @@
       "width": [
         "^(?:\\d+(?:\\.\\d+)?(?:px|%)|auto)$"
       ]
+    },
+    "figure": {
+      "--wiki-poetry-quote-margin-left": [
+        "^(?:0|-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:px|em|rem|%))$"
+      ],
+      "--wiki-poetry-quote-margin-right": [
+        "^(?:0|-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:px|em|rem|%))$"
+      ],
+      "margin-top": [
+        "^(?:0|-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:px|em|rem|%))$"
+      ],
+      "margin-right": [
+        "^(?:0|-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:px|em|rem|%))$"
+      ],
+      "margin-bottom": [
+        "^(?:0|-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:px|em|rem|%))$"
+      ],
+      "margin-left": [
+        "^(?:0|-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:px|em|rem|%))$"
+      ]
+    },
+    "blockquote": {
+      "padding-top": [
+        "^(?:0|(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:px|em|rem|%))$"
+      ],
+      "padding-right": [
+        "^(?:0|(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:px|em|rem|%))$"
+      ],
+      "padding-bottom": [
+        "^(?:0|(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:px|em|rem|%))$"
+      ],
+      "padding-left": [
+        "^(?:0|(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:px|em|rem|%))$"
+      ]
     }
   }
 }

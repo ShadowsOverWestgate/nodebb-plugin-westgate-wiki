@@ -3521,15 +3521,173 @@ await test("wikiPoetryQuote stores full-width block position as a fourth positio
   editor.destroy();
 });
 
+await test("wikiPoetryQuote stores sanitized block spacing for margin and padding", function () {
+  const editor = createEditor('<figure class="wiki-poetry-quote" data-wiki-node="poetry-quote"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>');
+
+  editor.commands.setTextSelection(3);
+  assert.equal(editor.commands.setWikiPoetryQuoteSpacing("padding", {
+    top: "1.25rem",
+    right: "3rem",
+    bottom: "0.75rem",
+    left: "2rem"
+  }), true);
+  assert.equal(editor.commands.setWikiPoetryQuoteSpacing("margin", {
+    top: "2rem",
+    right: "1rem",
+    bottom: "3rem",
+    left: "-0.5rem"
+  }), true);
+
+  const attrs = editor.getJSON().content[0].attrs;
+  assert.equal(attrs.paddingTop, "1.25rem");
+  assert.equal(attrs.paddingRight, "3rem");
+  assert.equal(attrs.paddingBottom, "0.75rem");
+  assert.equal(attrs.paddingLeft, "2rem");
+  assert.equal(attrs.marginTop, "2rem");
+  assert.equal(attrs.marginRight, "1rem");
+  assert.equal(attrs.marginBottom, "3rem");
+  assert.equal(attrs.marginLeft, "-0.5rem");
+  assert.match(editor.getHTML(), /<figure[^>]*style="[^"]*margin:\s*2rem\s+1rem\s+3rem\s+-0\.5rem;?[^"]*"/);
+  assert.match(editor.getHTML(), /<blockquote class="wiki-poetry-quote__body" style="[^"]*padding:\s*1\.25rem\s+3rem\s+0\.75rem\s+2rem;?[^"]*"/);
+
+  assert.equal(editor.commands.setWikiPoetryQuoteSpacing("padding", {
+    top: "-1rem",
+    right: "calc(1rem)",
+    bottom: "12vw",
+    left: "4px"
+  }), true);
+  assert.equal(editor.getJSON().content[0].attrs.paddingTop, null);
+  assert.equal(editor.getJSON().content[0].attrs.paddingRight, null);
+  assert.equal(editor.getJSON().content[0].attrs.paddingBottom, null);
+  assert.equal(editor.getJSON().content[0].attrs.paddingLeft, "4px");
+
+  assert.equal(editor.commands.clearWikiPoetryQuoteSpacing("margin"), true);
+  assert.equal(editor.getJSON().content[0].attrs.marginTop, null);
+  assert.doesNotMatch(editor.getHTML(), /margin-top:/);
+  editor.destroy();
+});
+
+await test("wikiPoetryQuote full-width position preserves horizontal margins as block insets", function () {
+  const editor = createEditor('<figure class="wiki-poetry-quote" data-wiki-node="poetry-quote"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>');
+
+  editor.commands.setTextSelection(3);
+  assert.equal(editor.commands.setWikiPoetryQuoteSpacing("margin", {
+    top: "2rem",
+    right: "4rem",
+    bottom: "3rem",
+    left: "5rem"
+  }), true);
+  assert.equal(editor.commands.setWikiPoetryQuotePosition("full"), true);
+
+  const attrs = editor.getJSON().content[0].attrs;
+  assert.equal(attrs.position, "full");
+  assert.equal(attrs.marginTop, "2rem");
+  assert.equal(attrs.marginBottom, "3rem");
+  assert.equal(attrs.marginRight, "4rem");
+  assert.equal(attrs.marginLeft, "5rem");
+  assert.match(editor.getHTML(), /wiki-poetry-quote--full/);
+  assert.match(editor.getHTML(), /style="(?=[^"]*margin-top:\s*2rem)(?=[^"]*margin-bottom:\s*3rem)(?=[^"]*--wiki-poetry-quote-margin-right:\s*4rem)(?=[^"]*--wiki-poetry-quote-margin-left:\s*5rem)[^"]*"/);
+  let figureStyle = editor.getHTML().match(/<figure[^>]*style="([^"]*)"/)?.[1] || "";
+  assert.doesNotMatch(figureStyle, /(?:^|;\s*)margin-right:/);
+  assert.doesNotMatch(figureStyle, /(?:^|;\s*)margin-left:/);
+
+  assert.equal(editor.commands.setWikiPoetryQuoteSpacing("margin", {
+    top: "6rem",
+    right: "7rem",
+    bottom: "8rem",
+    left: "9rem"
+  }), true);
+  assert.equal(editor.getJSON().content[0].attrs.marginTop, "6rem");
+  assert.equal(editor.getJSON().content[0].attrs.marginBottom, "8rem");
+  assert.equal(editor.getJSON().content[0].attrs.marginRight, "7rem");
+  assert.equal(editor.getJSON().content[0].attrs.marginLeft, "9rem");
+  assert.match(editor.getHTML(), /style="(?=[^"]*margin-top:\s*6rem)(?=[^"]*margin-bottom:\s*8rem)(?=[^"]*--wiki-poetry-quote-margin-right:\s*7rem)(?=[^"]*--wiki-poetry-quote-margin-left:\s*9rem)[^"]*"/);
+  figureStyle = editor.getHTML().match(/<figure[^>]*style="([^"]*)"/)?.[1] || "";
+  assert.doesNotMatch(figureStyle, /(?:^|;\s*)margin-right:/);
+  assert.doesNotMatch(figureStyle, /(?:^|;\s*)margin-left:/);
+
+  const reopened = createEditor(editor.getHTML());
+  const reopenedAttrs = reopened.getJSON().content[0].attrs;
+  assert.equal(reopenedAttrs.position, "full");
+  assert.equal(reopenedAttrs.marginTop, "6rem");
+  assert.equal(reopenedAttrs.marginBottom, "8rem");
+  assert.equal(reopenedAttrs.marginRight, "7rem");
+  assert.equal(reopenedAttrs.marginLeft, "9rem");
+  reopened.destroy();
+  editor.destroy();
+});
+
+await test("wikiPoetryQuote margin spacing preserves centered block positioning", function () {
+  const editor = createEditor('<figure class="wiki-poetry-quote wiki-poetry-quote--center" data-wiki-node="poetry-quote" data-wiki-quote-position="center"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">- Author</p></blockquote></figure>');
+
+  editor.commands.setTextSelection(3);
+  assert.equal(editor.commands.setWikiPoetryQuoteSpacing("margin", {
+    top: "2rem",
+    right: "3rem",
+    bottom: "4rem",
+    left: "3rem"
+  }), true);
+
+  const attrs = editor.getJSON().content[0].attrs;
+  assert.equal(attrs.position, "center");
+  assert.equal(attrs.marginTop, "2rem");
+  assert.equal(attrs.marginRight, "3rem");
+  assert.equal(attrs.marginBottom, "4rem");
+  assert.equal(attrs.marginLeft, "3rem");
+  assert.match(editor.getHTML(), /wiki-poetry-quote--center/);
+  assert.match(editor.getHTML(), /data-wiki-quote-position="center"/);
+
+  const figureStyle = editor.getHTML().match(/<figure[^>]*style="([^"]*)"/)?.[1] || "";
+  assert.match(figureStyle, /(?:^|;\s*)margin-top:\s*2rem/);
+  assert.match(figureStyle, /(?:^|;\s*)margin-bottom:\s*4rem/);
+  assert.match(figureStyle, /(?:^|;\s*)--wiki-poetry-quote-margin-right:\s*3rem/);
+  assert.match(figureStyle, /(?:^|;\s*)--wiki-poetry-quote-margin-left:\s*3rem/);
+  assert.doesNotMatch(figureStyle, /(?:^|;\s*)margin\s*:/);
+  assert.doesNotMatch(figureStyle, /(?:^|;\s*)margin-right:/);
+  assert.doesNotMatch(figureStyle, /(?:^|;\s*)margin-left:/);
+  editor.destroy();
+});
+
+await test("wikiPoetryQuote parses saved spacing styles and sanitizer preserves only safe spacing", function () {
+  const sanitized = sanitizeHtml('<figure class="wiki-poetry-quote" data-wiki-node="poetry-quote" style="margin-top: 2rem; margin-left: -0.5rem; --wiki-poetry-quote-margin-left: -0.5rem; --wiki-poetry-quote-margin-right: 4rem; --unsafe-spacing: 20px; position: fixed"><blockquote class="wiki-poetry-quote__body" style="padding-top: 1rem; padding-right: -2rem; padding-left: 5%"><p>Spoken words.</p></blockquote></figure>');
+  assert.match(sanitized, /style="(?=[^"]*(?:margin-top:\s*2rem|margin:\s*2rem[^"]*-0\.5rem))(?=[^"]*(?:margin-left:\s*-0\.5rem|margin:\s*2rem[^"]*-0\.5rem))[^"]*"/);
+  assert.match(sanitized, /style="(?=[^"]*--wiki-poetry-quote-margin-left:\s*-0\.5rem)(?=[^"]*--wiki-poetry-quote-margin-right:\s*4rem)[^"]*"/);
+  assert.doesNotMatch(sanitized, /position:\s*fixed/);
+  assert.doesNotMatch(sanitized, /--unsafe-spacing/);
+  assert.match(sanitized, /style="(?=[^"]*(?:padding-top:\s*1rem|padding:\s*1rem[^"]*5%))(?=[^"]*(?:padding-left:\s*5%|padding:\s*1rem[^"]*5%))[^"]*"/);
+  assert.doesNotMatch(sanitized, /padding-right:\s*-2rem/);
+
+  const editor = createEditor(sanitized.replace(/^<div>([\s\S]*)<\/div>$/, "$1"));
+  const attrs = editor.getJSON().content[0].attrs;
+  assert.equal(attrs.marginTop, "2rem");
+  assert.equal(attrs.marginLeft, "-0.5rem");
+  assert.equal(attrs.paddingTop, "1rem");
+  assert.equal(attrs.paddingLeft, "5%");
+  assert.equal(attrs.paddingRight, null);
+  editor.destroy();
+});
+
 await test("poetry quote css renders a speech-like quote panel with attribution", function () {
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote\s*\{[\s\S]*margin:\s*1rem\s+0/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote\s*\{[\s\S]*width:\s*fit-content/);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s*>\s*\.wiki-poetry-quote:first-child,\s*\.wiki-article-prose\s*>\s*\.card-body\s*>\s*\.wiki-poetry-quote:first-child\s*\{[^}]*margin-top:\s*0/);
+  const firstVisiblePoetryQuoteRule = /@supports\s+selector\(:nth-child\(1\s+of\s+:not\(\.wiki-infobox\)\)\)\s*\{([\s\S]*?)\n\s*\}\n\s*\}/.exec(articleBodyCss)?.[1] || "";
+  assert.match(firstVisiblePoetryQuoteRule, /\.wiki-article-prose\s*>\s*\.wiki-poetry-quote:nth-child\(1\s+of\s+:not\(\.wiki-infobox\)\)/);
+  assert.match(firstVisiblePoetryQuoteRule, /\.wiki-article-prose\s*>\s*\.card-body\s*>\s*\.wiki-poetry-quote:nth-child\(1\s+of\s+:not\(\.wiki-infobox\)\)/);
+  assert.match(firstVisiblePoetryQuoteRule, /\.wiki-article-prose\s*>\s*div:not\(\[class\]\):first-child\s*>\s*\.wiki-poetry-quote:nth-child\(1\s+of\s+:not\(\.wiki-infobox\)\)/);
+  assert.match(firstVisiblePoetryQuoteRule, /\.wiki-article-prose\s*>\s*\.card-body\s*>\s*div:not\(\[class\]\):first-child\s*>\s*\.wiki-poetry-quote:nth-child\(1\s+of\s+:not\(\.wiki-infobox\)\)/);
+  assert.match(firstVisiblePoetryQuoteRule, /margin-top:\s*0/);
+  assert.match(articleBodyCss, /\.wiki-article-prose\s*>\s*\.wiki-poetry-quote:last-child,\s*\.wiki-article-prose\s*>\s*\.card-body\s*>\s*\.wiki-poetry-quote:last-child\s*\{[^}]*margin-bottom:\s*0/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--center\s*\{[\s\S]*margin-left:\s*auto/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--center\s*\{[\s\S]*margin-right:\s*auto/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--right\s*\{[\s\S]*margin-left:\s*auto/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--right\s*\{[\s\S]*margin-right:\s*0/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--full\s*\{[\s\S]*display:\s*flow-root/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--full\s*\{[\s\S]*width:\s*auto/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--full\[style\*="--wiki-poetry-quote-margin-left"\]\s*\{[^}]*margin-left:\s*0\s*!important/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--full\[style\*="--wiki-poetry-quote-margin-right"\]\s*\{[^}]*margin-right:\s*0\s*!important/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote--center\s*>\s*\.wiki-poetry-quote__body,\s*\.wiki-article-prose \.wiki-poetry-quote--right\s*>\s*\.wiki-poetry-quote__body,\s*\.wiki-article-prose \.wiki-poetry-quote--full\s*>\s*\.wiki-poetry-quote__body\s*\{[^}]*margin-left:\s*var\(--wiki-poetry-quote-margin-left,\s*0\)[^}]*margin-right:\s*var\(--wiki-poetry-quote-margin-right,\s*0\)/);
+  assert.doesNotMatch(articleBodyCss, /\.wiki-article-prose\s+\.wiki-infobox\s*~\s*\.wiki-poetry-quote--full\s*>\s*\.wiki-poetry-quote__body\s*\{[^}]*width:\s*calc\(100%\s*-\s*var\(--wiki-infobox-reader-width\)/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body\s*\{[\s\S]*background:\s*var\(--wiki-poetry-quote-bg,[\s\S]*#1b101d/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body\s*\{[\s\S]*border:\s*1px\s+solid\s+var\(--wiki-poetry-quote-border/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-poetry-quote__body::before\s*\{[\s\S]*content:\s*"\\201C"/);
@@ -3646,11 +3804,217 @@ await test("poetry quote floating toolbar exposes container toggle and unwrap ac
   assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("center"\)/);
   assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("right"\)/);
   assert.match(editorBundleSource, /setWikiPoetryQuotePosition\("full"\)/);
+  assert.match(editorBundleSource, /poetry-quote-spacing/);
+  assert.match(editorBundleSource, /setWikiPoetryQuoteSpacing/);
+  assert.match(editorBundleSource, /wiki-editor-poetry-quote-spacing-popover/);
+  assert.doesNotMatch(editorBundleSource, /wiki-editor-poetry-quote-spacing-popover[\s\S]{0,280}aria-modal/);
   assert.match(editorBundleSource, /toggleWikiPoetryQuoteContainer/);
   assert.match(editorBundleSource, /unsetWikiPoetryQuote/);
   assert.match(editorBundleSource, /figure\.wiki-poetry-quote/);
   assert.match(editorBundleSource, /selectPoetryQuote/);
   assert.match(editorBundleSource, /closest\("p, h1, h2, h3, h4, h5, h6, li"\)/);
+});
+
+await test("poetry quote chrome selection preserves existing text selections", async function () {
+  const { selectPoetryQuote } = await importEditorBundleForContract();
+  const editor = createEditor('<figure class="wiki-poetry-quote" data-wiki-node="poetry-quote"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">— Author</p></blockquote></figure>');
+  const quote = editor.view.dom.querySelector('[data-wiki-node="poetry-quote"]');
+  const quoteRange = findTextRange(editor, "Spoken words");
+  const authorRange = findTextRange(editor, "Author");
+
+  editor.commands.setTextSelection({ from: quoteRange.from, to: authorRange.to });
+  const selectionBefore = {
+    from: editor.state.selection.from,
+    to: editor.state.selection.to,
+    empty: editor.state.selection.empty
+  };
+
+  assert.equal(selectionBefore.empty, false);
+  assert.equal(selectPoetryQuote(editor, quote, editor.view.dom), false);
+  assert.equal(editor.state.selection.from, selectionBefore.from);
+  assert.equal(editor.state.selection.to, selectionBefore.to);
+  assert.equal(editor.state.selection.empty, false);
+  editor.destroy();
+});
+
+await test("poetry quote spacing popover is non-modal and live-updates the selected quote", async function () {
+  const { createWikiEditor } = await importEditorBundleForContract();
+  const host = document.createElement("div");
+  host.className = "westgate-wiki-compose";
+  document.body.appendChild(host);
+
+  const wikiEditor = await createWikiEditor(host, {
+    initialData: '<figure class="wiki-poetry-quote" data-wiki-node="poetry-quote"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">— Author</p></blockquote></figure>'
+  });
+
+  const quote = host.querySelector('[data-wiki-node="poetry-quote"]');
+  quote.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+  await nextAnimationFrame();
+
+  const spacingButton = host.querySelector('[data-toolbar-id="poetry-quote-spacing"]');
+  assert.ok(spacingButton, "poetry quote spacing button should exist");
+  spacingButton.click();
+
+  const popover = document.querySelector(".wiki-editor-poetry-quote-spacing-popover");
+  assert.ok(popover, "poetry quote spacing popover should exist");
+  assert.equal(popover.getAttribute("aria-modal"), null);
+  assert.equal(popover.hidden, false);
+
+  const allRange = popover.querySelector('[data-spacing-range="all"]');
+  assert.ok(allRange, "all-sides range should exist");
+  allRange.value = "24";
+  allRange.dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.match(wikiEditor.getHTML(), /<blockquote class="wiki-poetry-quote__body" style="(?=[^"]*padding-top: 24px)(?=[^"]*padding-right: 24px)(?=[^"]*padding-bottom: 24px)(?=[^"]*padding-left: 24px)[^"]*"/);
+
+  const allUnit = popover.querySelector('[data-spacing-unit="all"]');
+  const allValue = popover.querySelector('[data-spacing-value="all"]');
+  assert.ok(allUnit, "all-sides unit dropdown should exist");
+  assert.ok(allValue, "all-sides value input should exist");
+  allUnit.value = "rem";
+  allUnit.dispatchEvent(new window.Event("change", { bubbles: true }));
+  allValue.value = "1.5";
+  allValue.dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.match(wikiEditor.getHTML(), /<blockquote class="wiki-poetry-quote__body" style="(?=[^"]*padding-top: 1\.5rem)(?=[^"]*padding-right: 1\.5rem)(?=[^"]*padding-bottom: 1\.5rem)(?=[^"]*padding-left: 1\.5rem)[^"]*"/);
+
+  wikiEditor.destroy();
+  document.querySelector(".wiki-editor-poetry-quote-spacing-popover")?.remove();
+  host.remove();
+});
+
+await test("poetry quote spacing slider keeps focus while dragging", async function () {
+  const { createWikiEditor } = await importEditorBundleForContract();
+  const host = document.createElement("div");
+  host.className = "westgate-wiki-compose";
+  document.body.appendChild(host);
+
+  const wikiEditor = await createWikiEditor(host, {
+    initialData: '<figure class="wiki-poetry-quote" data-wiki-node="poetry-quote"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">— Author</p></blockquote></figure>'
+  });
+
+  const quote = host.querySelector('[data-wiki-node="poetry-quote"]');
+  quote.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+  await nextAnimationFrame();
+
+  host.querySelector('[data-toolbar-id="poetry-quote-spacing"]').click();
+  const popover = document.querySelector(".wiki-editor-poetry-quote-spacing-popover");
+  const allRange = popover.querySelector('[data-spacing-range="all"]');
+
+  allRange.focus();
+  assert.equal(document.activeElement, allRange);
+  allRange.value = "28";
+  allRange.dispatchEvent(new window.Event("input", { bubbles: true }));
+
+  assert.equal(document.activeElement, allRange);
+  assert.match(wikiEditor.getHTML(), /<blockquote class="wiki-poetry-quote__body" style="(?=[^"]*padding-top: 28px)(?=[^"]*padding-right: 28px)(?=[^"]*padding-bottom: 28px)(?=[^"]*padding-left: 28px)[^"]*"/);
+  [editorBundleSource, vendoredEditorBundleSource].forEach(function (source) {
+    assert.doesNotMatch(source, /chain\(\)\.focus\(\)\.setWikiPoetryQuoteSpacing/);
+  });
+
+  wikiEditor.destroy();
+  document.querySelector(".wiki-editor-poetry-quote-spacing-popover")?.remove();
+  host.remove();
+});
+
+await test("poetry quote spacing axis mode updates both sides of the selected axis", async function () {
+  const { createWikiEditor } = await importEditorBundleForContract();
+  const host = document.createElement("div");
+  host.className = "westgate-wiki-compose";
+  document.body.appendChild(host);
+
+  const wikiEditor = await createWikiEditor(host, {
+    initialData: '<figure class="wiki-poetry-quote" data-wiki-node="poetry-quote"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">— Author</p></blockquote></figure>'
+  });
+
+  const quote = host.querySelector('[data-wiki-node="poetry-quote"]');
+  quote.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+  await nextAnimationFrame();
+
+  host.querySelector('[data-toolbar-id="poetry-quote-spacing"]').click();
+  const axisButton = Array.from(document.querySelectorAll(".wiki-editor-poetry-quote-spacing-popover__segment")).find(function (button) {
+    return button.textContent === "Axis";
+  });
+  axisButton.click();
+
+  const verticalRange = document.querySelector('[data-spacing-range="vertical"]');
+  verticalRange.value = "18";
+  verticalRange.dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.match(wikiEditor.getHTML(), /<blockquote class="wiki-poetry-quote__body" style="(?=[^"]*padding-top: 18px)(?=[^"]*padding-bottom: 18px)[^"]*"/);
+
+  const horizontalRange = document.querySelector('[data-spacing-range="horizontal"]');
+  horizontalRange.value = "32";
+  horizontalRange.dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert.match(wikiEditor.getHTML(), /<blockquote class="wiki-poetry-quote__body" style="(?=[^"]*padding-right: 32px)(?=[^"]*padding-left: 32px)[^"]*"/);
+
+  wikiEditor.destroy();
+  document.querySelector(".wiki-editor-poetry-quote-spacing-popover")?.remove();
+  host.remove();
+});
+
+await test("poetry quote spacing popover exposes horizontal margin controls for full-width quotes", async function () {
+  const { createWikiEditor } = await importEditorBundleForContract();
+  const host = document.createElement("div");
+  host.className = "westgate-wiki-compose";
+  document.body.appendChild(host);
+
+  const wikiEditor = await createWikiEditor(host, {
+    initialData: '<figure class="wiki-poetry-quote wiki-poetry-quote--full" data-wiki-node="poetry-quote" data-wiki-quote-position="full"><blockquote class="wiki-poetry-quote__body"><p>Spoken words.</p><p class="wiki-poetry-quote__attribution">— Author</p></blockquote></figure>'
+  });
+
+  const quote = host.querySelector('[data-wiki-node="poetry-quote"]');
+  quote.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
+  await nextAnimationFrame();
+
+  host.querySelector('[data-toolbar-id="poetry-quote-spacing"]').click();
+  const marginButton = Array.from(document.querySelectorAll(".wiki-editor-poetry-quote-spacing-popover__segment")).find(function (button) {
+    return button.textContent === "Margin";
+  });
+  marginButton.click();
+  const axisButton = Array.from(document.querySelectorAll(".wiki-editor-poetry-quote-spacing-popover__segment")).find(function (button) {
+    return button.textContent === "Axis";
+  });
+  axisButton.click();
+
+  const verticalRange = document.querySelector('[data-spacing-range="vertical"]');
+  assert.ok(verticalRange, "vertical margin range should remain available");
+  const horizontalRange = document.querySelector('[data-spacing-range="horizontal"]');
+  assert.ok(horizontalRange, "horizontal margin range should remain available");
+  verticalRange.value = "20";
+  verticalRange.dispatchEvent(new window.Event("input", { bubbles: true }));
+  horizontalRange.value = "12";
+  horizontalRange.dispatchEvent(new window.Event("input", { bubbles: true }));
+  const figureStyle = wikiEditor.getHTML().match(/<figure class="wiki-poetry-quote wiki-poetry-quote--full"[^>]*style="([^"]*)"/)?.[1] || "";
+  assert.match(figureStyle, /(?:^|;\s*)margin-top:\s*20px/);
+  assert.match(figureStyle, /(?:^|;\s*)margin-bottom:\s*20px/);
+  assert.match(figureStyle, /(?:^|;\s*)--wiki-poetry-quote-margin-right:\s*12px/);
+  assert.match(figureStyle, /(?:^|;\s*)--wiki-poetry-quote-margin-left:\s*12px/);
+  assert.doesNotMatch(figureStyle, /(?:^|;\s*)margin-right:/);
+  assert.doesNotMatch(figureStyle, /(?:^|;\s*)margin-left:/);
+
+  wikiEditor.destroy();
+  document.querySelector(".wiki-editor-poetry-quote-spacing-popover")?.remove();
+  host.remove();
+});
+
+await test("poetry quote positioning toolbar uses block placement icons", function () {
+  const iconMappings = [
+    ["poetry-quote-align-left", "wiki-editor-toolbar__icon--poetry-block-left", "fa-align-left"],
+    ["poetry-quote-align-center", "wiki-editor-toolbar__icon--poetry-block-center", "fa-align-center"],
+    ["poetry-quote-align-right", "wiki-editor-toolbar__icon--poetry-block-right", "fa-align-right"],
+    ["poetry-quote-align-full", "wiki-editor-toolbar__icon--poetry-block-full", "fa-arrows-h"]
+  ];
+
+  [editorBundleSource, vendoredEditorBundleSource].forEach(function (source) {
+    iconMappings.forEach(function ([id, iconClass, oldIconClass]) {
+      assert.match(source, new RegExp(`"${id}":\\s*"${iconClass}"`));
+      assert.doesNotMatch(source, new RegExp(`"${id}":\\s*"${oldIconClass}"`));
+    });
+  });
+
+  [editorCss, vendoredEditorCss].forEach(function (css) {
+    iconMappings.forEach(function ([, iconClass]) {
+      assert.match(css, new RegExp(iconClass));
+    });
+  });
 });
 
 await test("Backspace after a list removes the trailing empty paragraph instead of creating extra gaps", function () {

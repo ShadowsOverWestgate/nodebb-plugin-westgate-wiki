@@ -117,6 +117,16 @@ test("sanitizeWikiHtml preserves safe inline styles and strips unsafe ones", fun
   assert.doesNotMatch(sanitized, /position:/);
 });
 
+test("sanitizeWikiHtml preserves poetry quote margin inset variables only", function () {
+  const html = '<figure class="wiki-poetry-quote wiki-poetry-quote--full" data-wiki-node="poetry-quote" style="margin-right: 50px; margin-left: 50px; --wiki-poetry-quote-margin-right: 50px; --wiki-poetry-quote-margin-left: 50px; --unsafe-spacing: 20px"><blockquote class="wiki-poetry-quote__body"><p>Text</p></blockquote></figure>';
+  const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);
+  const rendered = wikiHtmlSanitizer.renderReadOnlyWikiHtml(sanitized);
+
+  assert.match(sanitized, /style="(?=[^"]*margin-right:50px)(?=[^"]*margin-left:50px)(?=[^"]*--wiki-poetry-quote-margin-right:50px)(?=[^"]*--wiki-poetry-quote-margin-left:50px)[^"]*"/);
+  assert.match(rendered, /style="(?=[^"]*--wiki-poetry-quote-margin-right:50px)(?=[^"]*--wiki-poetry-quote-margin-left:50px)[^"]*"/);
+  assert.doesNotMatch(sanitized, /--unsafe-spacing/);
+});
+
 test("sanitizeWikiHtml preserves semantic span markup for legacy inline formatting", function () {
   const html = '<p><span class="legacy-accent" style="font-size: 1.2rem; color: #caa55a">Accent</span></p>';
   const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);

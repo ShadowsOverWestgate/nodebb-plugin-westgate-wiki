@@ -177,10 +177,11 @@ const BUTTON_ICONS = {
   "table-toggle-header-column": "fa-header",
   "dnd-alignment-table-edit": "fa-th",
   "table-delete": "fa-trash",
-  "poetry-quote-align-left": "fa-align-left",
-  "poetry-quote-align-center": "fa-align-center",
-  "poetry-quote-align-right": "fa-align-right",
-  "poetry-quote-align-full": "fa-arrows-h",
+  "poetry-quote-align-left": "wiki-editor-toolbar__icon--poetry-block-left",
+  "poetry-quote-align-center": "wiki-editor-toolbar__icon--poetry-block-center",
+  "poetry-quote-align-right": "wiki-editor-toolbar__icon--poetry-block-right",
+  "poetry-quote-align-full": "wiki-editor-toolbar__icon--poetry-block-full",
+  "poetry-quote-spacing": "fa-sliders",
   "poetry-quote-container": "fa-square-o",
   "poetry-quote-unwrap": "fa-outdent",
   "image-align-center": "fa-align-center",
@@ -213,7 +214,35 @@ const BLOCK_BACKGROUND_COLOR_OPTIONS = [
   { id: "cyan", label: "Cyan", backgroundColor: "#cffafe" }
 ];
 
+const POETRY_QUOTE_SPACING_SIDES = ["top", "right", "bottom", "left"];
+const POETRY_QUOTE_SPACING_UNITS = ["px", "rem", "em", "%"];
+const POETRY_QUOTE_SPACING_TYPES = [
+  { id: "padding", label: "Padding" },
+  { id: "margin", label: "Margin" }
+];
+const POETRY_QUOTE_SPACING_MODES = [
+  { id: "all", label: "All" },
+  { id: "axis", label: "Axis" },
+  { id: "individual", label: "Individual" }
+];
+const POETRY_QUOTE_SPACING_FIELDS = {
+  all: [
+    { id: "all", label: "All", sides: ["top", "right", "bottom", "left"] }
+  ],
+  axis: [
+    { id: "vertical", label: "Vertical", sides: ["top", "bottom"] },
+    { id: "horizontal", label: "Horizontal", sides: ["right", "left"] }
+  ],
+  individual: [
+    { id: "top", label: "Top", sides: ["top"] },
+    { id: "right", label: "Right", sides: ["right"] },
+    { id: "bottom", label: "Bottom", sides: ["bottom"] },
+    { id: "left", label: "Left", sides: ["left"] }
+  ]
+};
+
 let activeSlashColorMenu = null;
+let activePoetryQuoteSpacingPopover = null;
 
 function closeSlashColorMenu() {
   if (activeSlashColorMenu && activeSlashColorMenu.parentNode) {
@@ -2444,7 +2473,10 @@ function positionInfoboxRail(panel, infobox, surface) {
   panel.style.top = `${position.top}px`;
 }
 
-function selectPoetryQuote(editor, target, surface) {
+export function selectPoetryQuote(editor, target, surface) {
+  if (!editor.state.selection.empty) {
+    return false;
+  }
   const element = target && typeof target.closest === "function" ? target.closest('[data-wiki-node="poetry-quote"], figure.wiki-poetry-quote') : null;
   if (!element || !surface.contains(element)) {
     return false;
@@ -2490,6 +2522,275 @@ function positionContextPanel(panel, targetEl, surface) {
   const top = Math.max(8, targetRect.top - surfaceRect.top - panel.offsetHeight - 8);
   panel.style.left = `${left}px`;
   panel.style.top = `${top}px`;
+}
+
+function getPoetryQuoteSpacingAttrName(type, side) {
+  return `${type}${side.charAt(0).toUpperCase()}${side.slice(1)}`;
+}
+
+function parsePoetryQuoteSpacingValue(value) {
+  const match = String(value || "").trim().match(/^(-?(?:\d+(?:\.\d+)?|\.\d+))(px|rem|em|%)$/);
+  if (!match) {
+    return {
+      amount: "",
+      unit: "px"
+    };
+  }
+  return {
+    amount: String(parseFloat(match[1])),
+    unit: match[2]
+  };
+}
+
+function formatPoetryQuoteSpacingValue(amount, unit, type) {
+  const text = String(amount ?? "").trim();
+  const selectedUnit = POETRY_QUOTE_SPACING_UNITS.includes(unit) ? unit : "px";
+  if (!text) {
+    return null;
+  }
+  const numeric = parseFloat(text);
+  if (!Number.isFinite(numeric) || (type === "padding" && numeric < 0)) {
+    return null;
+  }
+  if (Object.is(numeric, -0) || numeric === 0) {
+    return "0";
+  }
+  return `${numeric}${selectedUnit}`;
+}
+
+function getPoetryQuoteSpacingRangeConfig(unit) {
+  if (unit === "rem" || unit === "em") {
+    return { min: 0, max: 6, step: 0.125 };
+  }
+  if (unit === "%") {
+    return { min: 0, max: 100, step: 1 };
+  }
+  return { min: 0, max: 96, step: 1 };
+}
+
+function configurePoetryQuoteSpacingRange(range, unit) {
+  const config = getPoetryQuoteSpacingRangeConfig(unit);
+  range.min = String(config.min);
+  range.max = String(config.max);
+  range.step = String(config.step);
+}
+
+function getPoetryQuoteFieldValue(attrs, type, field) {
+  const values = field.sides.map(function (side) {
+    return attrs[getPoetryQuoteSpacingAttrName(type, side)] || "";
+  });
+  const firstValue = values[0] || "";
+  return values.every(function (value) { return value === firstValue; }) ? firstValue : "";
+}
+
+function closePoetryQuoteSpacingPopover() {
+  if (!activePoetryQuoteSpacingPopover) {
+    return;
+  }
+  const { element, anchor, cleanup } = activePoetryQuoteSpacingPopover;
+  if (typeof cleanup === "function") {
+    cleanup();
+  }
+  if (anchor) {
+    anchor.classList.remove("active");
+    anchor.setAttribute("aria-expanded", "false");
+  }
+  if (element && element.parentNode) {
+    element.parentNode.removeChild(element);
+  }
+  activePoetryQuoteSpacingPopover = null;
+}
+
+function positionPoetryQuoteSpacingPopover(popover, anchor) {
+  const rect = anchor.getBoundingClientRect();
+  const width = popover.offsetWidth || 320;
+  const height = popover.offsetHeight || 260;
+  const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+  const topAbove = rect.top - height - 6;
+  const top = topAbove >= 8 ? topAbove : Math.min(rect.bottom + 6, window.innerHeight - height - 8);
+  popover.style.left = `${Math.round(left)}px`;
+  popover.style.top = `${Math.max(8, Math.round(top))}px`;
+}
+
+function createPoetryQuoteSpacingButton(label, active, onClick) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "wiki-editor-poetry-quote-spacing-popover__segment";
+  button.textContent = label;
+  button.setAttribute("aria-pressed", active ? "true" : "false");
+  button.classList.toggle("active", active);
+  button.addEventListener("click", function (event) {
+    event.preventDefault();
+    onClick();
+  });
+  return button;
+}
+
+function openPoetryQuoteSpacingPopover({ button, editor }) {
+  if (activePoetryQuoteSpacingPopover && activePoetryQuoteSpacingPopover.anchor === button) {
+    closePoetryQuoteSpacingPopover();
+    return;
+  }
+  closePoetryQuoteSpacingPopover();
+
+  let activeType = "padding";
+  let activeMode = "all";
+  const popover = document.createElement("div");
+  popover.className = "wiki-editor-color-menu wiki-editor-poetry-quote-spacing-popover";
+  popover.setAttribute("role", "dialog");
+  popover.setAttribute("aria-label", "Poetry quote spacing");
+  popover.addEventListener("mousedown", function (event) {
+    event.stopPropagation();
+  });
+
+  const tabs = document.createElement("div");
+  tabs.className = "wiki-editor-poetry-quote-spacing-popover__tabs";
+  popover.appendChild(tabs);
+
+  const modes = document.createElement("div");
+  modes.className = "wiki-editor-poetry-quote-spacing-popover__modes";
+  popover.appendChild(modes);
+
+  const fields = document.createElement("div");
+  fields.className = "wiki-editor-poetry-quote-spacing-popover__fields";
+  popover.appendChild(fields);
+
+  const actions = document.createElement("div");
+  actions.className = "wiki-editor-poetry-quote-spacing-popover__actions";
+  const reset = document.createElement("button");
+  reset.type = "button";
+  reset.className = "btn btn-outline-secondary btn-sm";
+  reset.textContent = "Reset";
+  reset.addEventListener("click", function (event) {
+    event.preventDefault();
+    editor.commands.clearWikiPoetryQuoteSpacing(activeType);
+    render();
+  });
+  actions.appendChild(reset);
+  popover.appendChild(actions);
+
+  function applyField(field, amountInput, unitSelect, range) {
+    const spacingValue = formatPoetryQuoteSpacingValue(amountInput.value, unitSelect.value, activeType);
+    const updates = {};
+    field.sides.forEach(function (side) {
+      updates[side] = spacingValue;
+    });
+    if (range) {
+      configurePoetryQuoteSpacingRange(range, unitSelect.value);
+      const numeric = parseFloat(amountInput.value);
+      range.value = Number.isFinite(numeric) && numeric >= 0 ? String(Math.min(parseFloat(range.max), Math.max(parseFloat(range.min), numeric))) : "0";
+    }
+    editor.commands.setWikiPoetryQuoteSpacing(activeType, updates);
+  }
+
+  function createField(field) {
+    const attrs = editor.getAttributes("wikiPoetryQuote") || {};
+    const parsed = parsePoetryQuoteSpacingValue(getPoetryQuoteFieldValue(attrs, activeType, field));
+
+    const row = document.createElement("div");
+    row.className = "wiki-editor-poetry-quote-spacing-popover__field";
+
+    const label = document.createElement("label");
+    label.className = "wiki-editor-poetry-quote-spacing-popover__label";
+    label.textContent = field.label;
+    row.appendChild(label);
+
+    const range = document.createElement("input");
+    range.type = "range";
+    range.className = "wiki-editor-poetry-quote-spacing-popover__range";
+    range.setAttribute("data-spacing-range", field.id);
+    configurePoetryQuoteSpacingRange(range, parsed.unit);
+    range.value = parsed.amount && parseFloat(parsed.amount) >= 0 ? parsed.amount : "0";
+    row.appendChild(range);
+
+    const amount = document.createElement("input");
+    amount.type = "number";
+    amount.step = "any";
+    amount.className = "form-control form-control-sm wiki-editor-poetry-quote-spacing-popover__value";
+    amount.setAttribute("data-spacing-value", field.id);
+    if (activeType === "padding") {
+      amount.min = "0";
+    }
+    amount.value = parsed.amount;
+    row.appendChild(amount);
+
+    const unit = document.createElement("select");
+    unit.className = "form-select form-select-sm wiki-editor-poetry-quote-spacing-popover__unit";
+    unit.setAttribute("data-spacing-unit", field.id);
+    POETRY_QUOTE_SPACING_UNITS.forEach(function (unitValue) {
+      const option = document.createElement("option");
+      option.value = unitValue;
+      option.textContent = unitValue;
+      unit.appendChild(option);
+    });
+    unit.value = parsed.unit;
+    row.appendChild(unit);
+
+    range.addEventListener("input", function () {
+      amount.value = range.value;
+      applyField(field, amount, unit, range);
+    });
+    amount.addEventListener("input", function () {
+      applyField(field, amount, unit, range);
+    });
+    unit.addEventListener("change", function () {
+      applyField(field, amount, unit, range);
+    });
+
+    return row;
+  }
+
+  function render() {
+    tabs.innerHTML = "";
+    POETRY_QUOTE_SPACING_TYPES.forEach(function (type) {
+      tabs.appendChild(createPoetryQuoteSpacingButton(type.label, activeType === type.id, function () {
+        activeType = type.id;
+        render();
+      }));
+    });
+
+    modes.innerHTML = "";
+    POETRY_QUOTE_SPACING_MODES.forEach(function (mode) {
+      modes.appendChild(createPoetryQuoteSpacingButton(mode.label, activeMode === mode.id, function () {
+        activeMode = mode.id;
+        render();
+      }));
+    });
+
+    fields.innerHTML = "";
+    (POETRY_QUOTE_SPACING_FIELDS[activeMode] || POETRY_QUOTE_SPACING_FIELDS.all).forEach(function (field) {
+      fields.appendChild(createField(field));
+    });
+    window.requestAnimationFrame(function () {
+      positionPoetryQuoteSpacingPopover(popover, button);
+    });
+  }
+
+  function handleOutsideMouseDown(event) {
+    if (!popover.contains(event.target) && event.target !== button) {
+      closePoetryQuoteSpacingPopover();
+    }
+  }
+  function handleReposition() {
+    positionPoetryQuoteSpacingPopover(popover, button);
+  }
+
+  activePoetryQuoteSpacingPopover = {
+    element: popover,
+    anchor: button,
+    cleanup: function () {
+      document.removeEventListener("mousedown", handleOutsideMouseDown);
+      window.removeEventListener("resize", handleReposition);
+      window.removeEventListener("scroll", handleReposition, true);
+    }
+  };
+  button.classList.add("active");
+  button.setAttribute("aria-expanded", "true");
+  document.body.appendChild(popover);
+  document.addEventListener("mousedown", handleOutsideMouseDown);
+  window.addEventListener("resize", handleReposition);
+  window.addEventListener("scroll", handleReposition, true);
+  render();
 }
 
 function createCodeBlockLanguageToolbar(surface, editor) {
@@ -2643,6 +2944,14 @@ function createPoetryQuoteContextToolbar(surface, editor) {
       button.classList.toggle("active", editor.getAttributes("wikiPoetryQuote").position === "full");
     }
   });
+  const spacing = createButton({
+    id: "poetry-quote-spacing",
+    title: "Adjust quote spacing",
+    action: function () {
+      openPoetryQuoteSpacingPopover({ button: spacing, editor });
+    },
+    applyState: function () {}
+  });
   const container = createButton({
     id: "poetry-quote-container",
     title: "Toggle quote container",
@@ -2665,6 +2974,7 @@ function createPoetryQuoteContextToolbar(surface, editor) {
   panel.appendChild(alignCenter);
   panel.appendChild(alignRight);
   panel.appendChild(alignFull);
+  panel.appendChild(spacing);
   panel.appendChild(container);
   panel.appendChild(unwrap);
 
@@ -2672,6 +2982,7 @@ function createPoetryQuoteContextToolbar(surface, editor) {
     const quote = editor.isActive("wikiPoetryQuote") ? getActivePoetryQuoteElement(editor, surface) : null;
     panel.hidden = !quote;
     if (!quote) {
+      closePoetryQuoteSpacingPopover();
       return;
     }
     const activePosition = editor.getAttributes("wikiPoetryQuote").position || "left";
@@ -2679,6 +2990,7 @@ function createPoetryQuoteContextToolbar(surface, editor) {
     alignCenter.disabled = false;
     alignRight.disabled = false;
     alignFull.disabled = false;
+    spacing.disabled = false;
     alignLeft.classList.toggle("active", activePosition === "left");
     alignCenter.classList.toggle("active", activePosition === "center");
     alignRight.classList.toggle("active", activePosition === "right");
@@ -2701,6 +3013,7 @@ function createPoetryQuoteContextToolbar(surface, editor) {
 
   return {
     destroy: function () {
+      closePoetryQuoteSpacingPopover();
       window.removeEventListener("resize", syncPoetryQuoteTools);
       if (panel.parentNode) {
         panel.parentNode.removeChild(panel);
