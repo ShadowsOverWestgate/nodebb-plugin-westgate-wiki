@@ -4,6 +4,25 @@
 
 Refactor the Westgate wiki path system into one strict, title-driven canonical tree.
 
+## Contract Role And Reading Order
+
+This contract owns the hard cutover of the public wiki path standard. Read it
+with:
+
+1. [CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md)
+   for scope, ownership, rollout order, and generated-content coordination.
+2. This document for canonical path derivation, lookup tolerance, retired URL
+   behavior, and migration rules.
+3. [CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md)
+   for the canonical node index, composite page/namespace rendering, and
+   namespace index-page behavior.
+4. [CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
+   before implementation.
+
+The existing slug-leaf resolver in `lib/wiki-paths.js` is audit input, not the
+target architecture. Do not expand it to make an intermediate slug system more
+capable.
+
 Canonical examples:
 
 ```text
@@ -24,6 +43,9 @@ Hard-line rules:
 - Old flattened subpage slug rules are removed.
 - Do not preserve retired path rules with redirects, aliases, fallback resolvers, or compatibility shims.
 - Existing wiki data must be migrated into the new standard before relying on the new resolver in production.
+- The current category/topic ID wiki routes are part of retired wiki public URL
+  behavior at cutover. Do not preserve them as canonicalization bridges unless
+  a separately approved operator rollback contract changes this hard-line rule.
 
 ## Canonical Model
 
@@ -61,6 +83,11 @@ Keep NodeBB storage boundaries:
 
 The public path model is unified even though NodeBB objects remain distinct.
 
+Generated topdata identity remains distinct too. A generated page id, deploy
+manifest row, and managed-region marker identify generated ownership; they do
+not override the public canonical path derived from the current NodeBB title and
+namespace category chain.
+
 ## Canonical Segment Rules
 
 ### Segment source
@@ -81,6 +108,11 @@ URL: /wiki/Lore/Deities
 ```
 
 Do not use NodeBB topic slug leaves or category slug leaves as canonical wiki path sources.
+
+Do not omit a root segment because a category slug happens to be `wiki`. If the
+product needs `/wiki` itself to act as the listing for one configured root
+namespace, model and validate that route-root behavior explicitly in plugin
+configuration/migration state instead of inferring it from a slug leaf.
 
 ### Segment normalization
 
@@ -151,7 +183,9 @@ Reject ambiguous siblings that fold to the same lookup key.
 
 ### Unified resolver
 
-Refactor `lib/wiki-paths.js` into the canonical tree service.
+Refactor `lib/wiki-paths.js` into the canonical path/resolver facade. Extract a
+focused canonical tree/index service under that facade when node assembly,
+folded lookup, and child listing outgrow path normalization.
 
 It resolves:
 
@@ -248,6 +282,13 @@ Namespace creation must:
 - reject namespace/namespace canonical or folded collisions
 - use the same segment normalizer as page paths
 
+### Wiki homepage
+
+The separately configured wiki homepage controls the `/wiki` landing article
+experience. It is not a namespace index page and it does not claim a canonical
+tree node merely by being the homepage. Namespace index pages are structural
+page+namespace overlap under the canonical tree contract.
+
 ## Links, Search, Navigation
 
 Update all wiki-owned path emission and lookup:
@@ -296,6 +337,18 @@ Audit and update:
 - documentation and tests describing lowercase dash public wiki slugs
 
 Do not keep generated pages on old dash slugs while manual pages use title-case underscore paths.
+
+The current generated marker field `wiki_slug=...`, plugin topic field
+`westgateWikiPageSlug`, and YAML shape `page_paths.slug_overrides` describe the
+old public path override model. The replacement contract must:
+
+- preserve a generated page identity that deploy/adoption can match without
+  depending on the public URL
+- remove old public slug override reads from plugin runtime routing
+- rename or replace override YAML only if generated content still needs a
+  constrained, validated title-path exception under the new path standard
+- keep YAML as the human-authored source for any generated-content exception
+  and keep generated JSON manifests as machine output
 
 ## Migration Path
 
@@ -403,6 +456,8 @@ Apply must:
 - update any plugin-owned migration bookkeeping required to prevent old/new resolver mixing
 - invalidate plugin path indexes and wiki directory caches
 - return a post-apply verification report
+- refuse to activate the new path standard while generated topdata deploy output
+  still requires old public slug overrides or markers for plugin routing
 
 Apply must not:
 
@@ -459,6 +514,8 @@ Do not add:
 - fallback resolvers for dash slugs
 - fallback resolvers for flattened subpages
 - old lowercase public wiki slug acceptance
+- ID-based wiki article/category routes as a quiet redirect bridge into the new
+  canonical tree
 
 Retired examples may break:
 

@@ -17,6 +17,20 @@ This plugin is distributed under **GPL-3.0-or-later**. The wiki compose flow use
 - `/topic/:slug` remains the discussion thread for the same underlying content.
 - NodeBB category permissions remain the source of truth for who can view and create pages.
 
+### Canonical path realignment contract
+
+The current runtime still uses the implemented clean-path slug model described
+elsewhere in this README. The next public path/tree cutover is governed by the
+contract stack at the repository root:
+
+- [CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md)
+- [HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md)
+- [CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md)
+
+Those contracts supersede README/AGENTS references to future slug-leaf
+expansion, old ID-route redirect preservation, namespace-main-page selectors,
+and generated public `wiki_slug` routing once implementation begins.
+
 ## What It Currently Does
 
 - Renders a wiki landing page at `/wiki`

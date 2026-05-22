@@ -1,5 +1,23 @@
 # AGENTS.md
 
+## Canonical Wiki Path/Tree Contract Override
+
+The repository is entering a coordinated public path and canonical tree
+realignment. Before changing wiki routing, path generation, generated topdata
+integration, namespace index behavior, search/listing path emission, or path
+migration tooling, read these root documents in order:
+
+1. [CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md)
+2. [HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md)
+3. [CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md)
+4. [CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
+
+The historical clean-path roadmap later in this file documents the runtime that
+exists before that cutover. Where it conflicts with the contract stack, the
+contract stack wins. In particular, do not treat topic/category slug leaves,
+legacy wiki ID-route redirects, `westgateWikiPageSlug`, generated `wiki_slug`
+markers, or namespace-main-page selectors as the forward architecture.
+
 ## Purpose
 
 This repository is a NodeBB plugin that adds a Westgate-specific wiki surface on top of forum content. The package is **GPL-3.0-or-later**. Wiki page creation uses **`/wiki/compose/:cid`** with a vendored **Tiptap** build under `public/vendor/tiptap/` (rebuild with `npm run build:tiptap` or `npm run build:editors`). CKEditor has been removed from the active compose path; unsupported legacy HTML must be normalized into the plugin-owned Tiptap schema before editing.

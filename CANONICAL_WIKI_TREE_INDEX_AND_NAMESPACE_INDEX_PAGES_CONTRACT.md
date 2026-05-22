@@ -2,7 +2,24 @@
 
 ## Summary
 
-Implement this as a follow-up phase after the hard-line path resolver cutover. The refactor should make the canonical wiki tree the shared source for routing, listings, search, autocomplete, breadcrumbs, and namespace index-page rendering.
+Implement this after the hard-line path derivation and migration groundwork is
+defined, but before runtime route activation relies on the new resolver. The
+refactor should make the canonical wiki tree the shared source for routing,
+listings, search, autocomplete, breadcrumbs, and namespace index-page
+rendering.
+
+## Contract Role And Dependency
+
+Read the umbrella alignment contract and the hard-line path standardization
+contract before this document:
+
+- [CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md)
+- [HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md)
+
+This contract owns the canonical node tree after path derivation rules are
+settled. It does not reopen compatibility for retired dash slugs, flattened
+subpage slugs, legacy article/category ID wiki routes, generated public slug
+overrides, or namespace-main-page selectors.
 
 Phases:
 
@@ -48,6 +65,9 @@ Audit these plugin surfaces before implementation:
   - compose checkbox/API/template wiring
   - sort/pin logic in wiki service and directory service
 - Cache and hook coverage in `library.js`, `lib/cache-service.js`, `plugin.json`.
+- Route-root behavior now inferred by `shouldOmitRouteRootSegment()` when the
+  first category slug leaf is `wiki`; root exposure must become explicit rather
+  than slug-derived.
 - ACP/admin diagnostics in `lib/controllers/admin.js` and admin template.
 - Coordinated topdata/toolkit surfaces:
   - `toolkit/internal/topdata/wiki_slug.go`
@@ -86,6 +106,10 @@ Rules:
   - branch-only ancestor created by descendant page paths
 - Page+namespace exact overlap is valid.
 - Multiple canonical nodes sharing one folded lookup key are blocking ambiguity, even when facet types differ.
+- `/wiki` homepage identity is outside this canonical node index. The homepage
+  may link into the tree, but a configured homepage topic is not a namespace
+  index page unless its own canonical page path structurally overlaps a
+  namespace node.
 
 ### Ownership split
 
@@ -189,12 +213,19 @@ Detect namespace index pages structurally:
 - A namespace index article is any page facet whose canonical path exactly equals a namespace facet canonical path.
 - Do not keep `cid -> tid` namespace main-page selection as an override.
 - Migration reports existing stored namespace-main selections for remediation, then Apply removes them from active behavior.
+- Retire the namespace-main-page API, compose checkbox/template state,
+  directory pin/sort use, tests, and DB-key reads from active runtime behavior.
+  Retained migration reporting may read the old key until Apply remediation is
+  complete.
 
 ### Create
 
 - Namespace listing UI exposes `Create index page` only when no page facet exists and a valid topic creation scope exists.
 - Create action pre-fills the title/category placement needed to derive the namespace path.
 - Ordinary page create continues to derive path from namespace placement plus title hierarchy.
+- Do not derive an index-page title from a public URL string. Use the namespace
+  category chain and canonical segment/title rules so create validation and
+  later title edits use one source of truth.
 
 ### Edit
 
@@ -424,6 +455,9 @@ Cover:
 - Category rename/move can change many descendant canonical namespace paths at once.
 - Root namespace index-page creation may need explicit handling when the canonical parent storage category is not obvious.
 - Search/autocomplete performance may regress if the canonical index rebuild path repeatedly hydrates all readable topics.
+- NodeBB article visibility and category visibility can diverge at composite
+  nodes; permission-aware indexing/listing cannot assume one facet makes the
+  other facet visible.
 
 ### Defaults Chosen
 
