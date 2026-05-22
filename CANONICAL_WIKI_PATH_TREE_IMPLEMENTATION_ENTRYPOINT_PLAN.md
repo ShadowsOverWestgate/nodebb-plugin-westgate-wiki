@@ -188,3 +188,17 @@ Each implementation work package must name and run relevant verification from:
 Manual live verification is required before production Apply because NodeBB API
 hook order, deployed category permissions, stored generated markers, and cache
 state cannot be proven by local fixtures alone.
+
+## Downstream Archive Consumer
+
+Wiki ZIP import/export is not a phase of this cutover. It starts after this
+plan provides canonical tree paths, permission-aware listing/resolution,
+blocking diagnostics, and tree invalidation entrypoints.
+
+When working on that later subsystem, switch to:
+
+- [WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md)
+- [WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
+
+Do not add archive-specific public path fallback or portable identity behavior
+to this canonical cutover to make archive work start earlier.

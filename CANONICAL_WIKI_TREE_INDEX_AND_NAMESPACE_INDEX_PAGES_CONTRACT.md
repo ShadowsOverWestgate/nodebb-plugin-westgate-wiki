@@ -21,6 +21,12 @@ settled. It does not reopen compatibility for retired dash slugs, flattened
 subpage slugs, legacy article/category ID wiki routes, generated public slug
 overrides, or namespace-main-page selectors.
 
+The planned archive subsystem is a downstream canonical tree consumer. It must
+use this resolver/listing/diagnostic boundary for export and import placement;
+it must not build a parallel archive-only tree from old slug leaves. Archive
+format, portable identity, merge, asset, and job rules live in
+[WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md).
+
 Phases:
 
 1. Audit and remove current slug/main-page assumptions.

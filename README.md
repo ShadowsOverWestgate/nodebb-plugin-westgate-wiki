@@ -31,6 +31,29 @@ Those contracts supersede README/AGENTS references to future slug-leaf
 expansion, old ID-route redirect preservation, namespace-main-page selectors,
 and generated public `wiki_slug` routing once implementation begins.
 
+### Planned archive workflow
+
+Administrator-only wiki ZIP import/export is planned after the canonical
+path/tree cutover. Its implementation authority lives in:
+
+- [WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md)
+- [WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
+
+That workflow is not part of the current runtime described below. The planned
+ACP flow exports a private portable ZIP with a report, accepts an archive on a
+destination wiki, validates it, shows a previewed merge plan, and applies only
+an approved import. The preview is expected to show page and namespace creates,
+updates, moves, asset operations, settings changes that require opt-in,
+warnings, and blockers.
+
+The planned V1 archive is content portability, not a destructive restore or a
+raw NodeBB backup. It carries wiki namespace/page content, first-post article
+HTML, archive page identity, wiki page metadata, settings snapshot data, and
+validated local referenced uploads. It does not import discussion replies,
+category permission tables, edit locks, watches, notifications, caches, or
+search indexes. Destination NodeBB permissions remain authoritative, and a
+partial apply must leave an item report that supports safe review and rerun.
+
 ## What It Currently Does
 
 - Renders a wiki landing page at `/wiki`
@@ -78,6 +101,25 @@ Practical structure:
 - topics inside a namespace category: pages in that namespace
 
 If you want some wiki areas to be restricted, use normal NodeBB category privileges for those categories. The plugin respects them.
+
+### Planned administrator archive workflow
+
+After archive support lands and after the canonical tree migration is clear of
+blocking diagnostics, the intended ACP operator sequence is:
+
+1. Start an export job and review its completed report and warnings.
+2. Download the private archive ZIP from the completed job.
+3. Upload that ZIP to the destination wiki and wait for validation.
+4. Review the deterministic import preview for creates, updates, moves, asset
+   rewrites, optional settings mapping, warnings, and blockers.
+5. Opt in to imported settings only when the preview mapping is acceptable,
+   then apply the approved merge.
+6. Review the final item journal/report before rerunning after any partial
+   failure.
+
+Remote asset links stay remote. Missing or unsupported local upload references
+must be reported. Imported settings do not carry category permission tables;
+review destination category privileges separately.
 
 ## Authoring Notes
 

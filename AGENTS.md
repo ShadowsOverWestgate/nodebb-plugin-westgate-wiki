@@ -25,6 +25,22 @@ contract stack wins. In particular, do not treat topic/category slug leaves,
 legacy wiki ID-route redirects, `westgateWikiPageSlug`, generated `wiki_slug`
 markers, or namespace-main-page selectors as the forward architecture.
 
+### Archive Contract Stack
+
+Wiki ZIP import/export is planned downstream from the canonical path/tree
+cutover. Before changing archive schema/versioning, export/import jobs, ACP
+archive workflow, portable page identity, ZIP/asset handling, preview/apply
+merge behavior, or archive operator docs, read:
+
+1. the canonical path/tree contract stack above
+2. [WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md)
+3. [WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
+4. [docs/superpowers/plans/2026-05-22-wiki-import-export-archive-plan.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/docs/superpowers/plans/2026-05-22-wiki-import-export-archive-plan.md)
+
+Archive work must consume canonical tree APIs and diagnostics after that
+cutover. Do not make portable archive identity, source NodeBB IDs, topdata page
+ids, `wiki_slug`, or `westgateWikiPageSlug` into public wiki path authority.
+
 ## Purpose
 
 This repository is a NodeBB plugin that adds a Westgate-specific wiki surface on top of forum content. The package is **GPL-3.0-or-later**. Wiki page creation uses **`/wiki/compose/:cid`** with a vendored **Tiptap** build under `public/vendor/tiptap/` (rebuild with `npm run build:tiptap` or `npm run build:editors`). CKEditor has been removed from the active compose path; unsupported legacy HTML must be normalized into the plugin-owned Tiptap schema before editing.
@@ -108,6 +124,11 @@ Use the contract stack and
 for canonical wiki path/tree work. The implemented clean-path runtime remains
 audit input until that cutover; do not expand its slug-leaf or compatibility
 assumptions as the new target architecture.
+
+Use the archive contract stack above for wiki ZIP import/export work after the
+canonical path/tree gates exist. The archive feature is a previewed
+administrator merge workflow, not a pre-cutover slug resolver extension and
+not a destructive NodeBB backup restore.
 
 Current priority order:
 

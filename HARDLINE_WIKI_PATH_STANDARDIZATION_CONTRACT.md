@@ -88,6 +88,13 @@ manifest row, and managed-region marker identify generated ownership; they do
 not override the public canonical path derived from the current NodeBB title and
 namespace category chain.
 
+Portable archive identity is distinct for the same reason. A later archive page
+ID may match an imported page across Westgate wiki instances, but it must not
+become a manual public path override or a compatibility bridge for retired slug
+routes. Archive implementation is governed by
+[WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md)
+after this canonical path contract lands.
+
 ## Canonical Segment Rules
 
 ### Segment source

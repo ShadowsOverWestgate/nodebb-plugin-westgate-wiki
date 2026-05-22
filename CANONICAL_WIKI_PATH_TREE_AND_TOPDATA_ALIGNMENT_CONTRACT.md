@@ -16,6 +16,12 @@ index pages.
 Use [CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
 to enter implementation.
 
+The later wiki archive subsystem consumes the canonical tree output from this
+cutover. Its ZIP format, portable archive identity, previewed merge, assets,
+jobs, and administrator workflow are governed separately by
+[WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md)
+and must not be implemented against the pre-cutover slug resolver.
+
 ## Problem Statement
 
 The repository has a working pre-cutover clean-path system, but it encodes
@@ -197,6 +203,10 @@ this contract stack. In particular:
 
 New implementation planning for this cutover must cite this contract stack and
 must not implement from isolated search hits in old docs.
+
+Archive planning is downstream: it may preserve canonical paths and topdata
+marker state in portable records, but it must keep archive portable identity
+separate from generated identity and from public path authority.
 
 ## Non-Goals
 

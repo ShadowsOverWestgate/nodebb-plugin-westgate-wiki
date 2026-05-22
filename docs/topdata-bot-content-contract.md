@@ -60,6 +60,21 @@ Until toolkit generation and live stored pages are migrated together, this
 document describes storage and sanitizer shape only. It does not authorize old
 slug marker compatibility in the new resolver.
 
+## Archive Boundary
+
+The planned wiki archive subsystem may preserve topdata marker comments as part
+of exported first-post article HTML and report generated provenance state where
+the archive schema needs it. That preservation does not turn topdata page ids,
+managed-region marker hashes, old `wiki_slug` marker values, or generated
+deploy metadata into archive page matching or public destination path
+authority.
+
+Archive import/export must keep this storage contract separate from portable
+archive identity and canonical public path placement. Its authority lives in:
+
+- [WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md)
+- [WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
+
 ## Fixture
 
 ```html
