@@ -1,6 +1,13 @@
 # AGENTS.md
 
-## Canonical Wiki Path/Tree Contract Override
+## Current Agent Guide
+
+This file is the operating guide and roadmap ledger for the Westgate wiki
+plugin. It contains current rules first and preserved historical planning later.
+Historical phases explain how the repo arrived here; they are not permission to
+rebuild completed scaffolding or extend superseded path behavior.
+
+### Required Contract Stack
 
 The repository is entering a coordinated public path and canonical tree
 realignment. Before changing wiki routing, path generation, generated topdata
@@ -29,19 +36,26 @@ Current design baseline:
 - Categories act as wiki sections or namespaces.
 - The plugin must extend NodeBB instead of replacing core forum behavior.
 
-This file is the execution plan for initializing the project from its current scaffold into a working, testable plugin.
+This plugin is already past initialization. Use this file to route work, keep
+current behavior legible, and preserve implementation history. Use focused
+contracts and Superpowers plans for new multi-phase implementation work.
 
 ## Current Repository State
 
-The repo already contains a minimal starting point:
+The repository is a working NodeBB plugin with route, service, template,
+client, ACP, editor, search, and test surfaces. Key entrypoints:
 
-- `package.json`
-- `plugin.json`
-- `library.js`
-- `templates/wiki.tpl`
-- `public/wiki.css`
+- `library.js`: plugin hooks, API route registration, exported services
+- `routes/wiki.js`: wiki page routes
+- `lib/`: runtime services, authoring validation, path/link/search behavior,
+  cache services, controllers
+- `templates/`: wiki-facing NodeBB templates
+- `public/`: client scripts, wiki CSS, vendored editor assets
+- `tiptap/`: plugin-owned Tiptap source and editor extensions
+- `tests/`: Node/jsdom contract and runtime service coverage
+- `docs/`: focused content contracts and Superpowers specs/plans
 
-The existing implementation already does the following:
+Current implemented behavior includes:
 
 - Registers `static:app.load`
 - Adds a `/wiki` route
@@ -75,22 +89,25 @@ The existing implementation already does the following:
   wiki paths and server-computed insert text for wiki and forum authoring
   contexts.
 - Uses a plugin-owned Tiptap compose editor as the default wiki authoring
-  surface, with automatic/manual fallback to the legacy CKEditor bundle for
-  unsupported legacy HTML or migration breakage.
+  surface. CKEditor references later in this file are legacy migration/history
+  context unless an active fallback path is being audited in code.
 - Sanitizes wiki main-post HTML on both the compose client and server-side save
   validation so editor swaps do not trust browser HTML.
 - Live browser verification on 2026-05-06 confirmed the Tiptap compose/edit
   flow is working for normal page creation, save, and render in the active
   Westgate deployment.
 
-The implementation now has a working MVP shape. This document tracks remaining
-hardening, verification, and phase-two work so future changes do not invent a
-new architecture mid-flight.
+The implementation has a working MVP shape and active phase-two surfaces. Keep
+new architecture in focused contracts/plans rather than appending another
+unbounded execution plan to this file.
 
 ## Current Priority
 
-The namespace/path foundation is now implemented. Do not rebuild it from
-scratch; extend `lib/wiki-paths.js` and existing callers.
+Use the contract stack and
+[CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
+for canonical wiki path/tree work. The implemented clean-path runtime remains
+audit input until that cutover; do not expand its slug-leaf or compatibility
+assumptions as the new target architecture.
 
 Current priority order:
 
@@ -487,12 +504,12 @@ Current priority order:
      `[[development:Map Creation Guide]]`.
    - Forum composer wiki-link insertion now has a toolbar button backed by the
      server-side autocomplete API; live browser verification remains pending.
-3. Continue wiki-owned search only through
-   `lib/wiki-paths.js`; do not let client code or templates construct
-   `/wiki/...` manually.
+3. Continue wiki-owned search only through plugin-owned path/tree services; do
+   not let client code or templates construct `/wiki/...` manually.
 4. Continue Westgate theme alignment and full live smoke checks.
 
-Deprecated priority items, completed 2026-05-01:
+Historical priority items, completed 2026-05-01 under the pre-cutover clean
+path model:
 
 - Build the canonical namespace/page path resolver.
 - Add canonical clean routes and redirect existing ID-based wiki routes.
@@ -507,17 +524,14 @@ Deprecated priority items, completed 2026-05-01:
   setup.
 
 Architectural rule: search results, redlinks, breadcrumbs, authoring redirects,
-and future aliases must use one source of truth for wiki paths. New wiki-facing
-features must call `lib/wiki-paths.js` or a service that wraps it.
+and future path-aware features must use one source of truth for wiki paths. New
+wiki-facing features must call the plugin path facade/tree service rather than
+rebuilding paths locally.
 
 Editor migration rule: changes to Tiptap support must keep the client bundle,
 server sanitizer, and stored HTML contract aligned. Do not claim new HTML/CSS
 support unless the content can be imported, edited, saved, and re-rendered
 without silent data loss.
-
-## Initialization Objective
-
-Initialize the plugin so that a developer or agent can take it from scaffold to MVP in a controlled order, with explicit completion criteria and without inventing architecture mid-flight.
 
 ## Working Rules
 
@@ -530,8 +544,50 @@ When changing this plugin:
 5. Do not assume a specific database backend beyond NodeBB abstractions.
 6. Treat `/wiki` as a presentation layer over forum data, not a separate content system.
 7. Prefer exposing stable plugin-owned helpers over duplicating wiki resolution logic in future files.
+8. Keep human-authored behavior in documented config/contracts where it belongs;
+   do not hardcode topdata dataset exceptions into plugin runtime.
+9. Update this file by correcting current guidance near the top and labeling
+   history below; do not let old roadmaps silently regain authority.
 
-## Target MVP
+## Local Workflow
+
+From the plugin repo:
+
+```bash
+npm install
+npm run build:editors
+npm test
+```
+
+Restart NodeBB after changing `plugin.json`, server hooks, route registration,
+or plugin initialization. Rebuild NodeBB assets after changing templates,
+client scripts, CSS, or vendored editor output.
+
+## Current Work Routing
+
+- Canonical path/tree/index/topdata alignment: use the required contract stack
+  and implementation entrypoint at the top of this file.
+- Editor schema, sanitizer, normalization, and vendored Tiptap work: keep
+  Tiptap source, sanitizer allowlists, saved HTML, render CSS, and tests aligned.
+- Generated topdata wiki content: keep plugin storage/sanitizer expectations in
+  [docs/topdata-bot-content-contract.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/docs/topdata-bot-content-contract.md)
+  and coordinate public path changes with toolkit/module owners.
+- Forum/wiki feed separation, wiki search, revision history, and theme checks:
+  use the roadmap sections below only where they are not superseded by a newer
+  focused contract or plan.
+
+## Historical Initialization Material
+
+The initialization objective, MVP boundary, repository shape sketch, and phase
+plan below are preserved as history. They describe the scaffold-to-MVP path and
+contain some pre-cutover path/editor wording. Do not use them as the active
+implementation order.
+
+## Initialization Objective
+
+Initialize the plugin so that a developer or agent can take it from scaffold to MVP in a controlled order, with explicit completion criteria and without inventing architecture mid-flight.
+
+## Historical Target MVP
 
 The first usable version of this plugin must support:
 
@@ -545,7 +601,7 @@ The first usable version of this plugin must support:
 
 Anything beyond that is phase-two work, unless a later section of this file explicitly updates the boundary.
 
-## Recommended Project Shape
+## Historical Recommended Project Shape
 
 The plugin can stay small at first, but code should be split once the second route or second data transform appears.
 
@@ -573,9 +629,9 @@ nodebb-plugin-westgate-wiki/
 
 This is not mandatory on day one, but it is the intended direction once the landing-page-only prototype grows.
 
-## Step-By-Step Initialization Plan
+## Historical Step-By-Step Initialization Plan
 
-### Phase 0: Baseline Audit
+### Historical Phase 0: Baseline Audit
 
 Goal:
 Establish what exists and remove ambiguity before feature work starts.
@@ -594,7 +650,7 @@ Exit criteria:
 - Hard-coded assumptions are enumerated.
 - The next implementation step is configuration, not more route logic.
 
-### Phase 1: Configuration Foundation
+### Historical Phase 1: Configuration Foundation
 
 Goal:
 Replace hard-coded wiki category assumptions with plugin configuration.
@@ -615,7 +671,7 @@ Exit criteria:
 - Missing config does not crash the route.
 - Config access is centralized.
 
-### Phase 2: Route and Service Separation
+### Historical Phase 2: Route and Service Separation
 
 Goal:
 Stop putting all logic in `library.js`.
@@ -634,7 +690,7 @@ Exit criteria:
 - The landing page still renders with the same behavior.
 - The codebase is ready for a second wiki route without becoming tangled.
 
-### Phase 3: Landing Page Hardening
+### Historical Phase 3: Landing Page Hardening
 
 Goal:
 Turn the current `/wiki` page into a reliable MVP surface.
@@ -653,7 +709,7 @@ Exit criteria:
 - `/wiki` behaves predictably with good data and bad data.
 - The UI remains readable with zero, few, or many topics.
 
-### Phase 4: Wiki Page Route
+### Historical Phase 4: Wiki Page Route
 
 Goal:
 Add a dedicated wiki article view.
@@ -674,7 +730,7 @@ Exit criteria:
 - A topic can be viewed through a wiki-oriented route.
 - Missing or invalid slugs return proper NodeBB-style errors or 404 behavior.
 
-### Phase 5: Authoring and Navigation Decisions
+### Historical Phase 5: Authoring and Navigation Decisions
 
 Goal:
 Define the rules that make topics behave like wiki pages.
@@ -697,7 +753,7 @@ Exit criteria:
 - The plugin has a clear content model.
 - Routing behavior is consistent and documented.
 
-### Phase 6: Admin and Operational Readiness
+### Historical Phase 6: Admin and Operational Readiness
 
 Goal:
 Make the plugin maintainable instead of purely demo-ready.
@@ -715,7 +771,7 @@ Exit criteria:
 - Another developer can stand the plugin up without guessing.
 - The plugin has at least a minimal repeatable validation flow.
 
-### Phase 7: Wiki Authoring Behavior
+### Historical Phase 7: Wiki Authoring Behavior
 
 Goal:
 Move the plugin further away from forum-shaped navigation and closer to wiki-shaped authoring.
@@ -735,7 +791,7 @@ Exit criteria:
 - Missing links provide a create path instead of a dead end.
 - Page creation remains namespace-aware.
 
-### Phase 8: Westgate Theme Alignment
+### Historical Phase 8: Westgate Theme Alignment
 
 Goal:
 Bring wiki editor chrome and wiki page containers in line with
@@ -746,8 +802,8 @@ Assessment, 2026-04-29:
 
 - The plugin already exposes the right theming contract in `public/wiki.css` and
   `public/wiki-article-body.css`: wiki surfaces, prose, floating tools,
-  redlinks, and CKEditor all route through `--wiki-*` custom properties with
-  Bootstrap fallbacks.
+  redlinks, and editor-facing chrome route through `--wiki-*` custom
+  properties with Bootstrap fallbacks.
 - The Westgate theme already consumes that contract in
   `/home/vicky/Projects/nodebb-dev/nodebb-theme-westgate/scss/westgate/_wiki-prose.scss`.
   It sets Westgate palette variables and gives selected wiki cards the same
@@ -757,10 +813,10 @@ Assessment, 2026-04-29:
   `.wiki-sidebar-panel`, `.wiki-article-toc`, `.wiki-status-card`,
   `.wiki-card`, `.wiki-topic-card`, `.wiki-compose-form`,
   `.wiki-compose-editor`, and `.wiki-article-prose`.
-- Screenshot 1 editor issues are mostly theme-skin issues, not data-flow
-  issues: CKEditor focus still presents too much like browser/default blue,
-  toolbar button sizing/wrapping is cramped, and the compose form reads flatter
-  than the forum's velvet category/topic panels.
+- Screenshot 1 editor issues were mostly theme-skin issues, not data-flow
+  issues: the then-active editor focus presented too much like browser/default
+  blue, toolbar button sizing/wrapping was cramped, and the compose form read
+  flatter than the forum's velvet category/topic panels.
 - Screenshot 2 vs screenshot 3 container mismatch is also mostly theme-side:
   forum category rows use richer `--wg-velvet-panel`, muted gold borders,
   `8px` radius, and `--wg-velvet-shadow`; wiki article and sidebar cards are
@@ -772,8 +828,8 @@ Assessment, 2026-04-29:
 
 Ownership decision:
 
-- Plugin owns stable semantic classes, neutral layout, CKEditor loading, and
-  fallback CSS.
+- Plugin owns stable semantic classes, neutral layout, active editor loading,
+  and fallback CSS.
 - `nodebb-theme-westgate` owns the Westgate visual result in
   `scss/westgate/_wiki-prose.scss`.
 - Prefer adding or correcting plugin classes only when the theme lacks a stable
@@ -831,7 +887,12 @@ Exit criteria:
 - The plugin still degrades cleanly under non-Westgate themes through its
   Bootstrap-backed `--wiki-*` fallbacks.
 
-## Implemented Foundation: Human-Readable Wiki Paths
+## Historical Implemented Foundation: Human-Readable Wiki Paths
+
+This section records the 2026-05-01 clean-path foundation that the current
+runtime still exposes before the canonical path/tree cutover. It is not the
+future path contract. For new path work, use the contract stack at the top of
+this file.
 
 Implementation status, 2026-05-01:
 
@@ -861,9 +922,9 @@ Implementation status, 2026-05-01:
 - Full local NodeBB asset verification is still pending because `./nodebb build`
   currently fails before asset compilation with `theme-not-found`.
 
-Deprecated guidance: the phases below document the refactor plan and completion
-criteria. Phases 0 through 3 are implemented and should not be repeated as new
-work. Use the remaining open items for hardening and follow-up planning.
+Historical guidance: the phases below document the implemented pre-cutover
+refactor plan and completion criteria. They should not be repeated or extended
+as new path architecture. Use them as audit context only.
 
 Before the refactor, wiki article URLs inherited NodeBB topic slugs:
 
@@ -883,7 +944,7 @@ This is now implemented as a plugin-owned routing layer over NodeBB categories
 and topics. NodeBB category and topic ids remain internal identifiers, not
 public wiki path requirements.
 
-Priority decision, 2026-05-01:
+Historical priority decision, 2026-05-01:
 
 - This refactor blocks wiki-owned search expansion. Search result URLs,
   namespace filters, redlink create suggestions, and future search snippets must
@@ -892,8 +953,9 @@ Priority decision, 2026-05-01:
   backward-compatible redirect routes.
 - Existing forum discussion links remain `/topic/{topic.slug}` because those
   are NodeBB-owned, not wiki-owned.
-- Keep route compatibility for old wiki URLs, but treat them as migration
-  aliases rather than canonical paths.
+- That implementation kept route compatibility for old wiki URLs as migration
+  aliases. The hard-line contract now governs whether compatibility survives
+  the next canonical cutover.
 
 ### Historical Assessment
 
@@ -919,10 +981,10 @@ namespace/category path + page slug -> category + topic
 
 without relying on the topic id in the request path.
 
-### Phase 0: Define Canonical Path Rules
+### Historical Phase 0: Define Clean-Path Rules
 
-Status, 2026-05-01: Completed. Keep this section as canonical behavior
-documentation. Do not reopen unless product requirements change.
+Status, 2026-05-01: completed for the pre-cutover runtime. The new canonical
+path/tree contracts supersede these rules for future path work.
 
 Goal:
 Make URL behavior deterministic before changing routes.
@@ -953,19 +1015,20 @@ Rules:
 
 Exit criteria:
 
-- Every wiki namespace has one canonical public path.
-- Every wiki page has one canonical public path.
-- Existing URLs remain backward compatible through redirects.
+- The pre-cutover runtime gives each clean-path wiki namespace a public path.
+- The pre-cutover runtime gives each clean-path wiki page a public path.
+- That iteration preserved existing URLs through redirects.
 - Collision and reserved-word behavior is documented before route code changes.
 
-### Phase 1: Build A Path Resolver Service
+### Historical Phase 1: Build A Path Resolver Service
 
 Status, 2026-05-01: Completed for the shippable foundation. Implemented in
 `lib/wiki-paths.js` with namespace/article builders, legacy builders,
 namespace lookup, article lookup by page slug leaf, reserved first-segment
 handling, structured failure statuses, focused fixture tests, and admin-facing
-namespace setup diagnostics. Remaining work is deliberate alias policy for
-renames, not rebuilding the resolver.
+namespace setup diagnostics. The next canonical cutover replaces its slug-leaf
+assumptions; do not add alias policy to extend this iteration unless a newer
+contract explicitly says so.
 
 Goal:
 Centralize URL construction and lookup instead of scattering path logic through
@@ -1012,7 +1075,7 @@ Exit criteria:
 - No template needs to manually construct `/wiki/${topic.slug}`.
 - Search implementation has a stable path API to depend on.
 
-### Phase 2: Add Canonical Routes
+### Historical Phase 2: Add Clean Routes
 
 Status, 2026-05-01: Completed for route behavior. `routes/wiki.js` now registers
 specific utility routes first, redirects legacy ID-based article/category
@@ -1050,7 +1113,7 @@ Exit criteria:
   URL.
 - Compose, edit, delete, and namespace-create routes remain unaffected.
 
-### Phase 3: Update Link Generation
+### Historical Phase 3: Update Link Generation
 
 Status, 2026-05-01: Completed for existing wiki-owned links. New link work must
 reuse the resolver. A repository search for direct `/wiki/${topic.slug}` or
@@ -1085,7 +1148,7 @@ Exit criteria:
 - A repository search for `/wiki/${topic.slug}` and
   `/wiki/category/${category.slug}` only finds legacy redirect helpers or tests.
 
-### Phase 4: Collision And Rename Handling
+### Historical Phase 4: Collision And Rename Handling
 
 Status, 2026-05-01: Implemented for collision prevention and setup surfacing.
 The resolver returns structured statuses for namespace collisions, page
@@ -1094,7 +1157,8 @@ The ACP surfaces duplicate namespace paths and reserved namespace route
 segments. Wiki topic create/edit flows reject duplicate page slug leaves,
 reserved root page paths, namespace/page path collisions, and ambiguous
 namespace setup through `filter:topic.post`, `filter:topic.edit`, and the wiki
-compose preflight endpoint. Still open: any deliberate rename alias policy.
+compose preflight endpoint. The next hard-line path contract supersedes the
+alias discussion for path cutover work.
 
 Goal:
 Handle the cases that numeric ids used to make trivial.
@@ -1121,7 +1185,7 @@ Exit criteria:
 - Bad namespace configuration is surfaced as an admin/setup problem instead of
   producing ambiguous public routes.
 
-### Phase 4A: Search And Authoring Dependency Update
+### Historical Phase 4A: Search And Authoring Dependency Update
 
 Status, 2026-05-01: Completed for existing authoring flows. Existing namespace
 compose search, compose success/cancel redirects, redlink flows, and page title
@@ -1152,7 +1216,7 @@ Exit criteria:
 - No search or authoring plan asks templates or client code to build wiki URLs.
 - The path resolver becomes the required interface for all wiki URL generation.
 
-### Phase 4B: Wiki Link Autocomplete Helper
+### Historical Phase 4B: Wiki Link Autocomplete Helper
 
 Status, 2026-05-01: Implemented for the shippable authoring helper. `lib/wiki-link-autocomplete.js`
 backs `/api/v3/plugins/westgate-wiki/link-autocomplete`, returns compact page
@@ -1246,7 +1310,7 @@ Exit criteria:
   generation for both authoring contexts.
 - The helper remains distinct from full wiki search and does bounded work.
 
-### Phase 5: Verification
+### Historical Phase 5: Verification
 
 Status, 2026-05-01: Partially complete. `npm test` passes, including focused
 resolver fixture tests. Route patterns were checked against NodeBB's installed
@@ -1283,7 +1347,10 @@ Run these checks before considering clean paths complete:
 13. Wiki composer autocomplete inserts namespace-aware internal wiki links.
     Status: implemented for the compose link picker; live verification pending.
 
-## Planned Work: Wiki-Aware Revision History
+## Future Work: Wiki-Aware Revision History
+
+This roadmap remains future work. Any route/path examples in it must be adapted
+to the active canonical path contract at implementation time.
 
 NodeBB's built-in post edit history is forum-shaped. The current core path is:
 
@@ -1400,9 +1467,9 @@ post history as the source of truth.
 
 Tasks:
 
-1. Add a wiki-owned history route under the canonical article path, for example
-   `/wiki/:namespace_path_segments/:page_slug/history`, while redirecting any
-   legacy ID-based history route if one is introduced during migration.
+1. Add a wiki-owned history route under the active canonical article path. Do
+   not add history-specific legacy ID redirects unless the active path contract
+   permits them.
 2. Treat the first post `pid` as the article revision target.
 3. Build a two-pane layout:
    - left: paginated or virtualized revision list
@@ -1478,7 +1545,12 @@ Run these checks before considering the feature complete:
 6. HTML-heavy article diffs do not produce unsafe or broken markup.
 7. Mobile history view remains navigable.
 
-## Planned Work: Forum/Wiki Feed Separation
+## Future Work And Status: Forum/Wiki Feed Separation
+
+This roadmap includes implemented feed-separation work plus remaining live
+verification, socket filtering, recent-post API/feed gaps, and wiki-search
+follow-up. Public wiki path examples must follow the active path contract when
+search work resumes.
 
 Current wiki categories are hidden from the forum category tree by
 `lib/filter-categories-forum.js`, but their topics can still appear in global
@@ -1736,9 +1808,8 @@ Exit criteria:
 
 Goal:
 Replace main-search visibility with an intentional `/wiki` search surface.
-This phase is blocked until the human-readable namespace/path refactor is
-complete. Search must consume canonical path services instead of emitting
-ID-shaped wiki URLs.
+Search must consume the active plugin path/tree services instead of emitting
+ID-shaped wiki URLs or rebuilding public paths locally.
 
 Tasks:
 
@@ -1857,8 +1928,8 @@ Tasks:
 3. Handle duplicate page title leaves across namespaces by always showing the
    namespace path beside the page title. Never route a duplicate title by title
    alone.
-4. Handle duplicate or renamed slugs through the canonical path resolver. Do not
-   ship user-facing wiki search against ID-shaped wiki URLs.
+4. Handle duplicate or renamed public path cases through the active path/tree
+   resolver. Do not ship user-facing wiki search against ID-shaped wiki URLs.
 5. Treat deleted, scheduled, shadow, moved, or hidden topics as non-results
    unless NodeBB permissions and product requirements explicitly allow a
    moderator/admin state.
@@ -1946,9 +2017,14 @@ These items are intentionally out of initialization scope unless the project exp
 - Full DokuWiki-style sidebar/tree navigation
 - Semantic section-level revision storage beyond NodeBB's patch history
 
-Do not start on these until the MVP route and configuration model are stable.
+Do not start on these until the relevant active contract or roadmap makes them
+part of current scope.
 
-## Verification Checklist
+## Historical Verification Checklist
+
+This checklist mixes scaffold-era and pre-cutover clean-path checks. Use it as a
+manual audit aid, not as the sole acceptance gate for canonical path/tree work.
+The current contract stack owns cutover verification.
 
 Run or manually verify these after each major step:
 
@@ -1958,21 +2034,23 @@ Run or manually verify these after each major step:
 4. Invalid configured category IDs do not crash the route.
 5. Wiki CSS only affects wiki pages.
 6. `/wiki/:namespace_path_segments` resolves a configured namespace.
-7. `/wiki/:namespace_path_segments/:page_slug` resolves a valid configured wiki
-   topic.
-8. `/wiki/category/:category_id/:slug?` and `/wiki/:topic_id/:slug?` resolve
-   legacy requests and redirect to canonical wiki URLs for normal page
-   requests.
-9. Missing or ambiguous slugs fail cleanly without leaking hidden content.
+7. The active wiki article route resolves a valid configured wiki topic.
+8. Any compatibility route still permitted by the active path contract behaves
+   as documented.
+9. Missing or ambiguous public paths fail cleanly without leaking hidden
+   content.
 10. Restart NodeBB when changing `plugin.json`, server-side route registration, or plugin initialization code.
 11. Rebuild NodeBB assets when changing plugin templates or CSS.
 12. For Westgate theme alignment, rebuild assets after theme SCSS changes and
     compare `/categories`, a wiki article page, a wiki namespace page, and a
     wiki compose/edit page at desktop and mobile widths.
-13. Check CKEditor toolbar wrapping, dropdowns, balloon panels, focus rings,
+13. Check the active editor toolbar, dropdowns, floating panels, focus rings,
     source-editing mode, and editable prose styling on the compose page.
 
-## Content Model
+## Content Model Ledger
+
+This ledger describes the runtime lineage. The route statements below are
+pre-cutover status, not the canonical path/tree target.
 
 - Configured categories are wiki namespaces.
 - Topics inside configured categories are wiki pages.
@@ -1981,14 +2059,15 @@ Run or manually verify these after each major step:
 - The `/wiki` landing page should prefer root configured namespaces; child namespaces are reached from their parent namespace pages.
 - Wiki namespace enablement is plugin-specific configuration layered on top of normal NodeBB categories.
 - Automatic descendant inclusion is a quality-of-life layer on top of explicit namespace selection, not a replacement for NodeBB category permissions.
-- The current legacy wiki article route is `/wiki/:topic_id/:slug?`; it should
-  redirect to the canonical namespace/page route once the path refactor lands.
-- The target canonical wiki article view is
-  `/wiki/:namespace_path_segments/:page_slug`.
+- The pre-cutover clean-path runtime includes the old
+  `/wiki/:topic_id/:slug?` wiki article route as compatibility behavior.
+- The pre-cutover clean-path article view uses
+  `/wiki/:namespace_path_segments/:page_slug`; the root canonical path/tree
+  contracts own the next public path target.
 - `/topic/:slug` remains the discussion thread view for the same underlying
   topic.
 
-## Completed Steps
+## Completed Steps Ledger
 
 - Configuration is ACP-backed through `westgate-wiki` settings.
 - Landing-page and article route logic live outside `library.js`.
@@ -2035,7 +2114,7 @@ Mark items here as work lands in the repository.
 - [x] Live server check confirmed wiki posts no longer appear in main forum
   search.
 
-## Pending Steps
+## Pending Steps Ledger
 
 - [x] Highest priority: implement the human-readable namespace/page path
   resolver and canonical route refactor before expanding wiki-owned search,
@@ -2074,11 +2153,12 @@ Mark items here as work lands in the repository.
 - [ ] Add live socket filtering for wiki bot page creation so wiki-backed
   `event:new_post` / `event:new_topic` fanout does not create transient header
   unread badge popups for online users.
-- [ ] After canonical paths land, implement the wiki-owned search backend
-  contract under `/wiki/search` and `/api/v3/plugins/westgate-wiki/search`.
-- [x] After canonical paths land, update the existing namespace compose search
-  to share canonical link and privilege-safe result serialization with the
-  wiki link autocomplete service.
+- [ ] Continue wiki-owned search work only through the active path/tree
+  contracts and current search services under `/wiki/search` and
+  `/api/v3/plugins/westgate-wiki/search`.
+- [x] The pre-cutover clean-path pass updated the existing namespace compose
+  search to share link and privilege-safe result serialization with the wiki
+  link autocomplete service.
 - [x] Add resolver fixture tests for canonical namespace construction,
   namespace collisions, reserved segments, duplicate page slug leaves, and
   namespace/page path collisions.
@@ -2154,25 +2234,32 @@ Mark items here as work lands in the repository.
 
 ## Agent Execution Order
 
-If an agent is asked to initialize this project, execute in this order:
+When an agent starts work in this repo:
 
-1. Use `Current Priority` as the controlling order for new work.
-2. Complete the human-readable namespace/path refactor first:
-   `lib/wiki-paths.js`, canonical routes, legacy redirects, and canonical link
-   generation.
-3. Then expand authoring helpers, including forum/wiki link autocomplete.
-4. Then resume wiki-owned search, history, and remaining feed/API follow-ups.
-5. Stop and update this file before starting deferred work.
+1. Read the current guide and required contract stack at the top of this file.
+2. Route canonical path/tree/index/topdata work through
+   [CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md).
+3. For editor work, inspect the current Tiptap source, sanitizer, saved HTML
+   contract, editor tests, and any focused Superpowers plan before editing.
+4. For feed/search/history follow-up, use the future-work sections above only
+   after checking whether a newer focused contract or plan supersedes them.
+5. Update the current guide near the top when repository authority changes;
+   label historical notes instead of allowing them to become active by
+   accident.
 
-## Definition of Done For Initialization
+## Initialization Completion Record
 
-Initialization is complete when all of the following are true:
+Initialization is already complete. The record remains useful because it
+explains the baseline now assumed by later roadmaps:
 
 - The plugin no longer relies on hard-coded wiki category IDs.
 - `/wiki` is configuration-driven and resilient.
 - Route logic is modular enough to support growth.
-- A canonical namespace/page wiki route exists and renders a topic as an
-  article, with legacy ID-based wiki routes redirecting to it.
+- Wiki article, namespace, authoring, ACP, editor, search helper, and test
+  surfaces exist.
 - Manual verification steps are documented and usable.
-- Namespace configuration and navigation are manageable without hand-editing IDs.
-- The completed and pending sections in this file reflect reality.
+- Namespace configuration and navigation are manageable without hand-editing
+  IDs.
+
+Future definition-of-done criteria belong in the contract or focused plan for
+the work being implemented.
