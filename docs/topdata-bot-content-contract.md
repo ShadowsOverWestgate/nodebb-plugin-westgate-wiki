@@ -43,19 +43,42 @@ The topdata bot may generate:
 The generated subset must not use DokuWiki syntax, Markdown comment markers,
 unsafe inline event handlers, scripts, iframes, or raw editor-only Tiptap JSON.
 
-Generated page markers carry topdata page identity and the effective public
-wiki slug, for example
-`<!-- sow-topdata-wiki:page=feat:power_attack wiki_slug=power-attack -->`.
-Generated page-to-page `[[...]]` markers target the public namespace and page
-slug, such as `[[feat/power-attack|Power Attack]]`; typed page IDs stay in
-generated identity metadata and old stored content only. The plugin keeps
-best-effort typed-ID link resolution until topdata pages are refreshed, but new
-generated output must not depend on key fragments matching public title slugs.
+During the canonical title-path cutover, generated page markers must keep
+topdata page identity separate from public wiki paths. Old stored marker rows
+may still carry `wiki_slug=...`; migration reporting must detect them and new
+runtime routing must not use them as canonical public path overrides.
+
+New generated page-to-page `[[...]]` markers must target canonical title-path
+wiki addresses emitted by the aligned toolkit, not lowercase dash slug leaves,
+typed topdata page IDs, or generated dataset key fragments. The authoritative
+cross-cutover requirements live in:
+
+- [HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md)
+- [CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md)
+
+Until toolkit generation and live stored pages are migrated together, this
+document describes storage and sanitizer shape only. It does not authorize old
+slug marker compatibility in the new resolver.
+
+## Archive Boundary
+
+The planned wiki archive subsystem may preserve topdata marker comments as part
+of exported first-post article HTML and report generated provenance state where
+the archive schema needs it. That preservation does not turn topdata page ids,
+managed-region marker hashes, old `wiki_slug` marker values, or generated
+deploy metadata into archive page matching or public destination path
+authority.
+
+Archive import/export must keep this storage contract separate from portable
+archive identity and canonical public path placement. Its authority lives in:
+
+- [WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md)
+- [WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
 
 ## Fixture
 
 ```html
-<!-- sow-topdata-wiki:page=feat:power_attack wiki_slug=power-attack -->
+<!-- sow-topdata-wiki:page=feat:power_attack -->
 <!-- sow-topdata-wiki:managed:start hash="sha256:fixture" -->
 <h1>Power Attack</h1>
 <p class="wiki-callout wiki-callout--status">This feat has been altered from vanilla.</p>
