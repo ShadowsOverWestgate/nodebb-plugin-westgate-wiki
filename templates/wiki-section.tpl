@@ -52,9 +52,15 @@
                   <!-- BEGIN wikiIndexNamespaces -->
                   <li class="wiki-index-entry wiki-index-entry--namespace">
                     <div class="wiki-index-entry-main">
-                      <a class="wiki-index-entry-title" href="{config.relative_path}{wikiIndexNamespaces.wikiPath}">
-                        {wikiIndexNamespaces.displayTitle}
+                      <!-- IF ./hasWikiPath -->
+                      <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
+                        {./displayTitle}
                       </a>
+                      <!-- ELSE -->
+                      <span class="wiki-index-entry-title wiki-index-entry-title--disabled" aria-disabled="true">
+                        {./displayTitle}
+                      </span>
+                      <!-- ENDIF ./hasWikiPath -->
                       <p>({wikiIndexNamespaces.articleCountLabel})</p>
                     </div>
                   </li>
@@ -98,6 +104,7 @@
                     <!-- BEGIN section.topics -->
                     <li class="wiki-index-entry wiki-directory-row<!-- IF ./hasParentPath --> wiki-index-entry--subpage<!-- ENDIF ./hasParentPath -->"<!-- IF ./hasParentPath --> style="--wiki-title-depth: {./titleDepth};"<!-- ENDIF ./hasParentPath -->>
                       <div class="wiki-index-entry-main">
+                        <!-- IF ./hasWikiPath -->
                         <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
                           <!-- IF ./hasParentPath -->
                           <span class="wiki-topic-parent-path">
@@ -110,6 +117,20 @@
                           <!-- ENDIF ./hasParentPath -->
                           <span class="wiki-topic-title-leaf">{./titleLeaf}</span>
                         </a>
+                        <!-- ELSE -->
+                        <span class="wiki-index-entry-title wiki-index-entry-title--disabled" aria-disabled="true">
+                          <!-- IF ./hasParentPath -->
+                          <span class="wiki-topic-parent-path">
+                            <!-- BEGIN ./parentTitlePathSegments -->
+                            <!-- IF ./hasSeparatorBefore --><span class="wiki-topic-title-separator" aria-hidden="true">/</span><!-- ENDIF ./hasSeparatorBefore -->
+                            <span class="wiki-topic-parent-path__part">{./text}</span>
+                            <!-- END ./parentTitlePathSegments -->
+                          </span>
+                          <span class="wiki-topic-title-separator" aria-hidden="true">/</span>
+                          <!-- ENDIF ./hasParentPath -->
+                          <span class="wiki-topic-title-leaf">{./titleLeaf}</span>
+                        </span>
+                        <!-- ENDIF ./hasWikiPath -->
                       </div>
                     </li>
                     <!-- END section.topics -->

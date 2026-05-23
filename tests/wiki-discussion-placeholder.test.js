@@ -8,7 +8,8 @@ const state = {
     includeChildCategories: "0"
   },
   categories: new Map(),
-  topics: new Map()
+  topics: new Map(),
+  hiddenCategoryCidsByUid: new Map()
 };
 const originalMainRequire = require.main.require.bind(require.main);
 
@@ -60,7 +61,11 @@ require.main.require = function requireNodebbStub(id) {
     },
     "./src/privileges": {
       categories: {
-        get: async () => ({ read: true, "topics:read": true })
+        get: async (cid, uid) => {
+          const hidden = state.hiddenCategoryCidsByUid.get(parseInt(uid, 10)) || new Set();
+          const canRead = !hidden.has(parseInt(cid, 10));
+          return { read: canRead, "topics:read": canRead };
+        }
       },
       topics: {
         filterTids: async (priv, tids) => (Array.isArray(tids) ? tids : [])
@@ -106,6 +111,12 @@ function reset(settings, categories, topics) {
   };
   setCategories(categories || []);
   setTopics(topics || []);
+  state.hiddenCategoryCidsByUid = new Map();
+  try {
+    require("../lib/config").invalidateSettingsCache();
+  } catch (e) {
+    // Module may not be loaded during early test setup.
+  }
 }
 
 (async () => {
@@ -128,6 +139,7 @@ function reset(settings, categories, topics) {
   {
     const storedArticleContent = "<h1>Full article body</h1>";
     const data = {
+      uid: 1,
       templateData: {
         tid: 10,
         cid: 1,
@@ -148,7 +160,7 @@ function reset(settings, categories, topics) {
     assert(mainPost.content.includes("wiki-link-from-forum"), "placeholder article link should use forum wiki-link styling");
     assert(mainPost.content.includes("wiki-forum-link-icon"), "placeholder article link should include the book icon");
     assert(mainPost.content.includes("wiki-forum-link-text"), "placeholder article link should wrap text like forum wiki links");
-    assert(mainPost.content.includes('href="/forum/wiki/unsafe-article"'), "placeholder should link to canonical wiki path");
+    assert(mainPost.content.includes('href="/forum/wiki/Wiki/Unsafe_Article"'), "placeholder should link to canonical wiki path");
     assert(mainPost.content.includes("Unsafe &amp; &lt;Article&gt;"), "article title should be escaped");
     assert(!mainPost.content.includes("Full article body"), "forum view should not include the article body");
     assert.strictEqual(mainPost.excerpt, "", "excerpt should be cleared if present");
@@ -176,6 +188,7 @@ function reset(settings, categories, topics) {
     );
 
     const data = {
+      uid: 1,
       templateData: {
         tid: 11,
         cid: 1,
@@ -215,6 +228,7 @@ function reset(settings, categories, topics) {
 
   {
     const data = {
+      uid: 1,
       templateData: {
         tid: 20,
         cid: 2,
@@ -242,17 +256,18 @@ function reset(settings, categories, topics) {
           tid: 30,
           cid: 1,
           mainPid: 300,
-          title: "Broken Path"
+          title: ""
         }
       ]
     );
 
     const data = {
+      uid: 1,
       templateData: {
         tid: 30,
         cid: 1,
         mainPid: 300,
-        title: "Broken Path",
+        title: "",
         posts: [
           { pid: 300, content: "<p>Still here</p>" }
         ]
@@ -261,6 +276,47 @@ function reset(settings, categories, topics) {
 
     const result = await wikiDiscussionPlaceholder.filterTopicBuild(data);
     assert.strictEqual(result.templateData.posts[0].content, "<p>Still here</p>", "missing wiki path data should fail closed");
+  }
+
+  {
+    reset(
+      { categoryIds: "1, 2" },
+      [
+        { cid: 1, name: "Hidden Root", slug: "1/hidden-root", parentCid: 0 },
+        { cid: 2, name: "Readable Child", slug: "2/readable-child", parentCid: 1 }
+      ],
+      [
+        {
+          tid: 40,
+          cid: 2,
+          mainPid: 400,
+          title: "Hidden Article",
+          slug: "40/hidden-article"
+        }
+      ]
+    );
+    state.hiddenCategoryCidsByUid.set(9, new Set([1]));
+
+    const data = {
+      uid: 9,
+      templateData: {
+        tid: 40,
+        cid: 2,
+        mainPid: 400,
+        title: "Hidden Article",
+        slug: "40/hidden-article",
+        posts: [
+          { pid: 400, content: "<p>Still hidden</p>" }
+        ]
+      }
+    };
+
+    const result = await wikiDiscussionPlaceholder.filterTopicBuild(data);
+    assert.strictEqual(
+      result.templateData.posts[0].content,
+      "<p>Still hidden</p>",
+      "forum placeholder should not emit a wiki link through an unreadable ancestor"
+    );
   }
 
   console.log("wiki-discussion-placeholder tests passed");

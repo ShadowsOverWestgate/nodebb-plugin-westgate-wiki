@@ -13,51 +13,75 @@ This plugin is distributed under **GPL-3.0-or-later**. The wiki compose flow use
 - Configured categories are wiki namespaces.
 - Topics inside those categories are wiki pages.
 - The first post is the canonical wiki article body.
-- `/wiki/{namespace path}/{page slug}` is the canonical wiki view.
+- `/wiki/{category-name namespace path}/{title path}` is the canonical wiki view.
 - `/topic/:slug` remains the discussion thread for the same underlying content.
 - NodeBB category permissions remain the source of truth for who can view and create pages.
 
-### Canonical path realignment contract
+### Canonical title/category tree runtime
 
-The current runtime still uses the implemented clean-path slug model described
-elsewhere in this README. The next public path/tree cutover is governed by the
-contract stack at the repository root:
+The current runtime uses the canonical title/category tree. Namespace paths are
+derived from configured category names; page paths are derived from page title
+hierarchy split by ` :: `. Canonical URL segments preserve title case and encode
+spaces with `_`, for example `/wiki/Lore/Deities/Gond` or
+`/wiki/Feats/Inspire_Competence`.
+
+The governing contracts are:
 
 - [CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md)
 - [HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md)
 - [CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md)
 
-Those contracts supersede README/AGENTS references to future slug-leaf
-expansion, old ID-route redirect preservation, namespace-main-page selectors,
-and generated public `wiki_slug` routing once implementation begins.
+Migration reporting remains in the ACP so operators can recognize and clear
+pre-Apply state: blocking title/category collisions, retired namespace main-page
+overrides, and retired generated public slug fields. After Apply, old ID-route
+behavior, slug-leaf routing, namespace-main-page selectors, `wiki_slug`, and
+`westgateWikiPageSlug` are not public wiki path authority.
 
-### Planned archive workflow
+### Archive import/export
 
-Administrator-only wiki ZIP import/export is planned after the canonical
+Administrator-only wiki ZIP import/export is available after the canonical
 path/tree cutover. Its implementation authority lives in:
 
 - [WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md)
 - [WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
 
-That workflow is not part of the current runtime described below. The planned
-ACP flow exports a private portable ZIP with a report, accepts an archive on a
-destination wiki, validates it, shows a previewed merge plan, and applies only
-an approved import. The preview is expected to show page and namespace creates,
-updates, moves, asset operations, settings changes that require opt-in,
-warnings, and blockers.
+The V1 format is a `westgate-wiki-archive/v1` ZIP containing `manifest.json`,
+per-page sanitized article HTML, bundled validated local upload assets, an
+exported settings snapshot, reports, and checksum records. It is a portable
+previewed merge format, not a destructive restore workflow and not a raw NodeBB
+backup.
 
-The planned V1 archive is content portability, not a destructive restore or a
-raw NodeBB backup. It carries wiki namespace/page content, first-post article
-HTML, archive page identity, wiki page metadata, settings snapshot data, and
-validated local referenced uploads. It does not import discussion replies,
-category permission tables, edit locks, watches, notifications, caches, or
-search indexes. Destination NodeBB permissions remain authoritative, and a
-partial apply must leave an item report that supports safe review and rerun.
+Export includes configured namespaces, canonical namespace/page paths, first-post
+article HTML, per-page article CSS and discussion flag metadata, portable
+archive page IDs, and validated local uploads referenced from article HTML.
+Remote links stay remote. Missing or unsupported local references are reported.
+Export excludes discussion replies, category permission tables, edit locks,
+watches, notifications, caches, search indexes, soft-deleted pages, scheduled
+pages, and raw database records.
+
+Import validates the archive, then shows a deterministic preview before apply.
+The preview reports namespace/page creates, updates, adoptions, moves, asset
+imports/reuse/HTML rewrites, optional settings mapping, warnings, and blockers.
+Apply requires explicit administrator approval of the current preview. Settings
+mapping is skipped unless the administrator opts in. Created pages are owned by
+the applying administrator, and destination NodeBB category permissions remain
+authoritative.
+
+Apply is journaled item-by-item because NodeBB does not provide one broad
+archive transaction. If an apply partially fails, review the report, fix the
+cause, and rerun from a fresh preview against the current destination. Reruns
+use portable archive IDs and asset hashes to avoid duplicating already-applied
+pages or reused assets.
+
+Canonical path/tree diagnostics are part of archive safety. Legacy topic slug
+leaves, category slug leaves, topdata IDs, `wiki_slug`, and
+`westgateWikiPageSlug` are not public path authority and are not archive path
+authority.
 
 ## What It Currently Does
 
 - Renders a wiki landing page at `/wiki`
-- Renders namespace pages at `/wiki/category/:category_id/:slug?`
+- Renders namespace pages at canonical `/wiki/...` category-name paths
 - Renders wiki article pages at canonical `/wiki/...` namespace/page paths
 - Lets admins select wiki namespaces from ACP instead of hand-editing raw IDs
 - Optionally includes descendant categories automatically as nested namespaces
@@ -102,10 +126,10 @@ Practical structure:
 
 If you want some wiki areas to be restricted, use normal NodeBB category privileges for those categories. The plugin respects them.
 
-### Planned administrator archive workflow
+### Administrator archive workflow
 
-After archive support lands and after the canonical tree migration is clear of
-blocking diagnostics, the intended ACP operator sequence is:
+After the canonical tree migration is clear of blocking diagnostics, the ACP
+operator sequence is:
 
 1. Start an export job and review its completed report and warnings.
 2. Download the private archive ZIP from the completed job.
@@ -121,6 +145,10 @@ Remote asset links stay remote. Missing or unsupported local upload references
 must be reported. Imported settings do not carry category permission tables;
 review destination category privileges separately.
 
+Archive artifacts are private job files, not public wiki uploads. Rebuild
+NodeBB assets after plugin template/client changes, and restart NodeBB after
+server-side archive route, hook, or initialization changes.
+
 ## Authoring Notes
 
 Wiki pages are still NodeBB topics. That means:
@@ -131,12 +159,11 @@ Wiki pages are still NodeBB topics. That means:
 
 Internal links are resolved against wiki namespaces, not forum routes. Missing targets become redlinks. Clicking a redlink opens a prefilled page create flow in the target namespace.
 
-Wiki page slugs are derived from titles with the same normalization used by the
-topdata wiki generator: lowercase ASCII letters and numbers, accented Latin
-text normalized to ASCII where possible, common Latin characters such as `Æ`,
-`Œ`, `Ø`, `ß`, `Þ`, `Ł`, and `Đ` expanded, symbols and separator punctuation
-collapsed to `-`, and quote/apostrophe punctuation dropped inside words so
-possessives such as `Grandmaster's` resolve as `grandmasters`.
+Wiki page paths are derived from titles with the canonical title/category tree
+normalization used by the plugin and aligned topdata toolkit: title case is
+preserved where meaningful, spaces become `_`, supported accented/common Latin
+characters are transliterated consistently, ` :: ` splits page title hierarchy,
+and empty or reserved segments are rejected.
 
 ## Development
 
@@ -230,7 +257,7 @@ Check these flows after meaningful changes:
 - `/wiki` is empty:
   The selected categories may be empty, unreadable to the current user, or invalid.
 - A namespace page 404s:
-  Confirm the category is included in the effective wiki namespace set and the URL uses the current category slug.
+  Confirm the category is included in the effective wiki namespace set and the URL uses the current canonical category-name path.
 - A wiki article 404s:
   Confirm the topic belongs to an effective wiki namespace.
 - Redlinks look normal:

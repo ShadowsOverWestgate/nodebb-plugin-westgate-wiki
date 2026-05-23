@@ -204,7 +204,7 @@ const config = require("../lib/config");
     uid: 1
   });
   assert(
-    namespaceAutocomplete.some((row) => row.type === "namespace" && row.wikiPath === "/wiki/feats"),
+    namespaceAutocomplete.some((row) => row.type === "namespace" && row.wikiPath === "/wiki/Wiki/Feats"),
     "namespace autocomplete should include a matching namespace even when earlier page matches exceed the limit"
   );
 

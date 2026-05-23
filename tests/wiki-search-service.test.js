@@ -60,8 +60,13 @@ function reset({ settings, categories, topics, readableCids, readableTids }) {
 
 require.main.require = function requireNodebbStub(id) {
   const stubs = {
+    "nconf": { get: () => "" },
     "./src/categories": {
       getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
+      getChildren: async (cids) => (Array.isArray(cids) ? cids : []).map((cid) => {
+        const parsedCid = parseInt(cid, 10);
+        return [...state.categories.values()].filter((category) => parseInt(category.parentCid, 10) === parsedCid);
+      }),
       getChildrenCids: async () => []
     },
     "./src/controllers/helpers": {
@@ -74,6 +79,7 @@ require.main.require = function requireNodebbStub(id) {
     "./src/database": {
       getSortedSetRange: async (key) => state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || [],
       getSortedSetRevRange: async (key) => state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || [],
+      isSetMember: async () => false,
       getObjectField: async () => null,
       getObject: async () => ({})
     },
@@ -84,6 +90,7 @@ require.main.require = function requireNodebbStub(id) {
         set: async () => {}
       }
     },
+    "./src/notifications": {},
     "./src/privileges": {
       categories: {
         get: async (cid) => ({
@@ -101,11 +108,31 @@ require.main.require = function requireNodebbStub(id) {
           view_deleted: false,
           view_scheduled: false
         })
+      },
+      posts: {
+        canEdit: async () => ({ flag: false })
       }
+    },
+    "./src/posts": {
+      getPostSummaryByPids: async (pids) => (Array.isArray(pids) ? pids : []).map((pid) => ({
+        pid,
+        uid: 1,
+        content: "<p>Visible article body.</p>",
+        timestamp: 1000,
+        edited: 0,
+        editor: 0,
+        user: { uid: 1, displayname: "Author", userslug: "author" }
+      })),
+      getUserInfoForPosts: async (uids) => (Array.isArray(uids) ? uids : []).map((uid) => ({
+        uid,
+        displayname: `User ${uid}`,
+        userslug: `user-${uid}`
+      }))
     },
     "./src/slugify": slugify,
     "./src/topics": {
       getTopicData: async (tid) => state.topics.get(parseInt(tid, 10)) || null,
+      getTopicField: async () => null,
       getTopicsFields: async (tids) => (Array.isArray(tids) ? tids : [])
         .map((tid) => state.topics.get(parseInt(tid, 10)))
         .filter(Boolean)
@@ -120,7 +147,8 @@ require.main.require = function requireNodebbStub(id) {
           return Number.isFinite(value);
         }
         return typeof value === "string" && value.trim() !== "" && !Number.isNaN(parseFloat(value));
-      }
+      },
+      toISOString: (value) => new Date(value).toISOString()
     }
   };
 
@@ -130,6 +158,7 @@ require.main.require = function requireNodebbStub(id) {
 const wikiSearch = require("../lib/wiki-search-service");
 const wikiDirectory = require("../lib/wiki-directory-service");
 const wikiService = require("../lib/wiki-service");
+const topicService = require("../lib/topic-service");
 
 (async () => {
   reset({
@@ -157,7 +186,7 @@ const wikiService = require("../lib/wiki-service");
     assert.strictEqual(result.queryTooShort, false);
     assert(result.groups.exact.length >= 1, "exact title matches should be grouped separately");
     assert.strictEqual(result.groups.exact[0].tid, 10);
-    assert.strictEqual(result.groups.exact[0].wikiPath, "/wiki/development/map-creation-guide");
+    assert.strictEqual(result.groups.exact[0].wikiPath, "/wiki/Wiki/Development/Map_Creation_Guide");
   }
 
   {
@@ -176,7 +205,30 @@ const wikiService = require("../lib/wiki-service");
     const result = await wikiSearch.search({ q: "development", uid: 1, mode: "full", limit: 10 });
     assert.strictEqual(result.groups.namespaces.length, 1);
     assert.strictEqual(result.groups.namespaces[0].type, "namespace");
-    assert.strictEqual(result.groups.namespaces[0].wikiPath, "/wiki/development");
+    assert.strictEqual(result.groups.namespaces[0].wikiPath, "/wiki/Wiki/Development");
+  }
+
+  reset({
+    settings: { categoryIds: "10, 11" },
+    categories: [
+      { cid: 10, name: "Lore", slug: "10/lore", parentCid: 0, topic_count: 1 },
+      { cid: 11, name: "Gond", slug: "11/gond", parentCid: 10, topic_count: 0 }
+    ],
+    topics: [
+      { tid: 55, cid: 10, title: "Gond", titleRaw: "Gond", slug: "55/gond", deleted: 0, scheduled: 0, lastposttime: 1000 }
+    ],
+    readableCids: [10, 11],
+    readableTids: [55]
+  });
+
+  {
+    const result = await wikiSearch.search({ q: "Gond", uid: 1, mode: "full", limit: 10 });
+    const compositeRows = result.results.filter((row) => row.wikiPath === "/wiki/Lore/Gond");
+    assert(compositeRows.length >= 1, "search should return the canonical composite node path");
+    assert(
+      compositeRows.every((row) => row.facets && row.facets.page === true && row.facets.namespace === true),
+      "search rows at a composite node should expose both page and namespace facets"
+    );
   }
 
   reset({
@@ -207,7 +259,7 @@ const wikiService = require("../lib/wiki-service");
     assert(pageResults.every((row) => row.namespaceTitle && row.namespacePath), "duplicate leaves need namespace context");
     assert.deepStrictEqual(
       pageResults.map((row) => row.wikiPath).sort(),
-      ["/wiki/development/setup", "/wiki/lore/setup"]
+      ["/wiki/Wiki/Development/Setup", "/wiki/Wiki/Lore/Setup"]
     );
   }
 
@@ -235,6 +287,52 @@ const wikiService = require("../lib/wiki-service");
     );
   }
 
+  reset({
+    settings: { categoryIds: "10" },
+    categories: [
+      { cid: 10, name: "Lore", slug: "10/lore", parentCid: 0, topic_count: 1 }
+    ],
+    topics: [
+      { tid: 77, cid: 10, title: "Gond :: Clerics", titleRaw: "Gond :: Clerics", slug: "77/gond-clerics", deleted: 0, scheduled: 0, lastposttime: 1000 }
+    ],
+    readableCids: [10],
+    readableTids: [77]
+  });
+
+  {
+    const rows = await wikiDirectory.getOrderedSummaries(10, 1, false);
+    assert.strictEqual(rows[0].wikiPath, "/wiki/Lore/Gond/Clerics");
+
+    const dirWin = await wikiDirectory.getDirectoryWindow(10, 1);
+    assert.strictEqual(dirWin.namespacePath, "/wiki/Lore");
+    assert.strictEqual(dirWin.pages[0].wikiPath, "/wiki/Lore/Gond/Clerics");
+  }
+
+  reset({
+    settings: { categoryIds: "10", routeRootCid: "10" },
+    categories: [
+      { cid: 10, name: "Lore", slug: "10/lore", parentCid: 0, topic_count: 1 }
+    ],
+    topics: [
+      { tid: 78, cid: 10, title: "Home", titleRaw: "Home", slug: "78/home", deleted: 0, scheduled: 0, lastposttime: 1000 }
+    ],
+    readableCids: [10],
+    readableTids: [78]
+  });
+
+  {
+    const rows = await wikiDirectory.getOrderedSummaries(10, 1, false);
+    assert.strictEqual(rows[0].wikiPath, "/wiki/Home");
+
+    const dirWin = await wikiDirectory.getDirectoryWindow(10, 1);
+    assert.strictEqual(dirWin.namespacePath, "/wiki");
+    assert.strictEqual(dirWin.pages[0].wikiPath, "/wiki/Home");
+
+    const result = await wikiSearch.search({ q: "Home", uid: 1, mode: "full", limit: 10 });
+    assert.strictEqual(result.groups.exact[0].wikiPath, "/wiki/Home");
+    assert.strictEqual(result.groups.exact[0].namespacePath, "/wiki");
+  }
+
   {
     const section = wikiService.sortSectionTopics({
       topics: [
@@ -247,6 +345,91 @@ const wikiService = require("../lib/wiki-service");
       section.topics.map((row) => row.tid),
       [42, 41, 40],
       "initial section rendering should preserve tree ordering"
+    );
+  }
+
+  reset({
+    settings: { categoryIds: "100, 101, 102" },
+    categories: [
+      { cid: 100, name: "HiddenParent", slug: "100/hidden-parent", parentCid: 0, topic_count: 0 },
+      { cid: 101, name: "ReadableChild", slug: "101/readable-child", parentCid: 100, topic_count: 2 },
+      { cid: 102, name: "ChildLeaf", slug: "102/child-leaf", parentCid: 101, topic_count: 0 }
+    ],
+    topics: [
+      { tid: 509, cid: 101, title: "Parent Page", titleRaw: "Parent Page", slug: "509/parent-page", mainPid: 9509, deleted: 0, scheduled: 0, lastposttime: 900 },
+      { tid: 510, cid: 101, title: "Parent Page :: Visible Page", titleRaw: "Parent Page :: Visible Page", slug: "510/visible-page", mainPid: 9510, deleted: 0, scheduled: 0, lastposttime: 1000 }
+    ],
+    readableCids: [101, 102],
+    readableTids: [509, 510]
+  });
+
+  {
+    const namespaceResult = await wikiSearch.search({ q: "ReadableChild", uid: 1, mode: "full", limit: 10 });
+    assert.deepStrictEqual(
+      namespaceResult.results,
+      [],
+      "search should not expose a readable child namespace through an unreadable parent chain"
+    );
+
+    const pageResult = await wikiSearch.search({ q: "Visible Page", uid: 1, mode: "full", limit: 10 });
+    assert.deepStrictEqual(
+      pageResult.results,
+      [],
+      "search should not expose page paths under an unreadable parent namespace"
+    );
+
+    const section = await wikiService.getSection(101, 1);
+    assert.strictEqual(section.status, "ok", "the legacy category can still be read directly");
+    assert.strictEqual(section.section.wikiPath, "", "section canonical URL should be withheld when an ancestor is unreadable");
+    assert.strictEqual(section.section.canonicalPath, "", "section canonical path should be withheld when an ancestor is unreadable");
+    assert.strictEqual(section.section.hasWikiPath, false, "section render data should mark blank paths as non-linkable");
+    assert(
+      section.section.topics.every((topic) => topic.wikiPath === "" && topic.hasWikiPath === false),
+      "page canonical URLs should be withheld and marked non-linkable when an ancestor is unreadable"
+    );
+    assert.strictEqual(section.section.childSections[0].wikiPath, "", "child namespace URL should be withheld through unreadable ancestors");
+    assert.strictEqual(section.section.childSections[0].hasWikiPath, false, "child namespace should be marked non-linkable");
+    assert.deepStrictEqual(
+      section.section.ancestorSections,
+      [],
+      "render data should not include unreadable ancestor namespace names"
+    );
+
+    const hub = await wikiService.getSections(1);
+    assert.deepStrictEqual(
+      hub.sections,
+      [],
+      "unreadable configured roots should not appear in wiki hub sections"
+    );
+
+    const article = await topicService.getWikiPage(510, 1);
+    assert.strictEqual(article.status, "ok", "the readable article is still renderable by legacy numeric route");
+    assert.strictEqual(article.topic.wikiPath, "", "article canonical URL should be withheld when an ancestor is unreadable");
+    assert.strictEqual(article.topic.canonicalPath, "", "article canonical path should be withheld when an ancestor is unreadable");
+    assert.strictEqual(article.topic.hasWikiPath, false, "article topic should be marked non-linkable when path is hidden");
+    assert.strictEqual(article.category.wikiPath, "", "article category URL should be withheld when an ancestor is unreadable");
+    assert.strictEqual(article.category.hasWikiPath, false, "article category should be marked non-linkable when path is hidden");
+    assert.strictEqual(article.sectionNavigation.hasWikiPath, false, "article nav namespace row should be marked non-linkable");
+    assert(
+      article.sectionNavigation.topics.every((topic) => topic.hasWikiPath === false),
+      "article nav page rows should be marked non-linkable when paths are hidden"
+    );
+    assert.strictEqual(article.sectionNavigation.childSections[0].hasWikiPath, false, "article nav child namespace rows should be marked non-linkable");
+    assert.deepStrictEqual(article.ancestorSections, [], "article breadcrumbs should not include unreadable ancestor namespaces");
+    assert.deepStrictEqual(
+      article.parentPages,
+      [{ text: "Parent Page", url: "" }],
+      "parent-page breadcrumbs should not link through unreadable ancestor namespaces"
+    );
+    assert.doesNotMatch(
+      JSON.stringify({
+        topic: article.topic,
+        category: article.category,
+        ancestorSections: article.ancestorSections,
+        parentPages: article.parentPages
+      }),
+      /HiddenParent|\/wiki\/HiddenParent/,
+      "article render data should not leak hidden ancestor names or paths"
     );
   }
 

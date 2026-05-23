@@ -176,7 +176,7 @@ function resetRuntime() {
   });
   assert.strictEqual(state.notifications.length, 1, "only readable non-editor watchers should be notified");
   assert.strictEqual(state.notifications[0].type, wikiArticleWatch.ARTICLE_EDIT_NOTIFICATION_TYPE);
-  assert.strictEqual(state.notifications[0].path, "/wiki/watched-page");
+  assert.strictEqual(state.notifications[0].path, "/wiki/Wiki/Watched_Page");
   assert.deepStrictEqual(state.pushes[0].uids, [3]);
 
   await wikiArticleWatch.handlePostEdit({

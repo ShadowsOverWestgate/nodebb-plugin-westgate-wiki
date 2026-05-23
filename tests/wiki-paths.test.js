@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("assert");
+const canonicalSegments = require("./fixtures/canonical-wiki-path-segments.json");
 
 const state = {
   settings: {
@@ -112,6 +113,24 @@ require.main.require = function requireNodebbStub(id) {
 const wikiPaths = require("../lib/wiki-paths");
 const wikiLinks = require("../lib/wiki-links");
 
+[
+  "resolveWikiNode",
+  "listWikiNodeChildren",
+  "getCanonicalPagePath",
+  "getCanonicalNamespacePath",
+  "validateCanonicalPagePlacement",
+  "validateCanonicalNamespacePlacement",
+  "invalidateWikiTreeIndex"
+].forEach((name) => {
+  assert.strictEqual(typeof wikiPaths[name], "function", `${name} should be exported by wiki-paths facade`);
+});
+
+canonicalSegments.forEach((row) => {
+  const segment = wikiPaths.normalizeCanonicalSegment(row.source);
+  assert.strictEqual(segment.canonical, row.canonical);
+  assert.strictEqual(segment.foldedKey, row.folded);
+});
+
 function reset(settings, categories, topics) {
   state.settings = {
     includeChildCategories: "0",
@@ -132,12 +151,42 @@ function reset(settings, categories, topics) {
   reset(
     { categoryIds: "1, 2, 3" },
     [
-      { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0 },
+      { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 1 },
       { cid: 2, name: "Mechanics", slug: "2/mechanics", parentCid: 1 },
       { cid: 3, name: "Classes", slug: "3/classes", parentCid: 2 }
     ]
   );
-  assert.strictEqual(await wikiPaths.getNamespacePath(3), "/wiki/mechanics/classes");
+  assert.strictEqual(await wikiPaths.getNamespacePath(3), "/wiki/wiki/mechanics/classes");
+  assert.strictEqual(await wikiPaths.getCanonicalNamespacePath(state.categories.get(3)), "Wiki/Mechanics/Classes");
+  assert.strictEqual((await wikiPaths.resolveWikiNode("Wiki/Mechanics/Classes", { uid: 1 })).node.namespace.cid, 3);
+
+  reset(
+    { categoryIds: "1, 2" },
+    [
+      { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 1 },
+      { cid: 2, name: "Guides", slug: "2/guides", parentCid: 1 }
+    ]
+  );
+  assert.strictEqual(
+    (await wikiPaths.resolveRouteRootNamespace()).status,
+    "namespace-not-found",
+    "a category with slug wiki must not become the route root without explicit routeRootCid"
+  );
+  assert.strictEqual(await wikiPaths.getNamespacePath(2), "/wiki/wiki/guides");
+
+  reset(
+    { categoryIds: "1, 2", routeRootCid: "1" },
+    [
+      { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 1 },
+      { cid: 2, name: "Guides", slug: "2/guides", parentCid: 1 }
+    ],
+    [
+      { tid: 9, cid: 1, title: "Home", slug: "9/home", deleted: 0, scheduled: 0, postcount: 1 }
+    ]
+  );
+  assert.strictEqual((await wikiPaths.resolveRouteRootNamespace()).cid, 1);
+  assert.strictEqual(await wikiPaths.getNamespacePath(2), "/wiki/guides");
+  assert.strictEqual((await wikiPaths.resolveArticlePath("home", 1)).status, "ok");
 
   reset(
     { categoryIds: "1, 2, 3" },
@@ -147,7 +196,7 @@ function reset(settings, categories, topics) {
       { cid: 3, name: "Classes B", slug: "3/classes", parentCid: 1 }
     ]
   );
-  assert.strictEqual((await wikiPaths.resolveNamespacePath("classes")).status, "namespace-collision");
+  assert.strictEqual((await wikiPaths.resolveNamespacePath("wiki/classes")).status, "namespace-collision");
   assert.strictEqual((await wikiPaths.getNamespaceSetupDiagnostics()).namespaceCollisions.length, 1);
 
   reset(
@@ -163,7 +212,7 @@ function reset(settings, categories, topics) {
   );
 
   reset(
-    { categoryIds: "1" },
+    { categoryIds: "1", routeRootCid: "1" },
     [
       { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 2 }
     ],
@@ -185,9 +234,17 @@ function reset(settings, categories, topics) {
   assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Æther Œuvre Øresund Straße Þorn Łódź Đelta"), "aether-oeuvre-oresund-strasse-thorn-lodz-delta");
   assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("你好, world!"), "ni-hao-world");
   assert.strictEqual(wikiPaths.normalizeTitleToSlugLeaf("Asdf :: A sub page :: Baby page"), "asdf-a-sub-page-baby-page");
+  assert.strictEqual(
+    wikiPaths.getTopicSlugLeaf({
+      title: "Generated Page Title",
+      slug: "10/legacy-generated-page",
+      westgateWikiPageSlug: "old-generated-path"
+    }),
+    "generated-page-title"
+  );
 
   reset(
-    { categoryIds: "1" },
+    { categoryIds: "1", routeRootCid: "1" },
     [
       { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 2 }
     ],
@@ -201,7 +258,7 @@ function reset(settings, categories, topics) {
   assert.strictEqual(await wikiPaths.getArticlePath(state.topics.get(13)), "/wiki/13/ckeditor-page");
 
   reset(
-    { categoryIds: "1, 2" },
+    { categoryIds: "1, 2", routeRootCid: "1" },
     [
       { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0 },
       { cid: 2, name: "Guides", slug: "2/guides", parentCid: 1 }
@@ -221,16 +278,16 @@ function reset(settings, categories, topics) {
     ]
   );
   assert.match(
-    await wikiLinks.replaceWikiLinks("[[development:Map Creation Guide]]", 1, await require("../lib/config").getSettings()),
-    /href="\/wiki\/development\/map-creation-guide"/
+    await wikiLinks.replaceWikiLinks("[[development:Map Creation Guide]]", 1, await require("../lib/config").getSettings(), 1),
+    /href="\/wiki\/Wiki\/Development\/Map_Creation_Guide"/
   );
   assert.match(
-    await wikiLinks.replaceWikiLinks('<p><span class="wiki-entity wiki-entity--page" data-wiki-entity="page" data-wiki-target="development/Map Creation Guide" data-wiki-label="Map guide">Map guide</span></p>', 1, await require("../lib/config").getSettings()),
-    /<a class="wiki-internal-link" href="\/wiki\/development\/map-creation-guide">Map guide<\/a>/
+    await wikiLinks.replaceWikiLinks('<p><span class="wiki-entity wiki-entity--page" data-wiki-entity="page" data-wiki-target="development/Map Creation Guide" data-wiki-label="Map guide">Map guide</span></p>', 1, await require("../lib/config").getSettings(), 1),
+    /<a class="wiki-internal-link" href="\/wiki\/Wiki\/Development\/Map_Creation_Guide">Map guide<\/a>/
   );
   assert.match(
-    await wikiLinks.replaceWikiLinks('<p><span class="wiki-entity wiki-entity--namespace" data-wiki-entity="namespace" data-wiki-target="development" data-wiki-label="Development">Development</span></p>', 1, await require("../lib/config").getSettings()),
-    /<a class="wiki-internal-link wiki-namespace-link" href="\/wiki\/development">Development<\/a>/
+    await wikiLinks.replaceWikiLinks('<p><span class="wiki-entity wiki-entity--namespace" data-wiki-entity="namespace" data-wiki-target="development" data-wiki-label="Development">Development</span></p>', 1, await require("../lib/config").getSettings(), 1),
+    /<a class="wiki-internal-link wiki-namespace-link" href="\/wiki\/Wiki\/Development">Development<\/a>/
   );
 
   reset(
@@ -246,16 +303,16 @@ function reset(settings, categories, topics) {
     ]
   );
   assert.match(
-    await wikiLinks.replaceWikiLinks("[[development/guides/module-development-setup-on-windows]]", 3, await require("../lib/config").getSettings()),
-    /href="\/wiki\/development\/guides\/module-development-setup-on-windows"/
+    await wikiLinks.replaceWikiLinks("[[development/guides/module-development-setup-on-windows]]", 3, await require("../lib/config").getSettings(), 1),
+    /href="\/wiki\/Wiki\/Development\/Guides\/Module_Development_Setup_on_Windows"/
   );
   assert.match(
-    await wikiLinks.replaceWikiLinks("[[module-development-setup-on-windows]]", 3, await require("../lib/config").getSettings()),
-    /href="\/wiki\/development\/guides\/module-development-setup-on-windows"/
+    await wikiLinks.replaceWikiLinks("[[module-development-setup-on-windows]]", 3, await require("../lib/config").getSettings(), 1),
+    /href="\/wiki\/Wiki\/Development\/Guides\/Module_Development_Setup_on_Windows"/
   );
 
   reset(
-    { categoryIds: "1, 2" },
+    { categoryIds: "1, 2", routeRootCid: "1" },
     [
       { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0 },
       { cid: 2, name: "Feats", slug: "2/feats", parentCid: 1, topic_count: 1 }
@@ -294,9 +351,10 @@ function reset(settings, categories, topics) {
   const slashTitleLink = await wikiLinks.replaceWikiLinks(
     "[[Clairaudience/Clairvoyance]]",
     2,
-    await require("../lib/config").getSettings()
+    await require("../lib/config").getSettings(),
+    1
   );
-  assert.match(slashTitleLink, /href="\/wiki\/spells\/clairaudience-clairvoyance"/);
+  assert.match(slashTitleLink, /href="\/wiki\/Wiki\/Spells\/Clairaudience_Clairvoyance"/);
   assert.doesNotMatch(slashTitleLink, /wiki-redlink/);
 
   console.log("wiki-paths tests passed");

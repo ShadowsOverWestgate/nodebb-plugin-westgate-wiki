@@ -16,7 +16,8 @@ const state = {
   sets: new Map(),
   notifications: [],
   pushes: [],
-  deniedUids: new Set()
+  deniedUids: new Set(),
+  hiddenCategoryCidsByUid: new Map()
 };
 const originalMainRequire = require.main.require.bind(require.main);
 
@@ -86,7 +87,14 @@ require.main.require = function requireNodebbStub(id) {
       getPostFields: async (pid) => state.posts.get(parseInt(pid, 10)) || null
     },
     "./src/privileges": {
-      categories: { isAdminOrMod: async () => false },
+      categories: {
+        get: async (cid, uid) => {
+          const hidden = state.hiddenCategoryCidsByUid.get(parseInt(uid, 10)) || new Set();
+          const canRead = !hidden.has(parseInt(cid, 10));
+          return { read: canRead, "topics:read": canRead };
+        },
+        isAdminOrMod: async () => false
+      },
       topics: {
         get: async (tid, uid) => ({
           "topics:read": !state.deniedUids.has(parseInt(uid, 10)),
@@ -128,6 +136,21 @@ function resetRuntime() {
   state.notifications = [];
   state.pushes = [];
   state.deniedUids = new Set();
+  state.hiddenCategoryCidsByUid = new Map();
+}
+
+function resetWikiFixture() {
+  state.settings = {
+    categoryIds: "1",
+    includeChildCategories: "0"
+  };
+  state.categories = new Map([[1, { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0 }]]);
+  state.topics = new Map([[10, { tid: 10, cid: 1, mainPid: 100, title: "Mentioned Page", slug: "10/mentioned-page" }]]);
+  try {
+    require("../lib/config").invalidateSettingsCache();
+  } catch (e) {
+    // Module may not be loaded during early test setup.
+  }
 }
 
 (async () => {
@@ -143,7 +166,7 @@ function resetRuntime() {
   });
   assert.strictEqual(state.notifications.length, 1, "first wiki article mention should notify");
   assert.strictEqual(state.notifications[0].type, "mention");
-  assert.strictEqual(state.notifications[0].path, "/wiki/mentioned-page");
+  assert.strictEqual(state.notifications[0].path, "/wiki/Wiki/Mentioned_Page");
   assert.deepStrictEqual(state.pushes[0].uids, [3]);
 
   await wikiMentionNotifications.handlePostSaveOrEdit({
@@ -168,6 +191,35 @@ function resetRuntime() {
     post: { pid: 100, tid: 10, uid: 2, content: "<p>Denied @other</p>" }
   });
   assert.strictEqual(state.notifications.length, 0, "unreadable users should not be notified");
+
+  resetRuntime();
+  state.settings = {
+    categoryIds: "1, 2",
+    includeChildCategories: "0"
+  };
+  state.categories = new Map([
+    [1, { cid: 1, name: "Hidden Root", slug: "1/hidden-root", parentCid: 0 }],
+    [2, { cid: 2, name: "Readable Child", slug: "2/readable-child", parentCid: 1 }]
+  ]);
+  state.topics.set(10, {
+    tid: 10,
+    cid: 2,
+    mainPid: 100,
+    title: "Hidden Mentioned Page",
+    slug: "10/hidden-mentioned-page"
+  });
+  state.hiddenCategoryCidsByUid.set(3, new Set([1]));
+  require("../lib/config").invalidateSettingsCache();
+  await wikiMentionNotifications.handlePostSaveOrEdit({
+    post: { pid: 100, tid: 10, uid: 2, content: "<p>Hidden @target</p>" }
+  });
+  assert.strictEqual(
+    state.notifications.length,
+    0,
+    "mention notifications should not expose paths through unreadable namespace ancestors"
+  );
+  resetWikiFixture();
+  resetRuntime();
 
   {
     const payload = { data: { type: "mention", pid: 100 } };

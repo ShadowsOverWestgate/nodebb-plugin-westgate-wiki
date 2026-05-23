@@ -9,10 +9,10 @@ rebuild completed scaffolding or extend superseded path behavior.
 
 ### Required Contract Stack
 
-The repository is entering a coordinated public path and canonical tree
-realignment. Before changing wiki routing, path generation, generated topdata
-integration, namespace index behavior, search/listing path emission, or path
-migration tooling, read these root documents in order:
+The repository uses a coordinated public path and canonical tree runtime.
+Before changing wiki routing, path generation, generated topdata integration,
+namespace index behavior, search/listing path emission, or path migration
+tooling, read these root documents in order:
 
 1. [CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md)
 2. [HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md)
@@ -20,10 +20,10 @@ migration tooling, read these root documents in order:
 4. [CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
 
 The historical clean-path roadmap later in this file documents the runtime that
-exists before that cutover. Where it conflicts with the contract stack, the
+existed before the cutover. Where it conflicts with the contract stack, the
 contract stack wins. In particular, do not treat topic/category slug leaves,
 legacy wiki ID-route redirects, `westgateWikiPageSlug`, generated `wiki_slug`
-markers, or namespace-main-page selectors as the forward architecture.
+markers, or namespace-main-page selectors as public wiki path authority.
 
 ### Archive Contract Stack
 
@@ -37,9 +37,9 @@ merge behavior, or archive operator docs, read:
 3. [WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
 4. [docs/superpowers/plans/2026-05-22-wiki-import-export-archive-plan.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/docs/superpowers/plans/2026-05-22-wiki-import-export-archive-plan.md)
 
-Archive work must consume canonical tree APIs and diagnostics after that
-cutover. Do not make portable archive identity, source NodeBB IDs, topdata page
-ids, `wiki_slug`, or `westgateWikiPageSlug` into public wiki path authority.
+Archive work must consume canonical tree APIs and diagnostics. Do not make
+portable archive identity, source NodeBB IDs, topdata page ids, `wiki_slug`, or
+`westgateWikiPageSlug` into public wiki path authority.
 
 ## Purpose
 
@@ -75,8 +75,8 @@ Current implemented behavior includes:
 
 - Registers `static:app.load`
 - Adds a `/wiki` route
-- Adds a `/wiki/category/:category_id/:slug?` section route for configured wiki categories
-- Adds a `/wiki/:topic_id/:slug?` article route for configured wiki categories
+- Adds canonical `/wiki/...` namespace routes derived from configured category names
+- Adds canonical `/wiki/...` article routes derived from namespace placement and page title hierarchy
 - Renders a landing page from ACP-managed settings
 - Treats configured categories as wiki namespaces, with NodeBB category permissions remaining the source of truth for visibility
 - Surfaces configured child categories as nested namespaces on section pages
@@ -89,8 +89,8 @@ Current implemented behavior includes:
 - Exposes a wiki page navigation rail for namespace-local browsing
 - Supports first-pass internal wiki links in article bodies via `[[Page Title]]`, `[[Child Namespace/Page Title]]`, and `[[Root Namespace/Child Namespace/Page Title]]`
 - Treats unresolved wiki links as redlinks that open prefilled page creation in the target namespace
-- Provides canonical human-readable wiki namespace and page paths through `lib/wiki-paths.js`
-- Keeps old ID-based wiki URLs as backward-compatible redirect aliases
+- Provides canonical title/category wiki namespace and page paths through `lib/wiki-paths.js`
+- Keeps migration reporting for retired ID-route, generated slug, and namespace-main-page state
 - Exposes reusable internal services through `plugin.services` for future extension work
 - Uses route and service modules instead of placing everything in `library.js`
 - Live production checks on 2026-05-01 confirmed clean wiki article and
@@ -98,9 +98,9 @@ Current implemented behavior includes:
   `[[Map Creation Guide]]` resolving to canonical clean paths.
 - Surfaces clean-path setup diagnostics in the ACP for duplicate namespace
   paths and reserved namespace route segments.
-- Rejects wiki page create/edit titles that would collide with an existing page
-  slug leaf, a child namespace path, a reserved root route, or an ambiguous
-  namespace configuration.
+- Rejects wiki page create/edit titles that would collide with an existing
+  canonical page path, a child namespace path, a reserved root route, or an
+  ambiguous folded path.
 - Exposes a reusable wiki link autocomplete service/API that returns canonical
   wiki paths and server-computed insert text for wiki and forum authoring
   contexts.
@@ -121,14 +121,13 @@ unbounded execution plan to this file.
 
 Use the contract stack and
 [CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
-for canonical wiki path/tree work. The implemented clean-path runtime remains
-audit input until that cutover; do not expand its slug-leaf or compatibility
-assumptions as the new target architecture.
+for canonical wiki path/tree work. The old clean-path runtime remains audit
+input only; do not expand its slug-leaf or compatibility assumptions as active
+architecture.
 
-Use the archive contract stack above for wiki ZIP import/export work after the
-canonical path/tree gates exist. The archive feature is a previewed
-administrator merge workflow, not a pre-cutover slug resolver extension and
-not a destructive NodeBB backup restore.
+Use the archive contract stack above for wiki ZIP import/export work. The
+archive feature is a previewed administrator merge workflow, not a slug
+resolver extension and not a destructive NodeBB backup restore.
 
 Current priority order:
 
@@ -529,8 +528,8 @@ Current priority order:
    not let client code or templates construct `/wiki/...` manually.
 4. Continue Westgate theme alignment and full live smoke checks.
 
-Historical priority items, completed 2026-05-01 under the pre-cutover clean
-path model:
+Historical priority items, completed 2026-05-01 under the retired clean-path
+model:
 
 - Build the canonical namespace/page path resolver.
 - Add canonical clean routes and redirect existing ID-based wiki routes.
@@ -2070,8 +2069,8 @@ Run or manually verify these after each major step:
 
 ## Content Model Ledger
 
-This ledger describes the runtime lineage. The route statements below are
-pre-cutover status, not the canonical path/tree target.
+This ledger describes the active content model. Historical route details remain
+below in the completed-steps ledger only as audit history.
 
 - Configured categories are wiki namespaces.
 - Topics inside configured categories are wiki pages.
@@ -2080,11 +2079,12 @@ pre-cutover status, not the canonical path/tree target.
 - The `/wiki` landing page should prefer root configured namespaces; child namespaces are reached from their parent namespace pages.
 - Wiki namespace enablement is plugin-specific configuration layered on top of normal NodeBB categories.
 - Automatic descendant inclusion is a quality-of-life layer on top of explicit namespace selection, not a replacement for NodeBB category permissions.
-- The pre-cutover clean-path runtime includes the old
-  `/wiki/:topic_id/:slug?` wiki article route as compatibility behavior.
-- The pre-cutover clean-path article view uses
-  `/wiki/:namespace_path_segments/:page_slug`; the root canonical path/tree
-  contracts own the next public path target.
+- Canonical namespace paths derive from configured category names.
+- Canonical article paths derive from namespace placement plus page title
+  hierarchy split by ` :: `.
+- Retired ID wiki routes, slug leaves, generated public slug fields, and
+  namespace-main-page selectors are migration-reporting concerns, not active
+  public path sources.
 - `/topic/:slug` remains the discussion thread view for the same underlying
   topic.
 

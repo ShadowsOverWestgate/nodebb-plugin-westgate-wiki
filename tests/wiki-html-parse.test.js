@@ -21,6 +21,11 @@ require.main.require = function requireNodebbStub(id) {
         set: async () => {}
       }
     },
+    "./src/privileges": {
+      categories: {
+        get: async () => ({ read: true, "topics:read": true })
+      }
+    },
     "./src/topics": {},
     "./src/slugify": (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
   };

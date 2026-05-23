@@ -1,0 +1,352 @@
+"use strict";
+
+const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
+const fs = require("node:fs/promises");
+const os = require("node:os");
+const path = require("node:path");
+const test = require("node:test");
+
+const root = path.resolve(__dirname, "..");
+const originalMainRequire = require.main.require.bind(require.main);
+
+function clearProjectModule(relativePath) {
+  const modulePath = path.join(root, relativePath);
+  delete require.cache[require.resolve(modulePath)];
+}
+
+async function withNodebbStubs(stubs, fn) {
+  const previousMainRequire = require.main.require;
+  require.main.require = function requireNodebbStub(id) {
+    return Object.prototype.hasOwnProperty.call(stubs, id) ? stubs[id] : originalMainRequire(id);
+  };
+
+  try {
+    return await fn();
+  } finally {
+    require.main.require = previousMainRequire;
+  }
+}
+
+function createRuntimeNodebbStubs(state) {
+  const uploadPath = state.uploadPath;
+  return {
+    "nconf": {
+      get(key) {
+        if (key === "upload_path") {
+          return uploadPath;
+        }
+        if (key === "relative_path") {
+          return "";
+        }
+        if (key === "upload_url") {
+          return "/assets/uploads";
+        }
+        return "";
+      }
+    },
+    "./src/categories": {
+      create: async (payload) => {
+        state.events.push(`category.create:${payload.name}:${payload.parentCid}:${payload.uid}`);
+        return { cid: 88 };
+      },
+      getChildrenCids: async () => []
+    },
+    "./src/controllers/helpers": { formatApiResponse: () => {} },
+    "./src/controllers/uploads": {
+      uploadFile: async (uid, uploadedFile) => {
+        state.events.push(`uploadFile:${uid}:${uploadedFile.name}:${uploadedFile.type}:${uploadedFile.size}`);
+        assert.equal(await fs.readFile(uploadedFile.path, "utf8"), "asset-bytes");
+        const destinationPath = path.join(uploadPath, "files", `stored-${uploadedFile.name}`);
+        await fs.mkdir(path.dirname(destinationPath), { recursive: true });
+        await fs.copyFile(uploadedFile.path, destinationPath);
+        return {
+          url: `/assets/uploads/files/stored-${uploadedFile.name}`,
+          name: uploadedFile.name,
+          path: destinationPath
+        };
+      }
+    },
+    "./src/database": {},
+    "./src/database": {
+      getObject: async () => ({}),
+      getSortedSetRange: async (key) => state.tidsBySet && state.tidsBySet[key] || []
+    },
+    "./src/groups": { getNonPrivilegeGroups: async () => state.groups || [] },
+    "./src/meta": {
+      settings: {
+        set: async () => {},
+        get: async () => ({
+          categoryIds: "10",
+          includeChildCategories: "0",
+          homeTopicId: "",
+          wikiNamespaceCreateGroups: ""
+        }),
+        setOnEmpty: async () => {}
+      }
+    },
+    "./src/posts": {
+      edit: async (payload) => {
+        state.events.push(`post.edit:${payload.pid}:${payload.title}:${payload.uid}:${payload.content}`);
+      },
+      setPostFields: async (pid, fields) => {
+        state.events.push(`post.fields:${pid}:${fields.content}`);
+      },
+      clearCachedPost: (pid) => {
+        state.events.push(`post.clear:${pid}`);
+      },
+      uploads: {
+        sync: async (pid) => {
+          state.events.push(`uploads.sync:${pid}`);
+        }
+      }
+    },
+    "./src/privileges": { categories: {}, topics: {}, posts: {} },
+    "./src/topics": {
+      post: async (payload) => {
+        state.events.push(`topic.post:${payload.cid}:${payload.title}:${payload.uid}:${payload.content}`);
+        return {
+          topicData: { tid: 101, cid: payload.cid, mainPid: 1001 },
+          postData: { pid: 1001, tid: 101 }
+        };
+      },
+      setTopicField: async (tid, field, value) => {
+        state.events.push(`topic.field:${tid}:${field}:${value}`);
+      },
+      getTopicField: async (tid, field) => {
+        state.events.push(`topic.getField:${tid}:${field}`);
+        return tid === 77 ? "770" : "";
+      },
+      getTopicsFields: async (tids) => (Array.isArray(tids) ? tids : [])
+        .map((tid) => state.topics && state.topics.get(parseInt(tid, 10)))
+        .filter(Boolean),
+      tools: {
+        move: async (tid, payload) => {
+          state.events.push(`topic.move:${tid}:${payload.cid}:${payload.uid}`);
+        }
+      }
+    },
+    "./src/user": { isAdministrator: async () => true },
+    "./src/utils": { isNumber: () => true }
+  };
+}
+
+test("runtime apply services provide page, asset, identity, and upload association adapters", async () => {
+  const uploadPath = await fs.mkdtemp(path.join(os.tmpdir(), "wg-runtime-uploads-"));
+  await fs.mkdir(path.join(uploadPath, "files"), { recursive: true });
+  await fs.writeFile(path.join(uploadPath, "files", "existing.txt"), "asset-bytes");
+  const state = { uploadPath, events: [] };
+
+  await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
+    clearProjectModule("lib/wiki-archive-runtime.js");
+    clearProjectModule("lib/wiki-article-css.js");
+    clearProjectModule("lib/wiki-discussion-settings.js");
+    const runtime = require("../lib/wiki-archive-runtime");
+    const services = runtime.createApplyServices();
+
+    assert.equal(typeof services.assets.importAsset, "function");
+    assert.equal(typeof services.assets.findBySha256, "function");
+    assert.equal(typeof services.pages.createPage, "function");
+    assert.equal(typeof services.identity.setPageArchiveId, "function");
+    assert.equal(typeof services.uploadAssociations.syncPostUploads, "function");
+
+    const crypto = require("node:crypto");
+    const sha256 = crypto.createHash("sha256").update("asset-bytes").digest("hex");
+    const reused = await services.assets.findBySha256(sha256);
+    assert.deepEqual(reused, {
+      path: "/assets/uploads/files/existing.txt",
+      sha256
+    });
+
+    const imported = await services.assets.importAsset({
+      asset: { path: "assets/sha256/abc123.png", contentType: "image/png" },
+      buffer: Buffer.from("asset-bytes"),
+      uid: 9
+    });
+    assert.equal(imported.path, "/assets/uploads/files/stored-abc123.png");
+
+    assert.deepEqual(await services.pages.createPage({
+      uid: 9,
+      cid: 10,
+      title: "Gond",
+      content: "<p>Article</p>"
+    }), { tid: 101, pid: 1001, mainPid: 1001, cid: 10 });
+
+    await services.identity.setPageArchiveId(101, "wgap_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    await services.uploadAssociations.syncPostUploads({ pid: 1001 });
+
+    assert(state.events.includes("topic.field:101:westgateWikiArchivePageId:wgap_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+    assert(state.events.includes("uploads.sync:1001"));
+  });
+});
+
+test("runtime apply settings preserves routeRootCid", async () => {
+  const uploadPath = await fs.mkdtemp(path.join(os.tmpdir(), "wg-runtime-settings-"));
+  const state = { uploadPath, events: [] };
+
+  await withNodebbStubs({
+    ...createRuntimeNodebbStubs(state),
+    "./src/meta": {
+      settings: {
+        set: async (key, value) => {
+          state.events.push(`settings.set:${key}:${JSON.stringify(value)}`);
+        },
+        get: async () => ({
+          categoryIds: "10",
+          includeChildCategories: "0",
+          homeTopicId: "",
+          wikiNamespaceCreateGroups: "",
+          routeRootCid: "10"
+        }),
+        setOnEmpty: async () => {}
+      }
+    }
+  }, async () => {
+    clearProjectModule("lib/wiki-archive-runtime.js");
+    const runtime = require("../lib/wiki-archive-runtime");
+    const services = runtime.createApplyServices();
+
+    await services.settings.applySettings({
+      categoryRoots: [{ cid: 10 }],
+      includeChildCategories: true,
+      homepage: { tid: 90 },
+      routeRootCid: 10,
+      namespaceCreatorGroups: ["Wiki Curators"]
+    });
+
+    const settingsSet = state.events.find((event) => event.startsWith("settings.set:westgate-wiki:"));
+    assert.match(settingsSet, /"routeRootCid":"10"/);
+  });
+});
+
+test("collectDestination includes hashed upload assets from the default upload path", async () => {
+  const uploadPath = await fs.mkdtemp(path.join(os.tmpdir(), "wg-runtime-destination-assets-"));
+  await fs.mkdir(path.join(uploadPath, "files"), { recursive: true });
+  await fs.writeFile(path.join(uploadPath, "files", "gond.png"), "asset-bytes");
+  const state = {
+    uploadPath,
+    events: [],
+    tidsBySet: { "cid:10:tids": [77] },
+    topics: new Map([[77, { tid: 77, cid: 10, title: "Gond", titleRaw: "Gond", mainPid: 770, deleted: 0, scheduled: 0 }]])
+  };
+
+  await withNodebbStubs({
+    ...createRuntimeNodebbStubs(state),
+    "./src/categories": {
+      create: async () => ({ cid: 88 }),
+      getCategoryData: async (cid) => ({ cid, name: "Lore", parentCid: 0, slug: "10/lore" }),
+      getChildrenCids: async () => []
+    },
+    "./src/posts": {
+      ...createRuntimeNodebbStubs(state)["./src/posts"],
+      getPostFields: async () => ({ content: "<p>Gond</p>", sourceContent: "<p>Gond</p>" })
+    }
+  }, async () => {
+    clearProjectModule("lib/wiki-archive-runtime.js");
+    clearProjectModule("lib/wiki-path-migration.js");
+    clearProjectModule("lib/wiki-tree-index.js");
+    const runtime = require("../lib/wiki-archive-runtime");
+    const crypto = require("node:crypto");
+    const sha256 = crypto.createHash("sha256").update("asset-bytes").digest("hex");
+
+    const destination = await runtime.collectDestination({ uid: 1 });
+    assert(destination.destination.assets.some((asset) =>
+      asset.path === "/assets/uploads/files/gond.png" &&
+      asset.sha256 === sha256 &&
+      asset.bytes === Buffer.byteLength("asset-bytes") &&
+      asset.contentType === "image/png"));
+  });
+});
+
+test("collectDestinationAssets hashes uploads with streams and can narrow by sha256", async () => {
+  const uploadPath = await fs.mkdtemp(path.join(os.tmpdir(), "wg-runtime-stream-assets-"));
+  await fs.mkdir(path.join(uploadPath, "files"), { recursive: true });
+  await fs.writeFile(path.join(uploadPath, "files", "wanted.png"), "wanted-bytes");
+  await fs.writeFile(path.join(uploadPath, "files", "ignored.png"), "ignored-bytes");
+  const wantedSha = crypto.createHash("sha256").update("wanted-bytes").digest("hex");
+  const state = { uploadPath, events: [] };
+
+  await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
+    clearProjectModule("lib/wiki-archive-runtime.js");
+    const runtime = require("../lib/wiki-archive-runtime");
+    const readFile = fs.readFile;
+    fs.readFile = async () => {
+      throw new Error("destination asset hashing must not use fs.promises.readFile");
+    };
+    try {
+      const assets = await runtime.collectDestinationAssets({ assetSha256s: [wantedSha] });
+      assert.deepEqual(assets.map((asset) => asset.path), ["/assets/uploads/files/wanted.png"]);
+      assert.equal(assets[0].sha256, wantedSha);
+      assert.equal(assets[0].bytes, Buffer.byteLength("wanted-bytes"));
+    } finally {
+      fs.readFile = readFile;
+    }
+  });
+});
+
+test("apply asset findBySha256 uses a cached destination asset index", async () => {
+  const uploadPath = await fs.mkdtemp(path.join(os.tmpdir(), "wg-runtime-cached-assets-"));
+  await fs.mkdir(path.join(uploadPath, "files"), { recursive: true });
+  const existingPath = path.join(uploadPath, "files", "existing.png");
+  await fs.writeFile(existingPath, "cached-bytes");
+  const sha256 = crypto.createHash("sha256").update("cached-bytes").digest("hex");
+  const state = { uploadPath, events: [] };
+
+  await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
+    clearProjectModule("lib/wiki-archive-runtime.js");
+    const runtime = require("../lib/wiki-archive-runtime");
+    const services = runtime.createApplyServices();
+    const first = await services.assets.findBySha256(sha256);
+    await fs.rm(existingPath);
+    const second = await services.assets.findBySha256(sha256);
+
+    assert.deepEqual(first, { path: "/assets/uploads/files/existing.png", sha256 });
+    assert.deepEqual(second, { path: "/assets/uploads/files/existing.png", sha256 });
+  });
+});
+
+test("apply asset findBySha256 uses seeded destination assets without scanning uploads", async () => {
+  const uploadPath = await fs.mkdtemp(path.join(os.tmpdir(), "wg-runtime-seeded-assets-"));
+  const sha256 = "c".repeat(64);
+  const state = { uploadPath, events: [] };
+
+  await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
+    clearProjectModule("lib/wiki-archive-runtime.js");
+    const runtime = require("../lib/wiki-archive-runtime");
+    const readdir = fs.readdir;
+    fs.readdir = async () => {
+      throw new Error("seeded asset index should not scan upload files");
+    };
+    try {
+      const services = runtime.createApplyServices({
+        destinationAssets: [{ path: "/assets/uploads/files/seeded.png", sha256 }]
+      });
+      assert.deepEqual(await services.assets.findBySha256(sha256), {
+        path: "/assets/uploads/files/seeded.png",
+        sha256
+      });
+      assert.deepEqual(await services.assets.findBySha256(sha256), {
+        path: "/assets/uploads/files/seeded.png",
+        sha256
+      });
+    } finally {
+      fs.readdir = readdir;
+    }
+  });
+});
+
+test("createUploadStore reads asset references from upload_path directly", async () => {
+  const uploadPath = await fs.mkdtemp(path.join(os.tmpdir(), "wg-runtime-upload-store-"));
+  await fs.mkdir(path.join(uploadPath, "files"), { recursive: true });
+  await fs.writeFile(path.join(uploadPath, "files", "foo.png"), "image-bytes");
+  const state = { uploadPath, events: [] };
+
+  await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
+    clearProjectModule("lib/wiki-archive-runtime.js");
+    const runtime = require("../lib/wiki-archive-runtime");
+    const upload = await runtime.createUploadStore().readLocalUpload("/assets/uploads/files/foo.png");
+
+    assert.equal(upload.buffer.toString("utf8"), "image-bytes");
+    assert.equal(upload.contentType, "image/png");
+  });
+});

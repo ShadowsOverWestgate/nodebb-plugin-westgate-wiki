@@ -38,13 +38,18 @@
           <!-- IF sectionNavigation -->
           <ul class="wiki-sidebar-nav-rows wiki-sidebar-nav-rows--namespace-lead" role="list">
             <li class="wiki-sidebar-nav-row wiki-sidebar-nav-row--namespace" data-wiki-current-namespace="1" style="--wiki-nav-depth: 0;">
+              <!-- IF sectionNavigation.hasWikiPath -->
               <a class="wiki-sidebar-nav-ns" href="{config.relative_path}{sectionNavigation.wikiPath}">{sectionNavigation.name}</a>
+              <!-- ELSE -->
+              <span class="wiki-sidebar-nav-ns wiki-sidebar-nav-ns--disabled" aria-disabled="true">{sectionNavigation.name}</span>
+              <!-- ENDIF sectionNavigation.hasWikiPath -->
             </li>
           </ul>
           <!-- ENDIF sectionNavigation -->
           <ul class="wiki-sidebar-nav-rows wiki-sidebar-nav-rows--child-pages" data-wiki-directory-list role="list">
             <!-- BEGIN wikiSidebarPageRows -->
             <li class="wiki-sidebar-nav-row wiki-sidebar-nav-row--page" data-wiki-nav-tid="{./tid}">
+              <!-- IF ./hasWikiPath -->
               <a class="wiki-sidebar-nav-page" href="{config.relative_path}{./wikiPath}">
                 <!-- IF ./hasParentPath -->
                 <span class="wiki-sidebar-parent-path">
@@ -57,6 +62,20 @@
                 <!-- ENDIF ./hasParentPath -->
                 <span class="wiki-sidebar-page-title">{./titleLeaf}</span>
               </a>
+              <!-- ELSE -->
+              <span class="wiki-sidebar-nav-page wiki-sidebar-nav-page--disabled" aria-disabled="true">
+                <!-- IF ./hasParentPath -->
+                <span class="wiki-sidebar-parent-path">
+                  <!-- BEGIN ./parentTitlePathSegments -->
+                  <!-- IF ./hasSeparatorBefore --><span class="wiki-topic-title-separator" aria-hidden="true">/</span><!-- ENDIF ./hasSeparatorBefore -->
+                  <span class="wiki-sidebar-parent-path__part">{./text}</span>
+                  <!-- END ./parentTitlePathSegments -->
+                </span>
+                <span class="wiki-topic-title-separator" aria-hidden="true">/</span>
+                <!-- ENDIF ./hasParentPath -->
+                <span class="wiki-sidebar-page-title">{./titleLeaf}</span>
+              </span>
+              <!-- ENDIF ./hasWikiPath -->
             </li>
             <!-- END wikiSidebarPageRows -->
           </ul>
@@ -75,9 +94,15 @@
         <ul class="wiki-sidebar-nav-rows" aria-labelledby="wiki-sidebar-child-ns-heading">
           <!-- BEGIN sectionNavigation.childSections -->
           <li class="wiki-sidebar-nav-row wiki-sidebar-nav-row--page">
+            <!-- IF ./hasWikiPath -->
             <a class="wiki-sidebar-nav-page" href="{config.relative_path}{./wikiPath}">
               <span class="wiki-sidebar-page-title">{./name}</span>
             </a>
+            <!-- ELSE -->
+            <span class="wiki-sidebar-nav-page wiki-sidebar-nav-page--disabled" aria-disabled="true">
+              <span class="wiki-sidebar-page-title">{./name}</span>
+            </span>
+            <!-- ENDIF ./hasWikiPath -->
           </li>
           <!-- END sectionNavigation.childSections -->
         </ul>

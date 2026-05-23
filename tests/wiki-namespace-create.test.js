@@ -59,6 +59,9 @@ require.main.require = function requireNodebbStub(id) {
       },
       notAllowed: () => {}
     },
+    "./src/database": {
+      getSortedSetRange: async () => []
+    },
     "./src/groups": {
       isMemberOfGroups: async () => []
     },
@@ -69,6 +72,11 @@ require.main.require = function requireNodebbStub(id) {
         set: async (key, next) => {
           state.settings = { ...next };
         }
+      }
+    },
+    "./src/privileges": {
+      categories: {
+        get: async () => ({ read: true, "topics:read": true })
       }
     },
     "./src/slugify": slugify,
@@ -116,7 +124,7 @@ const controller = require("../lib/controllers/wiki-namespace-create");
   assert.equal(state.apiResponse.payload.cid, 2);
   assert.equal(
     state.apiResponse.payload.wikiPath,
-    "/wiki/new-namespace",
+    "/wiki/Wiki/New_Namespace",
     "created namespace redirects should use canonical wiki paths, not the legacy category route"
   );
   assert.notEqual(state.apiResponse.payload.wikiPath, "/wiki/category/2/new-namespace");

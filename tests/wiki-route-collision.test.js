@@ -17,14 +17,14 @@ require.main.require = function requireNodebbStub(id) {
         throw new Error("redirect should not be called");
       }
     },
-    "./src/categories": { getCategoryData: async () => null, getChildrenCids: async () => [] },
+    "./src/categories": { getCategoryData: async () => null, getChildren: async () => [[]], getChildrenCids: async () => [] },
     "./src/database": { getSortedSetRange: async () => [], getSortedSetRevRange: async () => [], getObjectField: async () => null, getObject: async () => ({}) },
     "./src/groups": { getNonPrivilegeGroups: async () => [] },
     "./src/meta": { settings: { get: async () => ({}), setOnEmpty: async () => {}, set: async () => {} } },
     "./src/middleware": { ensureLoggedIn: () => {} },
     "./src/notifications": {},
     "./src/plugins": { hooks: { on: () => {} } },
-    "./src/posts": {},
+    "./src/posts": { getPostSummaryByPids: async () => [], getUserInfoForPosts: async () => [] },
     "./src/privileges": { categories: {}, topics: {}, posts: {} },
     "./src/routes/helpers": {
       setupPageRoute: (router, routePath, middlewareOrHandler, maybeHandler) => {
@@ -34,7 +34,7 @@ require.main.require = function requireNodebbStub(id) {
     "./src/slugify": (value) => String(value || "").toLowerCase(),
     "./src/topics": {},
     "./src/user": {},
-    "./src/utils": { isNumber: () => true }
+    "./src/utils": { isNumber: () => true, toISOString: (value) => new Date(value).toISOString() }
   };
 
   return stubs[id] || originalMainRequire(id);
@@ -42,30 +42,27 @@ require.main.require = function requireNodebbStub(id) {
 
 const routes = require("../routes/wiki");
 const wikiPaths = require("../lib/wiki-paths");
-const wikiService = require("../lib/wiki-service");
 
-wikiPaths.resolveNamespacePath = async () => ({ status: "namespace-not-found" });
-wikiPaths.resolveArticlePath = async () => ({
-  status: "page-collision",
-  cid: 1,
-  category: { cid: 1, name: "Wiki", slug: "1/wiki" },
-  namespacePath: "/wiki",
-  pageSlug: "ckeditor-page",
-  topics: [
-    { tid: 12, cid: 1, title: "Ckeditor Page", titleRaw: "Ckeditor Page", slug: "12/ckeditor-page" },
-    { tid: 13, cid: 1, title: "CKEditor Page.................", titleRaw: "CKEditor Page.................", slug: "13/ckeditor-page" }
+let legacyNamespaceCalls = 0;
+let legacyArticleCalls = 0;
+
+wikiPaths.resolveWikiNode = async () => ({
+  status: "ambiguous",
+  foldedKey: "lore/deities/gond",
+  hiddenBlockers: false,
+  matches: [
+    { canonicalPath: "Lore/Deities/Gond", wikiPath: "/wiki/Lore/Deities/Gond" },
+    { canonicalPath: "Lore/Deities/gond", wikiPath: "/wiki/Lore/Deities/gond" }
   ]
 });
-wikiService.getSection = async () => ({
-  status: "ok",
-  section: {
-    cid: 1,
-    name: "Wiki",
-    wikiPath: "/wiki",
-    ancestorSections: [],
-    privileges: { canCreatePage: true }
-  }
-});
+wikiPaths.resolveNamespacePath = async () => {
+  legacyNamespaceCalls += 1;
+  return { status: "namespace-not-found" };
+};
+wikiPaths.resolveArticlePath = async () => {
+  legacyArticleCalls += 1;
+  return { status: "page-collision" };
+};
 
 routes.register({ router: { get: () => {} }, middleware: require.main.require("./src/middleware") });
 
@@ -76,7 +73,7 @@ assert.equal(typeof catchAllHandler, "function", "catch-all wiki path route shou
   const renderCalls = [];
   let nextCalled = false;
   await catchAllHandler(
-    { params: { path: "ckeditor-page" }, query: {}, uid: 1 },
+    { params: { path: "lore/deities/gond" }, query: {}, uid: 1 },
     {
       locals: {},
       render: (template, data) => {
@@ -88,17 +85,10 @@ assert.equal(typeof catchAllHandler, "function", "catch-all wiki path route shou
     }
   );
 
-  assert.equal(nextCalled, false, "ambiguous wiki article paths should not fall through to NodeBB's 404 route");
-  assert.equal(renderCalls.length, 1);
-  assert.equal(renderCalls[0].template, "wiki-page-collision");
-  assert.equal(renderCalls[0].data.requestedWikiPath, "/wiki/ckeditor-page");
-  assert.deepEqual(
-    renderCalls[0].data.pageCollisionRows.map((row) => [row.title, row.wikiPath]),
-    [
-      ["Ckeditor Page", "/wiki/12/ckeditor-page"],
-      ["CKEditor Page.................", "/wiki/13/ckeditor-page"]
-    ]
-  );
+  assert.equal(nextCalled, true, "folded canonical ambiguity should not select a legacy slug collision page");
+  assert.equal(renderCalls.length, 0);
+  assert.equal(legacyNamespaceCalls, 0);
+  assert.equal(legacyArticleCalls, 0);
 
   console.log("wiki route collision tests passed");
 })().catch((err) => {

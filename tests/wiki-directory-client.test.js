@@ -95,6 +95,12 @@ function createDom(options = {}) {
   return dom;
 }
 
+test("dynamic directory renderers guard rows with blank wikiPath", function () {
+  assert.match(script, /page\.hasWikiPath !== false && page\.wikiPath/);
+  assert.match(script, /<span class=\\"wiki-index-entry-title wiki-index-entry-title--disabled\\"/);
+  assert.match(script, /<span class=\\"wiki-sidebar-nav-page wiki-sidebar-nav-page--disabled\\"/);
+});
+
 test("directory navigation rows with descendants get a caret that hides child rows", function () {
   const dom = createDom();
   const { document } = dom.window;

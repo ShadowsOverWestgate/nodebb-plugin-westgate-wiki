@@ -79,18 +79,24 @@
     return "<span class=\"" + className + "\">" + inner + "</span><span class=\"wiki-topic-title-separator\" aria-hidden=\"true\">/</span>";
   }
 
+  function pageHasWikiPath(page) {
+    return !!(page && page.hasWikiPath !== false && page.wikiPath);
+  }
+
   function renderPageRow(page, rel) {
     var parent = renderParentPath(page, "wiki-topic-parent-path");
     var leaf = "<span class=\"wiki-topic-title-leaf\">" + escapeHtml(page.titleLeaf || page.title || "") + "</span>";
     var subpageClass = page.hasParentPath ? " wiki-index-entry--subpage" : "";
     var depth = parseInt(page.titleDepth, 10);
     var depthStyle = Number.isInteger(depth) && depth > 0 ? " style=\"--wiki-title-depth: " + escapeHtml(String(depth)) + ";\"" : "";
+    var title = pageHasWikiPath(page) ?
+      "<a class=\"wiki-index-entry-title\" href=\"" + escapeHtml(rel + page.wikiPath) + "\">" + parent + leaf + "</a>" :
+      "<span class=\"wiki-index-entry-title wiki-index-entry-title--disabled\" aria-disabled=\"true\">" + parent + leaf + "</span>";
     return (
       "<li class=\"wiki-index-entry wiki-directory-row" + subpageClass + "\" data-wiki-title-path=\"" + titlePathAttr(page) + "\"" + depthStyle + ">" +
       "<div class=\"wiki-index-entry-main\">" +
-      "<a class=\"wiki-index-entry-title\" href=\"" + escapeHtml(rel + (page.wikiPath || "")) + "\">" +
-      parent + leaf +
-      "</a></div></li>"
+      title +
+      "</div></li>"
     );
   }
 
@@ -99,11 +105,13 @@
     var leaf = "<span class=\"wiki-sidebar-page-title\">" + escapeHtml(page.titleLeaf || page.title || "") + "</span>";
     var active = page.isActive ? " is-active" : "";
     var tidAttr = page.tid != null ? " data-wiki-nav-tid=\"" + escapeHtml(String(page.tid)) + "\"" : "";
+    var title = pageHasWikiPath(page) ?
+      "<a class=\"wiki-sidebar-nav-page\" href=\"" + escapeHtml(rel + page.wikiPath) + "\">" + parent + leaf + "</a>" :
+      "<span class=\"wiki-sidebar-nav-page wiki-sidebar-nav-page--disabled\" aria-disabled=\"true\">" + parent + leaf + "</span>";
     return (
       "<li class=\"wiki-sidebar-nav-row wiki-sidebar-nav-row--page" + active + "\"" + tidAttr + " data-wiki-title-path=\"" + titlePathAttr(page) + "\">" +
-      "<a class=\"wiki-sidebar-nav-page\" href=\"" + escapeHtml(rel + (page.wikiPath || "")) + "\">" +
-      parent + leaf +
-      "</a></li>"
+      title +
+      "</li>"
     );
   }
 
