@@ -13,9 +13,10 @@ const state = {
   ]),
   topics: new Map([
     [10, { tid: 10, cid: 1, title: "Server Rules", slug: "10/server-rules", deleted: 0, scheduled: 0, postcount: 1 }],
-    [11, { tid: 11, cid: 1, title: "Third-Party Content Credits", slug: "11/third-party-content-credits", deleted: 0, scheduled: 0, postcount: 1 }]
+    [11, { tid: 11, cid: 1, title: "Third-Party Content Credits", slug: "11/third-party-content-credits", deleted: 0, scheduled: 0, postcount: 1 }],
+    [12, { tid: 12, cid: 1, title: "Rules", slug: "12/rules", deleted: 0, scheduled: 0, postcount: 1 }]
   ]),
-  tidsByCid: new Map([[1, [10, 11]], [2, []]])
+  tidsByCid: new Map([[1, [10, 11, 12]], [2, []]])
 };
 
 const originalMainRequire = require.main.require.bind(require.main);
@@ -129,6 +130,18 @@ const wikiService = require("../lib/wiki-service");
     rootSection.section.childSections[0].articleCount,
     0,
     "child namespace article counts should use the live cid tids set instead of stale category.topic_count"
+  );
+  assert.deepEqual(
+    rootSection.section.topics.map((topic) => topic.tid),
+    [10, 11],
+    "a child namespace index page should not be duplicated as a normal article in the parent namespace listing"
+  );
+
+  const hub = await wikiService.getSections(1);
+  assert.deepEqual(
+    hub.sections[0].topics.map((topic) => topic.tid),
+    [10, 11],
+    "a child namespace index page should not be duplicated in wiki hub previews"
   );
 
   console.log("wiki directory stale count tests passed");
