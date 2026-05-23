@@ -160,6 +160,8 @@ async function buildCanonicalPageRenderData(req, nodeResult, wikiPage, wikiSecti
   const section = wikiSection && wikiSection.section;
   const rows = buildCanonicalNodeListingRows(nodeResult.children);
   const node = nodeResult.node || {};
+  const isNamespaceIndexPage = !!section;
+  const canCreateWikiNamespaces = await wikiNamespaceCreators.getCanCreateWikiNamespaces(req.uid);
 
   return {
     ...buildWikiPageRenderData(wikiPage, { isWikiHome: false }),
@@ -170,6 +172,7 @@ async function buildCanonicalPageRenderData(req, nodeResult, wikiPage, wikiSecti
     hasNamespace: !!section,
     isComposite: !!node.isComposite,
     isBranchOnly: false,
+    isNamespaceIndexPage,
     hasDescendants: !!node.hasDescendants,
     nodeListing: {
       rows,
@@ -184,7 +187,21 @@ async function buildCanonicalPageRenderData(req, nodeResult, wikiPage, wikiSecti
       createIntentNamespaceName: "",
       createIntentAutoload: false
     }),
-    canCreateWikiNamespaces: await wikiNamespaceCreators.getCanCreateWikiNamespaces(req.uid)
+    ...(isNamespaceIndexPage ? {
+      canMoveWikiPage: false,
+      canChangeWikiOwner: false,
+      canMakeWikiSubpage: false,
+      namespaceIndexActionCid: section.cid,
+      namespaceIndexCanCreatePage: !!(section.privileges && section.privileges.canCreatePage),
+      namespaceIndexCanCreateWikiNamespaces: !!canCreateWikiNamespaces,
+      namespaceIndexDeleteRedirectPath: nodeResult.wikiPath || canonicalWikiPath(nodeResult.canonicalPath)
+    } : {
+      namespaceIndexActionCid: "",
+      namespaceIndexCanCreatePage: false,
+      namespaceIndexCanCreateWikiNamespaces: false,
+      namespaceIndexDeleteRedirectPath: ""
+    }),
+    canCreateWikiNamespaces
   };
 }
 

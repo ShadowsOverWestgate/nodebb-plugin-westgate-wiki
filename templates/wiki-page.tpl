@@ -127,8 +127,33 @@
       <button type="button" class="wiki-article-drawer-backdrop" data-wiki-drawer-backdrop hidden aria-label="Close article navigation drawers"></button>
     </div>
 
-    <nav class="wiki-fab-dock wiki-fab-dock--floating" aria-label="Page tools">
+    <nav class="wiki-fab-dock wiki-fab-dock--floating" aria-label="<!-- IF isNamespaceIndexPage -->Namespace tools<!-- ELSE -->Page tools<!-- ENDIF isNamespaceIndexPage -->">
       <div class="wiki-fab-dock-inner">
+        <!-- IF isNamespaceIndexPage -->
+        <!-- IF canEditWikiPage -->
+        <a class="wiki-fab-btn wiki-fab-btn--icon" href="{config.relative_path}/wiki/edit/{topic.tid}" title="Edit namespace index page" aria-label="Edit namespace index page">
+          <i class="fa fa-fw fa-pencil" aria-hidden="true"></i>
+        </a>
+        <!-- ENDIF canEditWikiPage -->
+        <!-- IF namespaceIndexCanCreatePage -->
+        <a class="wiki-fab-btn wiki-fab-btn--icon" href="#" data-wiki-create-page="1" data-cid="{namespaceIndexActionCid}" title="Create a new wiki page in this namespace" aria-label="Create a new wiki page in this namespace">
+          <i class="fa fa-fw fa-file-text" aria-hidden="true"></i>
+        </a>
+        <!-- ENDIF namespaceIndexCanCreatePage -->
+        <!-- IF namespaceIndexCanCreateWikiNamespaces -->
+        <a class="wiki-fab-btn wiki-fab-btn--icon" href="{config.relative_path}/wiki/namespace/create/{namespaceIndexActionCid}" title="Create a child wiki namespace under this namespace" aria-label="Create a child wiki namespace">
+          <i class="fa fa-fw fa-folder-open" aria-hidden="true"></i>
+        </a>
+        <!-- ENDIF namespaceIndexCanCreateWikiNamespaces -->
+        <!-- IF canDeleteWikiPage -->
+        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon wiki-fab-btn--danger wiki-delete-page" data-wiki-delete-topic="1" data-tid="{topic.tid}" data-redirect-href="{config.relative_path}{namespaceIndexDeleteRedirectPath}" title="Remove namespace index page" aria-label="Remove namespace index page">
+          <i class="fa fa-fw fa-trash-o" aria-hidden="true"></i>
+        </button>
+        <!-- ENDIF canDeleteWikiPage -->
+        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon" data-wiki-scroll-top="1" title="Scroll to top" aria-label="Scroll to top">
+          <i class="fa fa-fw fa-chevron-up" aria-hidden="true"></i>
+        </button>
+        <!-- ELSE -->
         <!-- IF canEditWikiPage -->
         <a class="wiki-fab-btn wiki-fab-btn--icon" href="{config.relative_path}/wiki/edit/{topic.tid}" title="Edit this wiki page" aria-label="Edit this wiki page">
           <i class="fa fa-fw fa-pencil" aria-hidden="true"></i>
@@ -177,6 +202,7 @@
         <button type="button" class="wiki-fab-btn wiki-fab-btn--icon" data-wiki-scroll-top="1" title="Scroll to top" aria-label="Scroll to top">
           <i class="fa fa-fw fa-chevron-up" aria-hidden="true"></i>
         </button>
+        <!-- ENDIF isNamespaceIndexPage -->
       </div>
     </nav>
   </div>

@@ -294,6 +294,7 @@ async function runHub() {
 
 (async () => {
   resetStubs();
+  canCreateWikiNamespaces = true;
   resolveWikiNodeResult = baseNodeResult();
   legacyNamespaceResult = { status: "ok", cid: 42 };
   const composite = await runCatchAll("Lore/Deities/Gond");
@@ -303,10 +304,15 @@ async function runHub() {
   assert.equal(composite.renderCalls[0].template, "wiki-page");
   assert.equal(composite.renderCalls[0].data.topic.tid, 77);
   assert.equal(composite.renderCalls[0].data.canEditWikiPage, true);
-  assert.equal(composite.renderCalls[0].data.canMoveWikiPage, true);
   assert.equal(composite.renderCalls[0].data.canDeleteWikiPage, true);
-  assert.equal(composite.renderCalls[0].data.canWatchWikiArticle, true);
-  assert.equal(composite.renderCalls[0].data.showWikiDiscussionLink, true);
+  assert.equal(composite.renderCalls[0].data.isNamespaceIndexPage, true);
+  assert.equal(composite.renderCalls[0].data.canMoveWikiPage, false);
+  assert.equal(composite.renderCalls[0].data.canChangeWikiOwner, false);
+  assert.equal(composite.renderCalls[0].data.canMakeWikiSubpage, false);
+  assert.equal(composite.renderCalls[0].data.namespaceIndexActionCid, 42);
+  assert.equal(composite.renderCalls[0].data.namespaceIndexCanCreatePage, true);
+  assert.equal(composite.renderCalls[0].data.namespaceIndexCanCreateWikiNamespaces, true);
+  assert.equal(composite.renderCalls[0].data.namespaceIndexDeleteRedirectPath, "/wiki/Lore/Deities/Gond");
   assert.equal(composite.renderCalls[0].data.nodeListing.rows[0].wikiPath, "/wiki/Lore/Deities/Gond/Clerics");
   assert.equal(Object.prototype.hasOwnProperty.call(composite.renderCalls[0].data, "canonicalNode"), false);
   assert.equal(Object.prototype.hasOwnProperty.call(composite.renderCalls[0].data, "namespaceSection"), false);
@@ -679,6 +685,12 @@ async function runHub() {
 
   const pageTemplate = fs.readFileSync(path.join(__dirname, "../templates/wiki-page.tpl"), "utf8");
   assert.match(pageTemplate, /wiki-fab-dock[\s\S]*data-wiki-article-watch[\s\S]*article-body\.css/);
+  assert.match(pageTemplate, /aria-label="<!-- IF isNamespaceIndexPage -->Namespace tools<!-- ELSE -->Page tools<!-- ENDIF isNamespaceIndexPage -->"/);
+  assert.match(
+    pageTemplate,
+    /<!-- IF isNamespaceIndexPage -->[\s\S]*data-wiki-create-page="1"[\s\S]*data-cid="\{namespaceIndexActionCid\}"[\s\S]*\/wiki\/namespace\/create\/\{namespaceIndexActionCid\}[\s\S]*<!-- ELSE -->[\s\S]*data-wiki-move-page[\s\S]*<!-- ENDIF isNamespaceIndexPage -->/,
+    "namespace index pages should render namespace-scoped floating actions instead of page-only move/subpage actions"
+  );
   assert.match(pageTemplate, /<!-- IF hasCreateIntent -->[\s\S]*data-wiki-create-page="1"[\s\S]*<!-- ENDIF hasCreateIntent -->/);
   assert.match(pageTemplate, /<!-- IF hasNodeListingRows -->[\s\S]*<!-- BEGIN nodeListing\.rows -->/);
 
