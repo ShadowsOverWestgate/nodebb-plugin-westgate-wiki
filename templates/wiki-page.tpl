@@ -82,20 +82,66 @@
 
         <!-- IF hasNodeListingRows -->
         <section class="wiki-page-body mt-4">
-          <article class="wiki-page-content wiki-article-prose wiki-namespace-index card">
+          <article class="wiki-page-content wiki-article-prose wiki-namespace-index wiki-node-contents card">
             <div class="card-body">
               <h2 class="wiki-index-subsection-title" style="margin-top:0;">Contents</h2>
-              <ul class="wiki-index-list">
-                <!-- BEGIN nodeListing.rows -->
-                <li class="wiki-index-entry">
-                  <div class="wiki-index-entry-main">
-                    <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
-                      {./displayTitle}
-                    </a>
-                  </div>
-                </li>
-                <!-- END nodeListing.rows -->
-              </ul>
+
+              <!-- IF hasNodeListingNamespaceRows -->
+              <section class="wiki-index-namespaces-block" aria-labelledby="wiki-node-ns-heading">
+                <h3 class="wiki-index-subsection-title" id="wiki-node-ns-heading" style="margin-top:0;">Child Namespaces</h3>
+                <ul class="wiki-index-list wiki-index-list--namespaces">
+                  <!-- BEGIN nodeListing.namespaceRows -->
+                  <li class="wiki-index-entry wiki-index-entry--namespace">
+                    <div class="wiki-index-entry-main">
+                      <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
+                        {./displayTitle}
+                      </a>
+                    </div>
+                  </li>
+                  <!-- END nodeListing.namespaceRows -->
+                </ul>
+              </section>
+              <!-- ENDIF hasNodeListingNamespaceRows -->
+
+              <!-- IF hasNodeListingArticleRows -->
+              <!-- IF hasNodeListingArticleDivider -->
+              <hr class="wiki-index-section-rule" />
+              <!-- ENDIF hasNodeListingArticleDivider -->
+              <section class="wiki-index-pages-block" aria-labelledby="wiki-node-pages-heading">
+                <h3 class="wiki-index-subsection-title" id="wiki-node-pages-heading"><!-- IF isNamespaceIndexPage -->Articles<!-- ELSE -->Subpages<!-- ENDIF isNamespaceIndexPage --></h3>
+                <ul class="wiki-index-list">
+                  <!-- BEGIN nodeListing.articleRows -->
+                  <li class="wiki-index-entry wiki-index-entry--article">
+                    <div class="wiki-index-entry-main">
+                      <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
+                        {./displayTitle}
+                      </a>
+                    </div>
+                  </li>
+                  <!-- END nodeListing.articleRows -->
+                </ul>
+              </section>
+              <!-- ENDIF hasNodeListingArticleRows -->
+
+              <!-- IF hasNodeListingBranchRows -->
+              <!-- IF hasNodeListingBranchDivider -->
+              <hr class="wiki-index-section-rule" />
+              <!-- ENDIF hasNodeListingBranchDivider -->
+              <section class="wiki-index-branches-block" aria-labelledby="wiki-node-branches-heading">
+                <h3 class="wiki-index-subsection-title" id="wiki-node-branches-heading">Branches</h3>
+                <ul class="wiki-index-list">
+                  <!-- BEGIN nodeListing.branchRows -->
+                  <li class="wiki-index-entry wiki-index-entry--branch">
+                    <div class="wiki-index-entry-main">
+                      <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
+                        {./displayTitle}
+                      </a>
+                    </div>
+                  </li>
+                  <!-- END nodeListing.branchRows -->
+                </ul>
+              </section>
+              <!-- ENDIF hasNodeListingBranchRows -->
             </div>
           </article>
         </section>

@@ -314,6 +314,9 @@ async function runHub() {
   assert.equal(composite.renderCalls[0].data.namespaceIndexCanCreateWikiNamespaces, true);
   assert.equal(composite.renderCalls[0].data.namespaceIndexDeleteRedirectPath, "/wiki/Lore/Deities/Gond");
   assert.equal(composite.renderCalls[0].data.nodeListing.rows[0].wikiPath, "/wiki/Lore/Deities/Gond/Clerics");
+  assert.equal(composite.renderCalls[0].data.hasNodeListingNamespaceRows, true);
+  assert.equal(composite.renderCalls[0].data.nodeListing.namespaceRows[0].displayTitle, "Clerics");
+  assert.equal(composite.renderCalls[0].data.hasNodeListingArticleRows, false);
   assert.equal(Object.prototype.hasOwnProperty.call(composite.renderCalls[0].data, "canonicalNode"), false);
   assert.equal(Object.prototype.hasOwnProperty.call(composite.renderCalls[0].data, "namespaceSection"), false);
   assert.equal(Object.prototype.hasOwnProperty.call(composite.renderCalls[0].data.nodeListing.rows[0], "topic"), false);
@@ -366,6 +369,49 @@ async function runHub() {
   assert.equal(pageOnly.renderCalls[0].data.topic.tid, 77);
   assert.equal(pageOnly.renderCalls[0].data.hasNamespace, false);
   assert.equal(pageOnly.renderCalls[0].data.nodeListing.rows.length, 0);
+  assert.deepEqual(getSectionCalls, []);
+
+  resetStubs();
+  resolveWikiNodeResult = baseNodeResult({
+    node: {
+      ...baseNodeResult().node,
+      namespace: null,
+      isComposite: false,
+      hasDescendants: true
+    },
+    children: {
+      directNodes: [
+        {
+          canonicalPath: "Lore/Deities/Gond/Forge_Prayers",
+          segments: ["Lore", "Deities", "Gond", "Forge_Prayers"],
+          wikiPath: "/wiki/Lore/Deities/Gond/Forge_Prayers",
+          page: {
+            tid: 88,
+            cid: 20,
+            canonicalPath: "Lore/Deities/Gond/Forge_Prayers",
+            titlePath: ["Gond", "Forge Prayers"],
+            topic: { tid: 88, cid: 20, title: "Gond :: Forge Prayers", titleRaw: "Gond :: Forge Prayers" }
+          },
+          namespace: null,
+          isComposite: false,
+          isBranchOnly: false,
+          hasDescendants: false
+        }
+      ],
+      childNamespaces: [],
+      childPages: []
+    }
+  });
+  const pageOnlyWithSubpages = await runCatchAll("Lore/Deities/Gond");
+
+  assert.equal(pageOnlyWithSubpages.renderCalls[0].template, "wiki-page");
+  assert.equal(pageOnlyWithSubpages.renderCalls[0].data.hasNamespace, false);
+  assert.equal(pageOnlyWithSubpages.renderCalls[0].data.isNamespaceIndexPage, false);
+  assert.equal(pageOnlyWithSubpages.renderCalls[0].data.canMoveWikiPage, true);
+  assert.equal(pageOnlyWithSubpages.renderCalls[0].data.canMakeWikiSubpage, true);
+  assert.equal(pageOnlyWithSubpages.renderCalls[0].data.hasNodeListingArticleRows, true);
+  assert.equal(pageOnlyWithSubpages.renderCalls[0].data.nodeListing.articleRows[0].displayTitle, "Forge Prayers");
+  assert.equal(pageOnlyWithSubpages.renderCalls[0].data.hasNodeListingNamespaceRows, false);
   assert.deepEqual(getSectionCalls, []);
 
   resetStubs();
@@ -691,8 +737,18 @@ async function runHub() {
     /<!-- IF isNamespaceIndexPage -->[\s\S]*data-wiki-create-page="1"[\s\S]*data-cid="\{namespaceIndexActionCid\}"[\s\S]*\/wiki\/namespace\/create\/\{namespaceIndexActionCid\}[\s\S]*<!-- ELSE -->[\s\S]*data-wiki-move-page[\s\S]*<!-- ENDIF isNamespaceIndexPage -->/,
     "namespace index pages should render namespace-scoped floating actions instead of page-only move/subpage actions"
   );
+  assert.match(
+    pageTemplate,
+    /<!-- IF hasNodeListingNamespaceRows -->[\s\S]*Child Namespaces[\s\S]*<!-- BEGIN nodeListing\.namespaceRows -->/,
+    "composite contents should distinguish child namespaces from article rows"
+  );
+  assert.match(
+    pageTemplate,
+    /<!-- IF hasNodeListingArticleRows -->[\s\S]*<!-- IF isNamespaceIndexPage -->Articles<!-- ELSE -->Subpages<!-- ENDIF isNamespaceIndexPage -->[\s\S]*<!-- BEGIN nodeListing\.articleRows -->/,
+    "page-only contents should label descendant articles as subpages instead of namespaces"
+  );
   assert.match(pageTemplate, /<!-- IF hasCreateIntent -->[\s\S]*data-wiki-create-page="1"[\s\S]*<!-- ENDIF hasCreateIntent -->/);
-  assert.match(pageTemplate, /<!-- IF hasNodeListingRows -->[\s\S]*<!-- BEGIN nodeListing\.rows -->/);
+  assert.match(pageTemplate, /<!-- IF hasNodeListingRows -->[\s\S]*wiki-node-contents/);
 
   const sectionTemplate = fs.readFileSync(path.join(__dirname, "../templates/wiki-section.tpl"), "utf8");
   assert.match(sectionTemplate, /wiki-fab-dock[\s\S]*data-wiki-create-page="1"[\s\S]*namespace\/create/);

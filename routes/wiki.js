@@ -138,6 +138,39 @@ function buildCanonicalNodeListingRows(children) {
   });
 }
 
+function buildCanonicalNodeListing(children) {
+  const rows = buildCanonicalNodeListingRows(children);
+  const namespaceRows = rows.filter((row) => row.hasNamespace);
+  const articleRows = rows.filter((row) => row.hasPage && !row.hasNamespace);
+  const branchRows = rows.filter((row) => !row.hasPage && !row.hasNamespace);
+
+  return {
+    rows,
+    namespaceRows,
+    articleRows,
+    branchRows,
+    hasRows: rows.length > 0,
+    hasNamespaceRows: namespaceRows.length > 0,
+    hasArticleRows: articleRows.length > 0,
+    hasBranchRows: branchRows.length > 0,
+    hasArticleDivider: namespaceRows.length > 0 && articleRows.length > 0,
+    hasBranchDivider: (namespaceRows.length > 0 || articleRows.length > 0) && branchRows.length > 0
+  };
+}
+
+function buildCanonicalNodeListingRenderData(children) {
+  const nodeListing = buildCanonicalNodeListing(children);
+  return {
+    nodeListing,
+    hasNodeListingRows: nodeListing.hasRows,
+    hasNodeListingNamespaceRows: nodeListing.hasNamespaceRows,
+    hasNodeListingArticleRows: nodeListing.hasArticleRows,
+    hasNodeListingBranchRows: nodeListing.hasBranchRows,
+    hasNodeListingArticleDivider: nodeListing.hasArticleDivider,
+    hasNodeListingBranchDivider: nodeListing.hasBranchDivider
+  };
+}
+
 function buildCreateIntentRenderData(req, section, options = {}) {
   const createIntentTitle = getCreateIntentTitle(req);
   const directCreateIntentTitle = String(options.createIntentTitle || "").trim();
@@ -158,7 +191,7 @@ function buildCreateIntentRenderData(req, section, options = {}) {
 
 async function buildCanonicalPageRenderData(req, nodeResult, wikiPage, wikiSection, options = {}) {
   const section = wikiSection && wikiSection.section;
-  const rows = buildCanonicalNodeListingRows(nodeResult.children);
+  const listingData = buildCanonicalNodeListingRenderData(nodeResult.children);
   const node = nodeResult.node || {};
   const isNamespaceIndexPage = !!section;
   const canCreateWikiNamespaces = await wikiNamespaceCreators.getCanCreateWikiNamespaces(req.uid);
@@ -174,11 +207,7 @@ async function buildCanonicalPageRenderData(req, nodeResult, wikiPage, wikiSecti
     isBranchOnly: false,
     isNamespaceIndexPage,
     hasDescendants: !!node.hasDescendants,
-    nodeListing: {
-      rows,
-      hasRows: rows.length > 0
-    },
-    hasNodeListingRows: rows.length > 0,
+    ...listingData,
     ...(section ? buildCreateIntentRenderData(req, section, options) : {
       canCreatePage: false,
       hasCreateIntent: false,
@@ -208,7 +237,7 @@ async function buildCanonicalPageRenderData(req, nodeResult, wikiPage, wikiSecti
 async function buildCanonicalNodeRenderData(req, nodeResult, wikiPage, wikiSection) {
   const article = wikiPage ? buildWikiPageRenderData(wikiPage, { isWikiHome: false }) : null;
   const namespace = wikiSection ? { section: wikiSection.section } : null;
-  const rows = buildCanonicalNodeListingRows(nodeResult.children);
+  const listingData = buildCanonicalNodeListingRenderData(nodeResult.children);
   const node = nodeResult.node || {};
   const canonicalTitle = article && article.pageTitle ?
     article.pageTitle :
@@ -229,11 +258,7 @@ async function buildCanonicalNodeRenderData(req, nodeResult, wikiPage, wikiSecti
     isComposite: !!node.isComposite,
     isBranchOnly: !!node.isBranchOnly,
     hasDescendants: !!node.hasDescendants,
-    nodeListing: {
-      rows,
-      hasRows: rows.length > 0
-    },
-    hasNodeListingRows: rows.length > 0,
+    ...listingData,
     canCreateWikiNamespaces
   };
 }
