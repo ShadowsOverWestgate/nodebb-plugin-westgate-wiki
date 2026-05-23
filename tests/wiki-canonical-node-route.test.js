@@ -315,6 +315,7 @@ async function runHub() {
   assert.equal(composite.renderCalls[0].data.namespaceIndexDeleteRedirectPath, "/wiki/Lore/Deities/Gond");
   assert.equal(composite.renderCalls[0].data.nodeListing.rows[0].wikiPath, "/wiki/Lore/Deities/Gond/Clerics");
   assert.equal(composite.renderCalls[0].data.hasNodeListingNamespaceRows, true);
+  assert.equal(composite.renderCalls[0].data.nodeListingNamespaceRows[0].displayTitle, "Clerics");
   assert.equal(composite.renderCalls[0].data.nodeListing.namespaceRows[0].displayTitle, "Clerics");
   assert.equal(composite.renderCalls[0].data.hasNodeListingArticleRows, false);
   assert.equal(Object.prototype.hasOwnProperty.call(composite.renderCalls[0].data, "canonicalNode"), false);
@@ -328,6 +329,100 @@ async function runHub() {
   });
   assert.equal(legacyNamespaceCalls, 0);
   assert.equal(legacyArticleCalls, 0);
+
+  resetStubs();
+  canCreateWikiNamespaces = true;
+  resolveWikiNodeResult = baseNodeResult({
+    canonicalPath: "Test_child_ns",
+    wikiPath: "/wiki/Test_child_ns",
+    node: {
+      canonicalPath: "Test_child_ns",
+      segments: ["Test_child_ns"],
+      page: {
+        tid: 77,
+        cid: 20,
+        canonicalPath: "Test_child_ns",
+        titlePath: ["test child ns"],
+        topic: { tid: 77, cid: 20, title: "test child ns", titleRaw: "test child ns" }
+      },
+      namespace: {
+        cid: 42,
+        canonicalPath: "Test_child_ns",
+        category: { cid: 42, name: "test child ns" },
+        categoryChain: [
+          { cid: 1, name: "Wiki" },
+          { cid: 42, name: "test child ns" }
+        ]
+      },
+      isComposite: true,
+      isBranchOnly: false,
+      hasDescendants: true
+    },
+    ancestors: [
+      { canonicalPath: "", segment: "Wiki", wikiPath: "/wiki" }
+    ],
+    children: {
+      directNodes: [
+        {
+          canonicalPath: "Test_child_ns/asdf",
+          segments: ["Test_child_ns", "asdf"],
+          wikiPath: "/wiki/Test_child_ns/asdf",
+          page: {
+            tid: 88,
+            cid: 42,
+            canonicalPath: "Test_child_ns/asdf",
+            titlePath: ["asdf"],
+            topic: { tid: 88, cid: 42, title: "asdf", titleRaw: "asdf" }
+          },
+          namespace: null,
+          isComposite: false,
+          isBranchOnly: false,
+          hasDescendants: true
+        }
+      ],
+      childNamespaces: [],
+      childPages: []
+    }
+  });
+  getWikiPageImpl = async (tid) => ({
+    ...makeWikiPage(parseInt(tid, 10)),
+    category: { cid: 42, name: "test child ns", wikiPath: "/wiki/Test_child_ns" },
+    ancestorSections: [{ name: "Wiki", wikiPath: "/wiki" }],
+    pageTitlePath: ["test child ns"],
+    sectionNavigation: {
+      cid: 42,
+      name: "test child ns",
+      wikiPath: "/wiki/Test_child_ns",
+      childSections: [],
+      topics: [{ tid: 88, title: "asdf", titleLeaf: "asdf", wikiPath: "/wiki/Test_child_ns/asdf" }],
+      topicCount: 1
+    }
+  });
+  getSectionImpl = async () => ({
+    status: "ok",
+    section: {
+      cid: 42,
+      name: "test child ns",
+      wikiPath: "/wiki/Test_child_ns",
+      ancestorSections: [{ name: "Wiki", wikiPath: "/wiki" }],
+      childSections: [],
+      topics: [{ tid: 88, title: "asdf", titleLeaf: "asdf", wikiPath: "/wiki/Test_child_ns/asdf" }],
+      topicCount: 1,
+      directoryHasMore: false,
+      directoryNextCursor: "",
+      privileges: { canCreatePage: true }
+    }
+  });
+  const compositeWithArticleSubtree = await runCatchAll("Test_child_ns");
+
+  assert.equal(compositeWithArticleSubtree.renderCalls[0].template, "wiki-page");
+  assert.equal(compositeWithArticleSubtree.renderCalls[0].data.isNamespaceIndexPage, true);
+  assert.equal(compositeWithArticleSubtree.renderCalls[0].data.hasNodeListingArticleRows, true);
+  assert.equal(compositeWithArticleSubtree.renderCalls[0].data.nodeListingArticleRows[0].displayTitle, "asdf");
+  assert.equal(compositeWithArticleSubtree.renderCalls[0].data.nodeListing.articleRows[0].displayTitle, "asdf");
+  assert.equal(compositeWithArticleSubtree.renderCalls[0].data.nodeListing.articleRows[0].hasDescendants, true);
+  assert.equal(compositeWithArticleSubtree.renderCalls[0].data.hasNodeListingBranchRows, false);
+  assert.equal(compositeWithArticleSubtree.renderCalls[0].data.hasNodeListingNamespaceRows, false);
 
   resetStubs();
   resolveWikiNodeResult = baseNodeResult();
@@ -410,6 +505,7 @@ async function runHub() {
   assert.equal(pageOnlyWithSubpages.renderCalls[0].data.canMoveWikiPage, true);
   assert.equal(pageOnlyWithSubpages.renderCalls[0].data.canMakeWikiSubpage, true);
   assert.equal(pageOnlyWithSubpages.renderCalls[0].data.hasNodeListingArticleRows, true);
+  assert.equal(pageOnlyWithSubpages.renderCalls[0].data.nodeListingArticleRows[0].displayTitle, "Forge Prayers");
   assert.equal(pageOnlyWithSubpages.renderCalls[0].data.nodeListing.articleRows[0].displayTitle, "Forge Prayers");
   assert.equal(pageOnlyWithSubpages.renderCalls[0].data.hasNodeListingNamespaceRows, false);
   assert.deepEqual(getSectionCalls, []);
@@ -704,6 +800,7 @@ async function runHub() {
   assert.equal(branchOnly.renderCalls[0].data.hasNamespace, false);
   assert.equal(branchOnly.renderCalls[0].data.isBranchOnly, true);
   assert.equal(branchOnly.renderCalls[0].data.nodeListing.rows[0].wikiPath, "/wiki/Lore/Calendar/Months");
+  assert.equal(branchOnly.renderCalls[0].data.nodeListingRows[0].wikiPath, "/wiki/Lore/Calendar/Months");
 
   const sorted = wikiService.sortSectionTopics({
     topics: [
@@ -739,12 +836,12 @@ async function runHub() {
   );
   assert.match(
     pageTemplate,
-    /<!-- IF hasNodeListingNamespaceRows -->[\s\S]*Child Namespaces[\s\S]*<!-- BEGIN nodeListing\.namespaceRows -->/,
+    /<!-- IF hasNodeListingNamespaceRows -->[\s\S]*Child Namespaces[\s\S]*<!-- BEGIN nodeListingNamespaceRows -->/,
     "composite contents should distinguish child namespaces from article rows"
   );
   assert.match(
     pageTemplate,
-    /<!-- IF hasNodeListingArticleRows -->[\s\S]*<!-- IF isNamespaceIndexPage -->Articles<!-- ELSE -->Subpages<!-- ENDIF isNamespaceIndexPage -->[\s\S]*<!-- BEGIN nodeListing\.articleRows -->/,
+    /<!-- IF hasNodeListingArticleRows -->[\s\S]*<!-- IF isNamespaceIndexPage -->Articles<!-- ELSE -->Subpages<!-- ENDIF isNamespaceIndexPage -->[\s\S]*<!-- BEGIN nodeListingArticleRows -->/,
     "page-only contents should label descendant articles as subpages instead of namespaces"
   );
   assert.match(pageTemplate, /<!-- IF hasCreateIntent -->[\s\S]*data-wiki-create-page="1"[\s\S]*<!-- ENDIF hasCreateIntent -->/);
@@ -781,6 +878,13 @@ async function runHub() {
   );
 
   const publicClient = fs.readFileSync(path.join(__dirname, "../public/wiki.js"), "utf8");
+  const hubTemplate = fs.readFileSync(path.join(__dirname, "../templates/wiki.tpl"), "utf8");
+  assert.match(
+    hubTemplate,
+    /<!-- IF hasNodeListingRows -->[\s\S]*<!-- BEGIN nodeListingRows -->/,
+    "branch-only contents should use a top-level rows loop"
+  );
+
   assert.match(
     publicClient,
     /redirectPath[\s\S]*data-wiki-create-redirect-path/,

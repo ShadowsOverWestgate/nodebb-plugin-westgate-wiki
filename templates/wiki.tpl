@@ -49,7 +49,7 @@
           <div class="card-body">
             <h2 class="wiki-index-subsection-title" style="margin-top:0;">Contents</h2>
             <ul class="wiki-index-list">
-              <!-- BEGIN nodeListing.rows -->
+              <!-- BEGIN nodeListingRows -->
               <li class="wiki-index-entry">
                 <div class="wiki-index-entry-main">
                   <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
@@ -57,7 +57,7 @@
                   </a>
                 </div>
               </li>
-              <!-- END nodeListing.rows -->
+              <!-- END nodeListingRows -->
             </ul>
           </div>
         </article>

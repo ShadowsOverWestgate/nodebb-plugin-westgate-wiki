@@ -162,6 +162,10 @@ function buildCanonicalNodeListingRenderData(children) {
   const nodeListing = buildCanonicalNodeListing(children);
   return {
     nodeListing,
+    nodeListingRows: nodeListing.rows,
+    nodeListingNamespaceRows: nodeListing.namespaceRows,
+    nodeListingArticleRows: nodeListing.articleRows,
+    nodeListingBranchRows: nodeListing.branchRows,
     hasNodeListingRows: nodeListing.hasRows,
     hasNodeListingNamespaceRows: nodeListing.hasNamespaceRows,
     hasNodeListingArticleRows: nodeListing.hasArticleRows,

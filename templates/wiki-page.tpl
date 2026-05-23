@@ -90,7 +90,7 @@
               <section class="wiki-index-namespaces-block" aria-labelledby="wiki-node-ns-heading">
                 <h3 class="wiki-index-subsection-title" id="wiki-node-ns-heading" style="margin-top:0;">Child Namespaces</h3>
                 <ul class="wiki-index-list wiki-index-list--namespaces">
-                  <!-- BEGIN nodeListing.namespaceRows -->
+                  <!-- BEGIN nodeListingNamespaceRows -->
                   <li class="wiki-index-entry wiki-index-entry--namespace">
                     <div class="wiki-index-entry-main">
                       <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
@@ -98,7 +98,7 @@
                       </a>
                     </div>
                   </li>
-                  <!-- END nodeListing.namespaceRows -->
+                  <!-- END nodeListingNamespaceRows -->
                 </ul>
               </section>
               <!-- ENDIF hasNodeListingNamespaceRows -->
@@ -110,7 +110,7 @@
               <section class="wiki-index-pages-block" aria-labelledby="wiki-node-pages-heading">
                 <h3 class="wiki-index-subsection-title" id="wiki-node-pages-heading"><!-- IF isNamespaceIndexPage -->Articles<!-- ELSE -->Subpages<!-- ENDIF isNamespaceIndexPage --></h3>
                 <ul class="wiki-index-list">
-                  <!-- BEGIN nodeListing.articleRows -->
+                  <!-- BEGIN nodeListingArticleRows -->
                   <li class="wiki-index-entry wiki-index-entry--article">
                     <div class="wiki-index-entry-main">
                       <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
@@ -118,7 +118,7 @@
                       </a>
                     </div>
                   </li>
-                  <!-- END nodeListing.articleRows -->
+                  <!-- END nodeListingArticleRows -->
                 </ul>
               </section>
               <!-- ENDIF hasNodeListingArticleRows -->
@@ -130,7 +130,7 @@
               <section class="wiki-index-branches-block" aria-labelledby="wiki-node-branches-heading">
                 <h3 class="wiki-index-subsection-title" id="wiki-node-branches-heading">Branches</h3>
                 <ul class="wiki-index-list">
-                  <!-- BEGIN nodeListing.branchRows -->
+                  <!-- BEGIN nodeListingBranchRows -->
                   <li class="wiki-index-entry wiki-index-entry--branch">
                     <div class="wiki-index-entry-main">
                       <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
@@ -138,7 +138,7 @@
                       </a>
                     </div>
                   </li>
-                  <!-- END nodeListing.branchRows -->
+                  <!-- END nodeListingBranchRows -->
                 </ul>
               </section>
               <!-- ENDIF hasNodeListingBranchRows -->
