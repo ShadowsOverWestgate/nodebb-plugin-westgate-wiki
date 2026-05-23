@@ -111,3 +111,23 @@ assert.deepStrictEqual(
   ["Asdf", "A sub page", "Baby page"],
   "canonical node breadcrumbs should display title-path text instead of canonical URL segments"
 );
+
+assert.deepStrictEqual(
+  texts(wikiBreadcrumbTrail.forCanonicalNodeView({
+    ancestors: [
+      { segment: "Wiki", canonicalPath: "", wikiPath: "/wiki" },
+      { segment: "Asdf", canonicalPath: "Asdf", wikiPath: "/wiki/Asdf" },
+      { segment: "A_sub_page", canonicalPath: "Asdf/A_sub_page", wikiPath: "/wiki/Asdf/A_sub_page" }
+    ],
+    node: {
+      canonicalPath: "Asdf/A_sub_page/Baby_page",
+      segments: ["Asdf", "A_sub_page", "Baby_page"],
+      page: {
+        canonicalPath: "Asdf/A_sub_page/Baby_page",
+        titlePath: ["Asdf", "A sub page", "Baby page"]
+      }
+    }
+  })),
+  ["Wiki", "Asdf", "A sub page", "Baby page"],
+  "canonical node breadcrumbs should preserve the configured route-root crumb"
+);

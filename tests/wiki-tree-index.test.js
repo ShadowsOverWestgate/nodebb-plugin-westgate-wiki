@@ -242,7 +242,11 @@ async function withRuntimeStubs(stubs, fn) {
     const explicitTree = createTree({ categories, topics: [], routeRootCid: 1 });
     assert.equal(await explicitTree.getCanonicalNamespacePath(categories[1]), "Lore");
     assert.equal((await explicitTree.resolveWikiNode("", { uid: 1 })).status, "root-outside-tree");
-    assert.equal((await explicitTree.resolveWikiNode("Lore", { uid: 1 })).node.namespace.cid, 2);
+    const routedLore = await explicitTree.resolveWikiNode("Lore", { uid: 1 });
+    assert.equal(routedLore.node.namespace.cid, 2);
+    assert.deepEqual(routedLore.ancestors, [
+      { canonicalPath: "", segment: "Wiki", wikiPath: "/wiki" }
+    ]);
   }
 
   {
