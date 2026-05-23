@@ -172,6 +172,11 @@
           <i class="fa fa-fw fa-file-text" aria-hidden="true"></i>
         </a>
         <!-- ENDIF canCreatePage -->
+        <!-- IF canCreateNamespaceIndexPage -->
+        <a class="wiki-fab-btn wiki-fab-btn--icon" href="#" data-wiki-create-page="1" data-cid="{namespaceIndexCreateCid}" data-title="{namespaceIndexCreateTitle}" data-wiki-create-redirect-path="{namespaceIndexCreateRedirectPath}" data-wiki-create-namespace-path="{namespaceIndexCreateNamespacePath}" title="Create index page" aria-label="Create index page">
+          <i class="fa fa-fw fa-file-text-o" aria-hidden="true"></i>
+        </a>
+        <!-- ENDIF canCreateNamespaceIndexPage -->
         <!-- IF canCreateWikiNamespaces -->
         <a class="wiki-fab-btn wiki-fab-btn--icon" href="{config.relative_path}/wiki/namespace/create/{section.cid}" title="Create a child wiki namespace under this category" aria-label="Create a child wiki namespace">
           <i class="fa fa-fw fa-folder-open" aria-hidden="true"></i>

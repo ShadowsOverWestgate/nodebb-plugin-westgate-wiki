@@ -27,6 +27,64 @@ $(document).ready(function () {
     pendingWikiCreate = null;
   }
 
+  function normalizeWikiCreateTitle(value) {
+    return String(value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  }
+
+  function normalizeWikiCreateCanonicalSegment(value) {
+    const transliterations = {
+      "æ": "ae",
+      "œ": "oe",
+      "ø": "o",
+      "ß": "ss",
+      "þ": "th",
+      "ð": "d",
+      "đ": "d",
+      "ł": "l",
+      "ħ": "h",
+      "ı": "i",
+      "ŋ": "n",
+      "ŧ": "t"
+    };
+    let canonical = "";
+    let lastSeparator = false;
+    const chars = Array.from(String(value || "").trim().normalize("NFKD"));
+
+    chars.forEach(function (char) {
+      const transliterated = transliterations[char.toLocaleLowerCase("en-US")];
+      if (/^[A-Za-z0-9]$/.test(char)) {
+        canonical += char;
+        lastSeparator = false;
+      } else if (char === "_") {
+        if (canonical && !lastSeparator) {
+          canonical += "_";
+          lastSeparator = true;
+        }
+      } else if (/^\p{Mark}$/u.test(char) || /['"`´‘’‚‛“”„‟‹›«»′″＇＂]/.test(char)) {
+        return;
+      } else if (transliterated) {
+        canonical += char === char.toLocaleUpperCase("en-US") ?
+          transliterated.charAt(0).toLocaleUpperCase("en-US") + transliterated.slice(1) :
+          transliterated;
+        lastSeparator = false;
+      } else if (canonical && !lastSeparator) {
+        canonical += "_";
+        lastSeparator = true;
+      }
+    });
+
+    return canonical.replace(/^_+|_+$/g, "");
+  }
+
+  function getSubmittedWikiCreateTitle(payload) {
+    return String(
+      (payload && payload.postData && payload.postData.title) ||
+      (payload && payload.data && payload.data.title) ||
+      (payload && payload.composerData && payload.composerData.title) ||
+      ""
+    ).trim();
+  }
+
   function buildCurrentPathWithoutQuery() {
     return `${window.location.pathname}${window.location.hash || ""}`;
   }
@@ -70,7 +128,9 @@ $(document).ready(function () {
     pendingWikiCreate = {
       cid: intent.cid,
       title: intent.title || "",
-      namespacePath: intent.namespacePath || ""
+      namespacePath: intent.namespacePath || "",
+      redirectPath: intent.redirectPath || "",
+      submittedTitle: ""
     };
 
     let target = `wiki/compose/${intent.cid}`;
@@ -816,6 +876,9 @@ $(document).ready(function () {
       ) {
         payload.redirect = false;
         payload.composerData._wikiRedirect = true;
+        if (pendingWikiCreate) {
+          pendingWikiCreate.submittedTitle = getSubmittedWikiCreateTitle(payload);
+        }
       }
 
       return payload;
@@ -830,9 +893,13 @@ $(document).ready(function () {
         payload.data.slug
       ) {
         pendingAutoCreateHref = null;
-        const slugLeaf = String(payload.data.slug || "").split("/").filter(Boolean).pop();
+        const redirectPath = pendingWikiCreate && pendingWikiCreate.redirectPath;
+        const submittedTitle = pendingWikiCreate && pendingWikiCreate.submittedTitle;
+        const redirectTitleChanged = !!(submittedTitle && pendingWikiCreate && normalizeWikiCreateTitle(submittedTitle) !== normalizeWikiCreateTitle(pendingWikiCreate.title));
         const namespacePath = pendingWikiCreate && pendingWikiCreate.namespacePath;
-        const cleanPath = namespacePath && slugLeaf ? `${namespacePath.replace(/\/$/, "")}/${slugLeaf}` : `wiki/${payload.data.slug}`;
+        const canonicalLeaf = redirectTitleChanged ? normalizeWikiCreateCanonicalSegment(submittedTitle) : "";
+        const slugLeaf = String(payload.data.slug || "").split("/").filter(Boolean).pop();
+        const cleanPath = redirectPath && !redirectTitleChanged ? redirectPath : (namespacePath && (canonicalLeaf || slugLeaf) ? `${namespacePath.replace(/\/$/, "")}/${canonicalLeaf || slugLeaf}` : `wiki/${payload.data.slug}`);
         clearPendingWikiCreate();
         ajaxify.go(cleanPath.replace(/^\//, ""));
       }
@@ -872,9 +939,11 @@ $(document).ready(function () {
   $(document).on("click", "[data-wiki-create-page]", function (event) {
     const cid = parseInt($(this).attr("data-cid"), 10);
     const title = ($(this).attr("data-title") || "").trim();
+    const redirectPath = ($(this).attr("data-wiki-create-redirect-path") || "").trim();
+    const namespacePath = ($(this).attr("data-wiki-create-namespace-path") || "").trim();
 
     event.preventDefault();
-    launchWikiCreate({ cid: cid, title: title });
+    launchWikiCreate({ cid: cid, title: title, redirectPath: redirectPath, namespacePath: namespacePath });
   });
 
   $(document).on("click", "a", function (event) {

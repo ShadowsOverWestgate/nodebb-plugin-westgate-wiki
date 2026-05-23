@@ -371,6 +371,26 @@ async function runHub() {
       isComposite: false
     }
   });
+  getSectionImpl = async (cid) => {
+    if (parseInt(cid, 10) === 20) {
+      return {
+        status: "ok",
+        section: {
+          cid: 20,
+          name: "Deities",
+          wikiPath: "/wiki/Lore/Deities",
+          ancestorSections: [{ name: "Lore", wikiPath: "/wiki/Lore" }],
+          childSections: [],
+          topics: [],
+          topicCount: 0,
+          directoryHasMore: false,
+          directoryNextCursor: "",
+          privileges: { canCreatePage: true }
+        }
+      };
+    }
+    return makeWikiSection(parseInt(cid, 10));
+  };
   const namespaceOnly = await runCatchAll("Lore/Deities/Gond");
 
   assert.equal(namespaceOnly.renderCalls[0].template, "wiki-section");
@@ -378,7 +398,95 @@ async function runHub() {
   assert.equal(namespaceOnly.renderCalls[0].data.section.cid, 42);
   assert.equal(namespaceOnly.renderCalls[0].data.canCreatePage, true);
   assert.equal(namespaceOnly.renderCalls[0].data.canCreateWikiNamespaces, true);
+  assert.equal(namespaceOnly.renderCalls[0].data.canCreateNamespaceIndexPage, true);
+  assert.equal(namespaceOnly.renderCalls[0].data.namespaceIndexCreateCid, 20);
+  assert.equal(namespaceOnly.renderCalls[0].data.namespaceIndexCreateTitle, "Gond");
+  assert.equal(namespaceOnly.renderCalls[0].data.namespaceIndexCreateRedirectPath, "/wiki/Lore/Deities/Gond");
+  assert.equal(namespaceOnly.renderCalls[0].data.namespaceIndexCreateNamespacePath, "/wiki/Lore/Deities");
   assert.deepEqual(getWikiPageCalls, []);
+
+  resetStubs();
+  resolveWikiNodeResult = baseNodeResult({
+    node: {
+      ...baseNodeResult().node,
+      page: null,
+      isComposite: false
+    }
+  });
+  getSectionImpl = async (cid) => {
+    if (parseInt(cid, 10) === 20) {
+      return {
+        status: "ok",
+        section: {
+          cid: 20,
+          name: "Deities",
+          wikiPath: "/wiki/Lore/Deities",
+          ancestorSections: [{ name: "Lore", wikiPath: "/wiki/Lore" }],
+          childSections: [],
+          topics: [],
+          topicCount: 0,
+          directoryHasMore: false,
+          directoryNextCursor: "",
+          privileges: { canCreatePage: false }
+        }
+      };
+    }
+    return makeWikiSection(parseInt(cid, 10));
+  };
+  const namespaceOnlyNoParentCreate = await runCatchAll("Lore/Deities/Gond");
+
+  assert.equal(namespaceOnlyNoParentCreate.renderCalls[0].template, "wiki-section");
+  assert.equal(namespaceOnlyNoParentCreate.renderCalls[0].data.canCreateNamespaceIndexPage, false);
+
+  resetStubs();
+  resolveWikiNodeResult = baseNodeResult({
+    canonicalPath: "Lore",
+    wikiPath: "/wiki/Lore",
+    node: {
+      canonicalPath: "Lore",
+      segments: ["Lore"],
+      page: null,
+      namespace: {
+        cid: 10,
+        canonicalPath: "Lore",
+        category: { cid: 10, name: "Lore", parentCid: 1 },
+        categoryChain: [
+          { cid: 10, name: "Lore", parentCid: 1 }
+        ]
+      },
+      isComposite: false,
+      isBranchOnly: false,
+      hasDescendants: true
+    }
+  });
+  getSectionImpl = async (cid) => {
+    if (parseInt(cid, 10) === 1) {
+      return {
+        status: "ok",
+        section: {
+          cid: 1,
+          name: "Wiki",
+          wikiPath: "/wiki",
+          ancestorSections: [],
+          childSections: [],
+          topics: [],
+          topicCount: 0,
+          directoryHasMore: false,
+          directoryNextCursor: "",
+          privileges: { canCreatePage: true }
+        }
+      };
+    }
+    return makeWikiSection(parseInt(cid, 10));
+  };
+  const routeRootChildNamespace = await runCatchAll("Lore");
+
+  assert.equal(routeRootChildNamespace.renderCalls[0].template, "wiki-section");
+  assert.equal(routeRootChildNamespace.renderCalls[0].data.canCreateNamespaceIndexPage, true);
+  assert.equal(routeRootChildNamespace.renderCalls[0].data.namespaceIndexCreateCid, 1);
+  assert.equal(routeRootChildNamespace.renderCalls[0].data.namespaceIndexCreateTitle, "Lore");
+  assert.equal(routeRootChildNamespace.renderCalls[0].data.namespaceIndexCreateRedirectPath, "/wiki/Lore");
+  assert.equal(routeRootChildNamespace.renderCalls[0].data.namespaceIndexCreateNamespacePath, "/wiki");
 
   resetStubs();
   resolveWikiNodeImpl = async (requestPath) => {
@@ -578,6 +686,11 @@ async function runHub() {
   assert.match(sectionTemplate, /wiki-fab-dock[\s\S]*data-wiki-create-page="1"[\s\S]*namespace\/create/);
   assert.match(
     sectionTemplate,
+    /<!-- IF canCreateNamespaceIndexPage -->[\s\S]*data-wiki-create-page="1"[\s\S]*data-cid="\{namespaceIndexCreateCid\}"[\s\S]*data-title="\{namespaceIndexCreateTitle\}"[\s\S]*data-wiki-create-redirect-path="\{namespaceIndexCreateRedirectPath\}"[\s\S]*data-wiki-create-namespace-path="\{namespaceIndexCreateNamespacePath\}"[\s\S]*Create index page[\s\S]*<!-- ENDIF canCreateNamespaceIndexPage -->/,
+    "namespace-only views should expose a dedicated create-index-page action"
+  );
+  assert.match(
+    sectionTemplate,
     /<!-- IF \.\/hasWikiPath -->[\s\S]*<a class="wiki-index-entry-title" href="\{config\.relative_path\}\{\.\/wikiPath\}"[\s\S]*<!-- ELSE -->[\s\S]*<span class="wiki-index-entry-title/,
     "namespace section template should not render unconditional page links when wikiPath is blank"
   );
@@ -597,6 +710,18 @@ async function runHub() {
     navTemplate,
     /<!-- IF \.\/hasWikiPath -->[\s\S]*<a class="wiki-sidebar-nav-page" href="\{config\.relative_path\}\{\.\/wikiPath\}"[\s\S]*<!-- ELSE -->[\s\S]*<span class="wiki-sidebar-nav-page/,
     "page nav drawer should not render unconditional page or child namespace links when wikiPath is blank"
+  );
+
+  const publicClient = fs.readFileSync(path.join(__dirname, "../public/wiki.js"), "utf8");
+  assert.match(
+    publicClient,
+    /redirectPath[\s\S]*data-wiki-create-redirect-path/,
+    "create-page client should support an explicit post-create redirect path for namespace index pages"
+  );
+  assert.match(
+    publicClient,
+    /submittedTitle[\s\S]*redirectTitleChanged[\s\S]*redirectPath && !redirectTitleChanged/,
+    "create-page client should ignore the explicit namespace index redirect when the submitted title changes"
   );
 
   console.log("wiki canonical node route tests passed");

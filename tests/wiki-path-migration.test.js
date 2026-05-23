@@ -212,13 +212,153 @@ function createBaseNodebbStubs(overrides = {}) {
       namespaceMainPages: {}
     });
 
+    assert.equal(report.summary.blockingErrors, 0);
+    assert.deepEqual(report.collisions.canonicalNamespacePages, []);
+    assert.deepEqual(report.collisions.foldedNamespacePages, []);
+    assert.deepEqual(report.blockingDetails, []);
+    assert.deepEqual(report.indexPages.indexPageCandidates, [
+      {
+        canonicalPath: "Lore/Guides",
+        tid: 77,
+        pageCid: 10,
+        namespaceCid: 11,
+        nodeType: "composite",
+        indexPageStatus: "exact-overlap"
+      }
+    ]);
+  }
+
+  {
+    const report = await migration.scan({
+      categories: [
+        { cid: 10, name: "Lore", parentCid: 0 },
+        { cid: 11, name: "Guides", parentCid: 10 }
+      ],
+      topics: [
+        { tid: 77, cid: 10, title: "Guides" }
+      ],
+      namespaceMainPages: { "11": 77 }
+    });
+
+    assert.deepEqual(report.indexPages.counts, {
+      total: 2,
+      pageOnly: 0,
+      namespaceOnly: 1,
+      composite: 1,
+      branchOnly: 0
+    });
+    assert.deepEqual(report.indexPages.compositeNodes, [
+      {
+        canonicalPath: "Lore/Guides",
+        tid: 77,
+        pageCid: 10,
+        namespaceCid: 11,
+        oldNamespaceMainPage: { cid: 11, tid: 77 },
+        nodeType: "composite",
+        indexPageStatus: "exact-overlap"
+      }
+    ]);
+    assert.deepEqual(report.indexPages.rows, [
+      {
+        canonicalPath: "Lore",
+        namespaceCid: 10,
+        nodeType: "namespace-only",
+        indexPageStatus: "missing"
+      },
+      {
+        canonicalPath: "Lore/Guides",
+        tid: 77,
+        pageCid: 10,
+        namespaceCid: 11,
+        oldNamespaceMainPage: { cid: 11, tid: 77 },
+        nodeType: "composite",
+        indexPageStatus: "exact-overlap"
+      }
+    ]);
+    assert.equal(report.treeIndex, report.indexPages);
+  }
+
+  {
+    const report = await migration.scan({
+      categories: [
+        { cid: 10, name: "Lore", parentCid: 0 },
+        { cid: 11, name: "!!!", parentCid: 10 }
+      ],
+      topics: [
+        { tid: 79, cid: 10, title: "???" }
+      ],
+      namespaceMainPages: {}
+    });
+
     assert.equal(report.summary.blockingErrors, 2);
-    assert.deepEqual(report.collisions.canonicalNamespacePages, [
-      { canonicalPath: "Lore/Guides", cids: [11], tids: [77] }
+    assert.deepEqual(
+      report.indexPages.rows.filter((row) => row.indexPageStatus === "invalid"),
+      [
+        {
+          canonicalPath: "Lore",
+          namespaceCid: 11,
+          nodeType: "namespace-only",
+          indexPageStatus: "invalid",
+          invalidSegments: [{ cid: 11, source: "!!!", error: "empty-segment" }]
+        },
+        {
+          canonicalPath: "Lore",
+          tid: 79,
+          pageCid: 10,
+          nodeType: "page-only",
+          indexPageStatus: "invalid",
+          invalidSegments: [{ tid: 79, source: "???", error: "empty-segment" }]
+        }
+      ]
+    );
+  }
+
+  {
+    const report = await migration.scan({
+      categories: [
+        { cid: 10, name: "Lore", parentCid: 0 },
+        { cid: 11, name: "Guides", parentCid: 10 }
+      ],
+      topics: [
+        { tid: 78, cid: 11, title: "Getting Started" }
+      ],
+      namespaceMainPages: { "11": 78 }
+    });
+
+    assert.deepEqual(report.indexPages.counts, {
+      total: 3,
+      pageOnly: 1,
+      namespaceOnly: 2,
+      composite: 0,
+      branchOnly: 0
+    });
+    assert.deepEqual(report.indexPages.missingNamespaceIndexPages, [
+      {
+        canonicalPath: "Lore",
+        namespaceCid: 10,
+        nodeType: "namespace-only",
+        indexPageStatus: "missing"
+      },
+      {
+        canonicalPath: "Lore/Guides",
+        namespaceCid: 11,
+        oldNamespaceMainPage: { cid: 11, tid: 78 },
+        nodeType: "namespace-only",
+        indexPageStatus: "missing"
+      }
     ]);
-    assert.deepEqual(report.collisions.foldedNamespacePages, [
-      { foldedKey: "lore/guides", cids: [11], tids: [77] }
-    ]);
+    assert.deepEqual(
+      report.indexPages.rows.map((row) => ({
+        canonicalPath: row.canonicalPath,
+        nodeType: row.nodeType,
+        indexPageStatus: row.indexPageStatus
+      })),
+      [
+        { canonicalPath: "Lore", nodeType: "namespace-only", indexPageStatus: "missing" },
+        { canonicalPath: "Lore/Guides", nodeType: "namespace-only", indexPageStatus: "missing" },
+        { canonicalPath: "Lore/Guides/Getting_Started", nodeType: "page-only", indexPageStatus: undefined }
+      ]
+    );
   }
 
   {

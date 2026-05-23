@@ -295,6 +295,43 @@ async function getRouteRootNamespaceActions(uid, canCreateWikiNamespaces) {
   };
 }
 
+async function getNamespaceIndexCreateData(req, nodeResult) {
+  const node = nodeResult && nodeResult.node;
+  const namespace = node && node.namespace;
+  const chain = namespace && Array.isArray(namespace.categoryChain) ? namespace.categoryChain : [];
+  const leaf = chain.length ? chain[chain.length - 1] : (namespace && namespace.category);
+  const parent = chain.length > 1 ? chain[chain.length - 2] : null;
+  const parentCid = parseInt(parent && parent.cid || leaf && leaf.parentCid, 10);
+  const title = String(leaf && leaf.name || "").trim();
+
+  if (!namespace || !Number.isInteger(parentCid) || parentCid <= 0 || !title) {
+    return {
+      canCreateNamespaceIndexPage: false,
+      namespaceIndexCreateCid: "",
+      namespaceIndexCreateTitle: "",
+      namespaceIndexCreateRedirectPath: "",
+      namespaceIndexCreateNamespacePath: ""
+    };
+  }
+
+  const parentSection = await wikiService.getSection(parentCid, req.uid);
+  const canCreate = !!(
+    parentSection &&
+    parentSection.status === "ok" &&
+    parentSection.section &&
+    parentSection.section.privileges &&
+    parentSection.section.privileges.canCreatePage
+  );
+
+  return {
+    canCreateNamespaceIndexPage: canCreate,
+    namespaceIndexCreateCid: canCreate ? parentCid : "",
+    namespaceIndexCreateTitle: canCreate ? title : "",
+    namespaceIndexCreateRedirectPath: canCreate ? (nodeResult.wikiPath || canonicalWikiPath(nodeResult.canonicalPath)) : "",
+    namespaceIndexCreateNamespacePath: canCreate ? (parentSection.section.wikiPath || "") : ""
+  };
+}
+
 function register(params) {
   const { router, middleware } = params;
 
@@ -422,6 +459,13 @@ function register(params) {
       ...buildWikiNavRenderData(wikiSection.section, { filterId: `section-${wikiSection.section.cid}` }),
       hasArticle: false,
       ...createIntentData,
+      ...(options.namespaceIndexCreate || {
+        canCreateNamespaceIndexPage: false,
+        namespaceIndexCreateCid: "",
+        namespaceIndexCreateTitle: "",
+        namespaceIndexCreateRedirectPath: "",
+        namespaceIndexCreateNamespacePath: ""
+      }),
       canCreateWikiNamespaces
     });
   }
@@ -453,7 +497,13 @@ function register(params) {
     }
 
     if (visibleSection) {
-      return renderSection(req, res, next, visibleSection, options);
+      const namespaceIndexCreate = !pageFacet && namespaceFacet ?
+        await getNamespaceIndexCreateData(req, nodeResult) :
+        null;
+      return renderSection(req, res, next, visibleSection, {
+        ...options,
+        ...(namespaceIndexCreate ? { namespaceIndexCreate } : {})
+      });
     }
 
     return res.render("wiki", await buildCanonicalNodeRenderData(req, nodeResult, null, null));
