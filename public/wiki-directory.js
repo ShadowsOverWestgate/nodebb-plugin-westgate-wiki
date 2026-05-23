@@ -407,6 +407,9 @@
       var params = {
         limit: mount.getAttribute("data-limit") || String(DEFAULT_LIMIT)
       };
+      if (navMode) {
+        params.nav = "1";
+      }
       if (cursor) {
         params.after = cursor;
       }

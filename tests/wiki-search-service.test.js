@@ -349,6 +349,55 @@ const topicService = require("../lib/topic-service");
   }
 
   reset({
+    settings: { categoryIds: "10", homeTopicId: "92" },
+    categories: [
+      { cid: 10, name: "Wiki", slug: "10/wiki", parentCid: 0, topic_count: 3 }
+    ],
+    topics: [
+      { tid: 90, cid: 10, title: "A Very Large Article", titleRaw: "A Very Large Article", slug: "90/a-very-large-article", mainPid: 9000, deleted: 0, scheduled: 0, lastposttime: 1000 },
+      { tid: 91, cid: 10, title: "Code Block Test", titleRaw: "Code Block Test", slug: "91/code-block-test", mainPid: 9100, deleted: 0, scheduled: 0, lastposttime: 1100 },
+      { tid: 92, cid: 10, title: "Homepage of Da Wiki", titleRaw: "Homepage of Da Wiki", slug: "92/homepage-of-da-wiki", mainPid: 9200, deleted: 0, scheduled: 0, lastposttime: 1200 }
+    ],
+    readableCids: [10],
+    readableTids: [90, 91, 92]
+  });
+
+  {
+    const alphabetical = await wikiDirectory.getDirectoryWindow(10, 1, { limit: 2 });
+    assert.deepStrictEqual(
+      alphabetical.pages.map((row) => row.tid),
+      [90, 91],
+      "plain namespace contents should remain alphabetical"
+    );
+
+    const navigation = await wikiDirectory.getDirectoryWindow(10, 1, { limit: 2, pinHomeTopic: true });
+    assert.deepStrictEqual(
+      navigation.pages.map((row) => row.tid),
+      [92, 90],
+      "navigation windows should pin the configured wiki homepage before alphabetical rows"
+    );
+
+    const nextNavigation = await wikiDirectory.getDirectoryWindow(10, 1, {
+      limit: 2,
+      after: navigation.nextCursor,
+      pinHomeTopic: true
+    });
+    assert.deepStrictEqual(
+      nextNavigation.pages.map((row) => row.tid),
+      [91],
+      "navigation pagination should not repeat the pinned wiki homepage"
+    );
+
+    const article = await topicService.getWikiPage(90, 1);
+    assert.strictEqual(article.status, "ok");
+    assert.deepStrictEqual(
+      article.sectionNavigation.topics.map((row) => row.tid).slice(0, 3),
+      [92, 90, 91],
+      "article navigation drawer rows should pin the configured wiki homepage first"
+    );
+  }
+
+  reset({
     settings: { categoryIds: "100, 101, 102" },
     categories: [
       { cid: 100, name: "HiddenParent", slug: "100/hidden-parent", parentCid: 0, topic_count: 0 },
