@@ -251,6 +251,25 @@ async function withRuntimeStubs(stubs, fn) {
 
   {
     const categories = [
+      { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0 },
+      { cid: 2, name: "test child ns", slug: "2/test-child-ns", parentCid: 1 }
+    ];
+    const topics = [
+      { tid: 81, cid: 2, title: "asdf :: zxcv", titleRaw: "asdf :: zxcv", deleted: 0, scheduled: 0 }
+    ];
+    const tree = createTree({ categories, topics, routeRootCid: 1 });
+    const article = await tree.resolveWikiNode("Test_child_ns/asdf/zxcv", { uid: 1 });
+
+    assert.equal(article.status, "ok");
+    assert.deepEqual(article.ancestors.map((ancestor) => ancestor.displayTitle || ancestor.segment), [
+      "Wiki",
+      "test child ns",
+      "asdf"
+    ]);
+  }
+
+  {
+    const categories = [
       { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0 }
     ];
     const topics = [
