@@ -447,18 +447,30 @@ const config = require("../lib/config");
     "hidden exact-title matches should not suppress a visible leaf-title match"
   );
 
+  state.topics = new Map([
+    [140, { tid: 140, cid: 11, title: "Public Page", titleRaw: "Public Page", slug: "140/public-page", deleted: 0, scheduled: 0 }]
+  ]);
+  state.tidsByCid = new Map([[11, [140]]]);
+  state.hiddenTopicTidsByUid = new Map();
+  state.hiddenCategoryCidsByUid = new Map();
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
   const parseHookData = {
     postData: {
       uid: 1,
       cid: 11,
-      content: "[[readable child:Hidden Page]] [[ns:readable child]]"
+      content: "[[readable child:Public Page]] [[ns:readable child]]"
     }
   };
   await wikiLinks.transformWikiPostContent(parseHookData);
-  assert.doesNotMatch(
+  assert.match(
     parseHookData.postData.content,
-    /href="\/wiki\/Hidden_Root\/Readable_Child/,
-    "parse hook should fail closed when no reliable viewer uid is present instead of using the post author"
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Public_Page/,
+    "parse hook should fall back to anonymous privileges when no reliable viewer uid is present"
+  );
+  assert.match(
+    parseHookData.postData.content,
+    /href="\/wiki\/Hidden_Root\/Readable_Child"/,
+    "parse hook should preserve public namespace links when no reliable viewer uid is present"
   );
 
   console.log("wiki-link resolver cache tests passed");

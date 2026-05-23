@@ -151,6 +151,15 @@ function createBaseNodebbStubs(overrides = {}) {
     assert.equal(report.summary.blockingErrors, 1);
     assert.equal(report.collisions.foldedPages[0].foldedKey, "lore/deities/gond");
     assert.deepEqual(report.collisions.foldedPages[0].tids, [77, 78]);
+    assert.deepEqual(report.blockingDetails, [
+      {
+        type: "folded-page-collision",
+        title: "Folded page path collisions",
+        count: 1,
+        howToFix: "Rename one of the listed topics so their canonical wiki paths are unique when case, spacing, punctuation, and accents are ignored.",
+        rows: [{ foldedKey: "lore/deities/gond", tids: [77, 78] }]
+      }
+    ]);
   }
 
   {
@@ -180,6 +189,15 @@ function createBaseNodebbStubs(overrides = {}) {
     assert.deepEqual(report.collisions.foldedPages, [
       { foldedKey: "lore/tome", tids: [77, 78] }
     ]);
+    assert.deepEqual(
+      report.blockingDetails.map((detail) => `${detail.type}:${detail.count}`),
+      [
+        "canonical-namespace-collision:1",
+        "folded-namespace-collision:1",
+        "canonical-page-collision:1",
+        "folded-page-collision:1"
+      ]
+    );
   }
 
   {
@@ -306,7 +324,7 @@ function createBaseNodebbStubs(overrides = {}) {
 
     await assert.rejects(
       () => migration.apply({ scan: report }),
-      /canonical wiki migration has blocking collisions/
+      /canonical wiki migration has 1 blocking issue\(s\): reserved namespace route roots \(1\)/
     );
   }
 
@@ -340,7 +358,7 @@ function createBaseNodebbStubs(overrides = {}) {
 
     await assert.rejects(
       () => migration.apply({ scan: reservedScan }),
-      /canonical wiki migration has blocking collisions/
+      /canonical wiki migration has 1 blocking issue\(s\): reserved namespace route roots \(1\)/
     );
   }
 
@@ -376,7 +394,7 @@ function createBaseNodebbStubs(overrides = {}) {
 
     await assert.rejects(
       () => migration.apply({ scan: blockingScan }),
-      /canonical wiki migration has blocking collisions/
+      /canonical wiki migration has 1 blocking issue\(s\): folded page path collisions \(1\)/
     );
   }
 
@@ -553,6 +571,8 @@ function createBaseNodebbStubs(overrides = {}) {
     assert.match(adminClient, /path-migration\/prepare/, "ACP client should call prepare report endpoint");
     assert.match(adminClient, /path-migration\/apply/, "ACP client should call apply endpoint");
     assert.match(adminClient, /path-migration\/verify/, "ACP client should call verify endpoint");
+    assert.match(adminClient, /blockingDetails/, "ACP client should summarize blocking report details");
+    assert.match(adminClient, /How to fix/, "ACP client should show blocker repair guidance");
   }
 
   await withNodebbStubs(createBaseNodebbStubs({

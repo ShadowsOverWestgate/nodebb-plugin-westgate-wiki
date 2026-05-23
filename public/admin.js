@@ -79,6 +79,38 @@ define("admin/plugins/westgate-wiki", ["settings"], function (Settings) {
     return payload && Object.prototype.hasOwnProperty.call(payload, "response") ? payload.response : payload;
   }
 
+  function getBlockingDetails(report) {
+    return report && Array.isArray(report.blockingDetails) ? report.blockingDetails : [];
+  }
+
+  function summarizeBlockingDetails(report) {
+    const details = getBlockingDetails(report);
+    if (!details.length) {
+      return "";
+    }
+    return " Blockers: " + details.map(function (detail) {
+      return detail.title + " (" + detail.count + ")";
+    }).join("; ") + ".";
+  }
+
+  function renderMigrationOutput(report) {
+    const details = getBlockingDetails(report);
+    if (!details.length) {
+      return JSON.stringify(report || {}, null, 2);
+    }
+
+    const lines = ["Blocking details:"];
+    details.forEach(function (detail) {
+      lines.push("- " + detail.title + " (" + detail.count + ")");
+      if (detail.howToFix) {
+        lines.push("  How to fix: " + detail.howToFix);
+      }
+      lines.push("  Rows: " + JSON.stringify(detail.rows || []));
+    });
+    lines.push("", "Raw report:", JSON.stringify(report || {}, null, 2));
+    return lines.join("\n");
+  }
+
   function renderMigrationReport(panel, action, report) {
     const statusEl = panel.find("[data-wiki-path-migration-blocking-status]");
     const outputEl = panel.find("[data-wiki-path-migration-output]");
@@ -102,9 +134,10 @@ define("admin/plugins/westgate-wiki", ["settings"], function (Settings) {
         blockingErrors + " blocking issue" + (blockingErrors === 1 ? "" : "s") +
         ", " + legacyMainPages + " active namespace main page override" + (legacyMainPages === 1 ? "" : "s") +
         ", " + retiredSlugs + " active generated public slug route" + (retiredSlugs === 1 ? "" : "s") +
-        ", " + routeRoots + " route-root row" + (routeRoots === 1 ? "" : "s") + "."
+        ", " + routeRoots + " route-root row" + (routeRoots === 1 ? "" : "s") + "." +
+        summarizeBlockingDetails(report)
       );
-    outputEl.text(JSON.stringify(report || {}, null, 2));
+    outputEl.text(renderMigrationOutput(report));
   }
 
   function setMigrationError(panel, message) {
