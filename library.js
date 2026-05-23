@@ -291,6 +291,7 @@ plugin.clearWikiPostParseCache = cacheService.clearWikiPostParseCache;
 plugin.syncPostedTopdataWikiPageSlug = wikiPageValidation.syncPostedTopdataWikiPageSlug;
 plugin.clearWikiPostEditCache = cacheService.clearWikiPostEditCache;
 plugin.onWikiTopicDelete = wikiTopicPurge.onTopicDelete;
+plugin.onWikiTopicsPurge = wikiTopicPurge.onTopicsPurge;
 plugin.invalidateWikiPathCaches = function () {
   const wikiDirectory = require("./lib/wiki-directory-service");
   wikiDirectory.invalidateAllWikiCaches();

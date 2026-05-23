@@ -122,6 +122,10 @@
       "method": "onWikiTopicDelete"
     },
     {
+      "hook": "action:topics.purge",
+      "method": "onWikiTopicsPurge"
+    },
+    {
       "hook": "filter:topic.delete",
       "method": "wikiFilterTopicDelete"
     },
