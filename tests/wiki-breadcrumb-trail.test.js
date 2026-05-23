@@ -92,3 +92,22 @@ assert.deepStrictEqual(
   ["Lore", "Deities", "Gond"],
   "canonical node breadcrumbs should use tree ancestors and render composite nodes once"
 );
+
+assert.deepStrictEqual(
+  texts(wikiBreadcrumbTrail.forCanonicalNodeView({
+    ancestors: [
+      { segment: "Asdf", canonicalPath: "Asdf", wikiPath: "/wiki/Asdf" },
+      { segment: "A_sub_page", canonicalPath: "Asdf/A_sub_page", wikiPath: "/wiki/Asdf/A_sub_page" }
+    ],
+    node: {
+      canonicalPath: "Asdf/A_sub_page/Baby_page",
+      segments: ["Asdf", "A_sub_page", "Baby_page"],
+      page: {
+        canonicalPath: "Asdf/A_sub_page/Baby_page",
+        titlePath: ["Asdf", "A sub page", "Baby page"]
+      }
+    }
+  })),
+  ["Asdf", "A sub page", "Baby page"],
+  "canonical node breadcrumbs should display title-path text instead of canonical URL segments"
+);
