@@ -101,6 +101,10 @@
       "method": "wikiFilterTopicEdit"
     },
     {
+      "hook": "filter:privileges.posts.edit",
+      "method": "wikiFilterPrivilegesPostsEdit"
+    },
+    {
       "hook": "action:post.edit",
       "method": "clearWikiPostEditCache"
     },

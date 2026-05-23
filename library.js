@@ -21,6 +21,7 @@ const wikiMentionNotifications = require("./lib/wiki-mention-notifications");
 const wikiArticleWatch = require("./lib/wiki-article-watch");
 const wikiEditLocks = require("./lib/wiki-edit-locks");
 const wikiPageActions = require("./lib/wiki-page-actions");
+const wikiTopdataBotPrivileges = require("./lib/wiki-topdata-bot-privileges");
 const wikiService = require("./lib/wiki-service");
 const wikiPaths = require("./lib/wiki-paths");
 const wikiPageValidation = require("./lib/wiki-page-validation");
@@ -298,6 +299,7 @@ plugin.invalidateWikiPathCaches = function () {
 plugin.wikiFilterTopicPost = wikiPageValidation.validateTopicPost;
 plugin.wikiFilterPostEdit = wikiPageValidation.validatePostEdit;
 plugin.wikiFilterTopicEdit = wikiPageValidation.validateTopicEdit;
+plugin.wikiFilterPrivilegesPostsEdit = wikiTopdataBotPrivileges.filterPostEditPrivilege;
 plugin.wikiFilterTopicDelete = async function (data) {
   if (!data || !data.topicData) {
     return data;
