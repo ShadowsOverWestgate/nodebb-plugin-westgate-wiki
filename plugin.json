@@ -160,6 +160,22 @@
     {
       "hook": "action:topic.move",
       "method": "onWikiTopicMoved"
+    },
+    {
+      "hook": "action:category.create",
+      "method": "invalidateWikiPathCaches"
+    },
+    {
+      "hook": "action:category.update",
+      "method": "invalidateWikiPathCaches"
+    },
+    {
+      "hook": "action:category.delete",
+      "method": "invalidateWikiPathCaches"
+    },
+    {
+      "hook": "action:settings.set",
+      "method": "invalidateWikiPathCaches"
     }
   ]
 }

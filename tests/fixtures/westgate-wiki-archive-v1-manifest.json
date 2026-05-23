@@ -1,0 +1,66 @@
+{
+  "assets": [],
+  "canonicalPathContractVersion": "canonical-title-category-tree-v1",
+  "checksums": [
+    {
+      "bytes": 22,
+      "path": "pages/wgap_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.html",
+      "sha256": "d933539e25cfdbf3ed8345ef705a81b4b0699d833664aa1b0905b8c4ab7834fa"
+    }
+  ],
+  "exporter": {
+    "plugin": "nodebb-plugin-westgate-wiki",
+    "version": "0.1.0"
+  },
+  "formatId": "westgate-wiki-archive",
+  "namespaces": [
+    {
+      "archiveNamespaceId": "wgan_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "canonicalPath": "Lore",
+      "parentArchiveNamespaceId": null,
+      "titlePath": [
+        "Lore"
+      ]
+    },
+    {
+      "archiveNamespaceId": "wgan_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "canonicalPath": "Lore/Deities",
+      "parentArchiveNamespaceId": "wgan_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "titlePath": [
+        "Lore",
+        "Deities"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "archiveNamespaceId": "wgan_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "archivePageId": "wgap_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "articleCss": "",
+      "articleHtmlPath": "pages/wgap_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.html",
+      "canonicalPath": "Lore/Deities/Gond",
+      "discussionDisabled": false,
+      "title": "Gond",
+      "topdata": {
+        "managedMarkerPreserved": true
+      }
+    }
+  ],
+  "reports": [],
+  "schemaId": "westgate-wiki-archive/v1",
+  "settingsSnapshot": {
+    "categoryRoots": [
+      {
+        "archiveNamespaceId": "wgan_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "canonicalPath": "Lore",
+        "includeDescendants": true
+      }
+    ],
+    "homepage": {
+      "archivePageId": "wgap_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "includeChildCategories": true,
+    "namespaceCreatorGroups": []
+  },
+  "version": 1
+}

@@ -272,7 +272,6 @@ async function initWikiComposePage() {
   const linkPick = document.getElementById("wiki-compose-link-pick");
   const linkInsert = document.getElementById("wiki-compose-link-insert");
   const returnLink = document.getElementById("wiki-compose-return");
-  const namespaceMainPageCheckbox = document.getElementById("wiki-compose-namespace-main-page");
   const discussionDisabledCheckbox = document.getElementById("wiki-compose-discussion-disabled");
   const cssButton = document.getElementById("wiki-compose-css-btn");
   const cssDialog = document.getElementById("wiki-compose-css-dialog");
@@ -592,7 +591,7 @@ async function initWikiComposePage() {
     });
   }
 
-  [titleInput, namespaceMainPageCheckbox, discussionDisabledCheckbox].forEach(function (input) {
+  [titleInput, discussionDisabledCheckbox].forEach(function (input) {
     if (input) {
       input.addEventListener("input", markUnsaved);
       input.addEventListener("change", markUnsaved);
@@ -777,36 +776,6 @@ async function initWikiComposePage() {
           if (cssInput) {
             cssInput.value = articleCss;
             syncCssEditor();
-          }
-        }
-
-        if (
-          payload.canSetNamespaceMainPage &&
-          payload.namespaceMainPageApiUrl &&
-          namespaceMainPageCheckbox &&
-          savedTid
-        ) {
-          const mainRes = await fetch(payload.namespaceMainPageApiUrl, {
-            method: "PUT",
-            credentials: "same-origin",
-            headers: {
-              "Content-Type": "application/json",
-              "x-csrf-token": payload.csrfToken
-            },
-            body: JSON.stringify({
-              tid: parseInt(savedTid, 10),
-              active: namespaceMainPageCheckbox.checked
-            })
-          });
-          if (!mainRes.ok) {
-            let mainJson = null;
-            try {
-              mainJson = await mainRes.json();
-            } catch (e) {
-              mainJson = null;
-            }
-            const mainMsg = (mainJson && mainJson.status && mainJson.status.message) || mainRes.statusText;
-            throw new Error("Page saved, but the namespace main page was not updated: " + mainMsg);
           }
         }
 

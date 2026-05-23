@@ -27,17 +27,6 @@ function appendQueryString(path, req) {
   return queryString ? `${path}?${queryString}` : path;
 }
 
-function buildRequestedWikiPath(namespacePath, pageSlug) {
-  const base = String(namespacePath || "/wiki").replace(/\/$/, "");
-  const leaf = String(pageSlug || "").replace(/^\//, "");
-  return leaf ? `${base}/${leaf}` : base;
-}
-
-function getLegacyArticleRequestPath(req) {
-  const slug = String(req.params && req.params.slug || "").trim();
-  return `/wiki/${req.params.topic_id}${slug ? `/${slug}` : ""}`;
-}
-
 function buildPageTitleSegments(pageTitlePath) {
   const path = Array.isArray(pageTitlePath) ? pageTitlePath.filter(Boolean) : [];
   if (path.length <= 1) {
@@ -101,6 +90,8 @@ function buildWikiPageRenderData(wikiPage, { isWikiHome }) {
     canChangeWikiOwner: canManageWikiPage,
     canMakeWikiSubpage: !!wikiPage.categoryPrivileges["topics:create"],
     canDeleteWikiPage: !!wikiPage.canDeleteWikiPage,
+    canWatchWikiArticle: !!wikiPage.canWatchWikiArticle,
+    wikiArticleWatched: !!wikiPage.wikiArticleWatched,
     ...buildWikiNavRenderData(wikiPage.sectionNavigation, { currentTid: wikiPage.topic.tid }),
     /* Inline ToC mount: avoids Benchpress empty IF/ELSE in wiki-page.tpl */
     showWikiTocInline: !wikiPage.sectionNavigation,
@@ -111,30 +102,122 @@ function buildWikiPageRenderData(wikiPage, { isWikiHome }) {
   };
 }
 
-function buildWikiPageCollisionRenderData(article, section) {
-  const sectionData = section || {
-    ...(article.category || {}),
-    name: (article.category && article.category.name) || "Wiki",
-    wikiPath: article.namespacePath || "/wiki",
-    ancestorSections: []
-  };
-  const rows = (Array.isArray(article.topics) ? article.topics : []).map((topic) => {
-    const row = serializer.serializeTopicSummary(topic);
+function canonicalWikiPath(canonicalPath) {
+  return canonicalPath ? `/wiki/${canonicalPath}` : "";
+}
+
+function getNodeLeafTitle(node) {
+  const pageTitlePath = node && node.page && Array.isArray(node.page.titlePath) ? node.page.titlePath : [];
+  if (pageTitlePath.length) {
+    return pageTitlePath[pageTitlePath.length - 1];
+  }
+  if (node && node.namespace && node.namespace.category && node.namespace.category.name) {
+    return node.namespace.category.name;
+  }
+  const segments = Array.isArray(node && node.segments) ? node.segments : [];
+  if (segments.length) {
+    return segments[segments.length - 1];
+  }
+  return String(node && node.canonicalPath || "Wiki");
+}
+
+function buildCanonicalNodeListingRows(children) {
+  return (children && Array.isArray(children.directNodes) ? children.directNodes : []).map((node) => {
+    const displayTitle = getNodeLeafTitle(node);
     return {
-      ...row,
-      title: serializer.getTitleDisplay(row.titlePath, topic.titleRaw || topic.title || row.title),
-      wikiPath: wikiPaths.getLegacyArticlePath(topic)
+      canonicalPath: node.canonicalPath || "",
+      wikiPath: node.wikiPath || canonicalWikiPath(node.canonicalPath),
+      displayTitle,
+      title: displayTitle,
+      hasPage: !!node.page,
+      hasNamespace: !!node.namespace,
+      isComposite: !!node.isComposite,
+      isBranchOnly: !!node.isBranchOnly,
+      hasDescendants: !!node.hasDescendants
     };
   });
+}
+
+function buildCreateIntentRenderData(req, section, options = {}) {
+  const createIntentTitle = getCreateIntentTitle(req);
+  const directCreateIntentTitle = String(options.createIntentTitle || "").trim();
+  const effectiveCreateIntentTitle = createIntentTitle || directCreateIntentTitle;
+  const canCreatePage = !!(section && section.privileges && section.privileges.canCreatePage);
+  const hasCreateIntent = !!(effectiveCreateIntentTitle && canCreatePage);
+  const createIntentAutoload = !!(createIntentTitle && String((req.query && req.query.redlink) || "") === "1");
 
   return {
-    title: "Ambiguous Wiki Page | Westgate Wiki",
-    ...wikiBreadcrumbTrail.forSectionView(sectionData),
-    section: sectionData,
-    requestedWikiPath: buildRequestedWikiPath(article.namespacePath, article.pageSlug),
-    pageSlug: article.pageSlug || "",
-    pageCollisionRows: rows,
-    hasPageCollisionRows: rows.length > 0
+    canCreatePage,
+    hasCreateIntent,
+    createIntentTitle: effectiveCreateIntentTitle,
+    createIntentCid: section && section.cid ? section.cid : "",
+    createIntentNamespaceName: section && section.name ? section.name : "",
+    createIntentAutoload
+  };
+}
+
+async function buildCanonicalPageRenderData(req, nodeResult, wikiPage, wikiSection, options = {}) {
+  const section = wikiSection && wikiSection.section;
+  const rows = buildCanonicalNodeListingRows(nodeResult.children);
+  const node = nodeResult.node || {};
+
+  return {
+    ...buildWikiPageRenderData(wikiPage, { isWikiHome: false }),
+    ...wikiBreadcrumbTrail.forCanonicalNodeView(nodeResult),
+    canonicalNodeView: true,
+    canonicalPath: nodeResult.canonicalPath || node.canonicalPath || "",
+    wikiPath: nodeResult.wikiPath || canonicalWikiPath(nodeResult.canonicalPath),
+    hasNamespace: !!section,
+    isComposite: !!node.isComposite,
+    isBranchOnly: false,
+    hasDescendants: !!node.hasDescendants,
+    nodeListing: {
+      rows,
+      hasRows: rows.length > 0
+    },
+    hasNodeListingRows: rows.length > 0,
+    ...(section ? buildCreateIntentRenderData(req, section, options) : {
+      canCreatePage: false,
+      hasCreateIntent: false,
+      createIntentTitle: "",
+      createIntentCid: "",
+      createIntentNamespaceName: "",
+      createIntentAutoload: false
+    }),
+    canCreateWikiNamespaces: await wikiNamespaceCreators.getCanCreateWikiNamespaces(req.uid)
+  };
+}
+
+async function buildCanonicalNodeRenderData(req, nodeResult, wikiPage, wikiSection) {
+  const article = wikiPage ? buildWikiPageRenderData(wikiPage, { isWikiHome: false }) : null;
+  const namespace = wikiSection ? { section: wikiSection.section } : null;
+  const rows = buildCanonicalNodeListingRows(nodeResult.children);
+  const node = nodeResult.node || {};
+  const canonicalTitle = article && article.pageTitle ?
+    article.pageTitle :
+    (namespace && namespace.section && namespace.section.name ? namespace.section.name : getNodeLeafTitle(node));
+  const canCreateWikiNamespaces = await wikiNamespaceCreators.getCanCreateWikiNamespaces(req.uid);
+
+  return {
+    title: `${canonicalTitle} | Westgate Wiki`,
+    ...wikiBreadcrumbTrail.forCanonicalNodeView(nodeResult, { leafText: canonicalTitle }),
+    canonicalNodeView: true,
+    canonicalPath: nodeResult.canonicalPath || node.canonicalPath || "",
+    wikiPath: nodeResult.wikiPath || canonicalWikiPath(nodeResult.canonicalPath),
+    canonicalTitle,
+    article,
+    hasArticle: !!article,
+    namespace,
+    hasNamespace: !!namespace,
+    isComposite: !!node.isComposite,
+    isBranchOnly: !!node.isBranchOnly,
+    hasDescendants: !!node.hasDescendants,
+    nodeListing: {
+      rows,
+      hasRows: rows.length > 0
+    },
+    hasNodeListingRows: rows.length > 0,
+    canCreateWikiNamespaces
   };
 }
 
@@ -171,10 +254,12 @@ function buildWikiSearchRenderData(searchResult) {
 
 async function getWikiFallbackContext(uid) {
   const wikiData = await wikiService.getSections(uid);
+  const sections = (Array.isArray(wikiData.sections) ? wikiData.sections : [])
+    .filter((section) => section && section.wikiPath && section.hasWikiPath !== false);
   const canCreateWikiNamespaces = await wikiNamespaceCreators.getCanCreateWikiNamespaces(uid);
   return {
-    sections: wikiData.sections,
-    hasSections: wikiData.sections.length > 0,
+    sections,
+    hasSections: sections.length > 0,
     configuredCategoryCount: wikiData.settings.categoryIds.length,
     effectiveCategoryCount: wikiData.settings.effectiveCategoryIds.length,
     includeChildCategories: wikiData.settings.includeChildCategories,
@@ -310,17 +395,11 @@ function register(params) {
   });
 
   async function renderSection(req, res, next, wikiSection, options = {}) {
-    const createIntentTitle = getCreateIntentTitle(req);
-    const directCreateIntentTitle = String(options.createIntentTitle || "").trim();
-    const effectiveCreateIntentTitle = createIntentTitle || directCreateIntentTitle;
-    const hasCreateIntent = !!(effectiveCreateIntentTitle && wikiSection.section.privileges.canCreatePage);
-    const createIntentAutoload = !!(createIntentTitle && String((req.query && req.query.redlink) || "") === "1");
-
     const sectionTrail = wikiBreadcrumbTrail.forSectionView(wikiSection.section);
 
     const canCreateWikiNamespaces = await wikiNamespaceCreators.getCanCreateWikiNamespaces(req.uid);
 
-    const canCreatePage = wikiSection.section.privileges.canCreatePage;
+    const createIntentData = buildCreateIntentRenderData(req, wikiSection.section, options);
     const sectionContentsIndex = wikiAlphabeticalIndex.buildSectionContentsIndex(
       wikiSection.section.childSections,
       []
@@ -341,134 +420,105 @@ function register(params) {
       hasNamespaceIndexContent: namespaceIndexEntryCount > 0,
       hasMultipleWikiIndexLetterGroups: false,
       ...buildWikiNavRenderData(wikiSection.section, { filterId: `section-${wikiSection.section.cid}` }),
-      canCreatePage,
-      hasCreateIntent,
-      createIntentTitle: effectiveCreateIntentTitle,
-      createIntentAutoload,
+      hasArticle: false,
+      ...createIntentData,
       canCreateWikiNamespaces
     });
   }
 
-  async function renderArticle(req, res, next, tid) {
-    const wikiPage = await topicService.getWikiPage(tid, req.uid);
+  async function renderCanonicalNode(req, res, next, nodeResult, options = {}) {
+    const pageFacet = nodeResult.node && nodeResult.node.page;
+    const namespaceFacet = nodeResult.node && nodeResult.node.namespace;
 
-    if (wikiPage.status === "invalid" || wikiPage.status === "not-found" || wikiPage.status === "not-wiki") {
+    const [wikiPage, wikiSection] = await Promise.all([
+      pageFacet ? topicService.getWikiPage(pageFacet.tid, req.uid) : null,
+      namespaceFacet ? wikiService.getSection(namespaceFacet.cid, req.uid) : null
+    ]);
+
+    const visiblePage = wikiPage && wikiPage.status === "ok" ? wikiPage : null;
+    const visibleSection = wikiSection && wikiSection.status === "ok" ? wikiSection : null;
+    const hasBranchListing = !!(nodeResult.node && nodeResult.node.isBranchOnly && nodeResult.children && nodeResult.children.directNodes.length);
+    if (!visiblePage && !visibleSection && !hasBranchListing) {
+      if (
+        (wikiPage && wikiPage.status === "forbidden") ||
+        (wikiSection && wikiSection.status === "forbidden")
+      ) {
+        return helpers.notAllowed(req, res);
+      }
       return next();
     }
 
-    if (wikiPage.status === "forbidden") {
-      return helpers.notAllowed(req, res);
+    if (visiblePage) {
+      return res.render("wiki-page", await buildCanonicalPageRenderData(req, nodeResult, visiblePage, visibleSection, options));
     }
 
-    const settings = await config.getSettings();
-    if (settings.homeTopicId && parseInt(wikiPage.topic.tid, 10) === settings.homeTopicId && !res.locals.isAPI) {
-      return helpers.redirect(res, appendQueryString("/wiki", req), true);
+    if (visibleSection) {
+      return renderSection(req, res, next, visibleSection, options);
     }
 
-    const canCreateWikiNamespaces = await wikiNamespaceCreators.getCanCreateWikiNamespaces(req.uid);
-    const pageData = {
-      ...buildWikiPageRenderData(wikiPage, { isWikiHome: false }),
-      canCreateWikiNamespaces
-    };
-    res.render("wiki-page", pageData);
+    return res.render("wiki", await buildCanonicalNodeRenderData(req, nodeResult, null, null));
   }
 
-  routeHelpers.setupPageRoute(router, "/wiki/category/:category_id/:slug?", async (req, res, next) => {
-    const wikiSection = await wikiService.getSection(req.params.category_id, req.uid);
-
-    if (wikiSection.status === "invalid" || wikiSection.status === "not-found" || wikiSection.status === "not-wiki") {
-      return next();
+  async function renderMissingCanonicalChild(req, res, next, requestPath) {
+    const pathSegments = wikiPaths.splitPath(requestPath);
+    if (pathSegments.length < 2) {
+      return false;
     }
 
-    if (wikiSection.status === "forbidden") {
-      return helpers.notAllowed(req, res);
+    const createIntentTitle = wikiMissingPageCreate.titleFromPageSlug(pathSegments[pathSegments.length - 1]);
+    if (!createIntentTitle) {
+      return false;
     }
 
-    if (!res.locals.isAPI) {
-      return helpers.redirect(res, appendQueryString(wikiSection.section.wikiPath, req), true);
+    const parentPath = pathSegments.slice(0, -1).join("/");
+    const parentResult = await wikiPaths.resolveWikiNode(parentPath, {
+      uid: req.uid,
+      includeChildren: true
+    });
+    if (parentResult.status !== "ok" || !(parentResult.node && parentResult.node.namespace)) {
+      return false;
     }
 
-    return renderSection(req, res, next, wikiSection);
-  });
+    const wikiSection = await wikiService.getSection(parentResult.node.namespace.cid, req.uid);
+    if (wikiSection.status !== "ok" || !(wikiSection.section.privileges && wikiSection.section.privileges.canCreatePage)) {
+      return false;
+    }
+
+    await renderCanonicalNode(req, res, next, parentResult, { createIntentTitle });
+    return true;
+  }
 
   routeHelpers.setupPageRoute(router, "/wiki/compose/:cid", [middleware.ensureLoggedIn], composeController.renderCompose);
 
   routeHelpers.setupPageRoute(router, "/wiki/edit/:tid", [middleware.ensureLoggedIn], composeController.renderEdit);
 
-  routeHelpers.setupPageRoute(router, "/wiki/:topic_id(\\d+)/:slug?", async (req, res, next) => {
-    const wikiPage = await topicService.getWikiPage(req.params.topic_id, req.uid);
-
-    if (wikiPage.status === "invalid" || wikiPage.status === "not-found" || wikiPage.status === "not-wiki") {
-      return next();
-    }
-
-    if (wikiPage.status === "forbidden") {
-      return helpers.notAllowed(req, res);
-    }
-
-    if (!res.locals.isAPI) {
-      const canonicalPath = wikiPage.topic.wikiPath || await wikiPaths.getArticlePath(wikiPage.topic);
-      if (canonicalPath && canonicalPath !== getLegacyArticleRequestPath(req)) {
-        return helpers.redirect(res, appendQueryString(canonicalPath, req), true);
-      }
-    }
-
-    return renderArticle(req, res, next, req.params.topic_id);
-  });
-
   routeHelpers.setupPageRoute(router, "/wiki/:path(*)", async (req, res, next) => {
-    const pathSegments = wikiPaths.splitPath(req.params.path);
-    if (!pathSegments.length) {
+    const requestPath = String(req.params.path || "").trim();
+    if (!wikiPaths.splitPath(requestPath).length) {
       return next();
     }
 
-    const namespace = await wikiPaths.resolveNamespacePath(pathSegments);
-    if (namespace.status === "ok") {
-      const wikiSection = await wikiService.getSection(namespace.cid, req.uid);
-      if (wikiSection.status === "forbidden") {
-        return helpers.notAllowed(req, res);
+    const nodeResult = await wikiPaths.resolveWikiNode(requestPath, {
+      uid: req.uid,
+      includeChildren: true
+    });
+    if (nodeResult.status !== "ok") {
+      if (nodeResult.status === "not-found" && await renderMissingCanonicalChild(req, res, next, requestPath)) {
+        return;
       }
-      if (wikiSection.status !== "ok") {
-        return next();
-      }
-      return renderSection(req, res, next, wikiSection);
-    }
-
-    const article = await wikiPaths.resolveArticlePath(pathSegments, req.uid);
-    if (article.status === "page-not-found" && article.cid) {
-      const wikiSection = await wikiService.getSection(article.cid, req.uid);
-      if (wikiSection.status === "forbidden") {
-        return helpers.notAllowed(req, res);
-      }
-      if (wikiSection.status === "ok" && wikiSection.section.privileges.canCreatePage) {
-        const createIntentTitle = wikiMissingPageCreate.titleFromPageSlug(article.pageSlug);
-        if (createIntentTitle) {
-          return renderSection(req, res, next, wikiSection, { createIntentTitle });
-        }
-      }
-      return next();
-    }
-    if (article.status === "page-collision" && article.cid) {
-      const wikiSection = await wikiService.getSection(article.cid, req.uid);
-      if (wikiSection.status === "forbidden") {
-        return helpers.notAllowed(req, res);
-      }
-      if (wikiSection.status === "ok") {
-        return res.render("wiki-page-collision", buildWikiPageCollisionRenderData(article, wikiSection.section));
-      }
-      return next();
-    }
-    if (article.status !== "ok") {
       return next();
     }
 
-    return renderArticle(req, res, next, article.tid);
+    if (nodeResult.redirectToCanonical && nodeResult.wikiPath && !(res.locals && res.locals.isAPI)) {
+      return helpers.redirect(res, appendQueryString(nodeResult.wikiPath, req), true);
+    }
+
+    return renderCanonicalNode(req, res, next, nodeResult);
   });
 }
 
 module.exports = {
   register,
-  buildWikiPageCollisionRenderData,
   buildWikiPageRenderData,
   buildWikiSearchRenderData
 };

@@ -52,16 +52,16 @@ assert.deepStrictEqual(
 assert.deepStrictEqual(
   actions.getGeneratedPageValidationOptions({
     getTopdataWikiPageSlug() {
-      return "pdk-fear";
+      return "";
     }
   }, "<!-- sow-topdata-wiki:page=spells:pdk:fear wiki_slug=pdk-fear -->", {
     westgateWikiPageSlug: "stored-fear"
   }, 42),
   {
     omitTid: 42,
-    pageSlug: "pdk-fear"
+    pageSlug: ""
   },
-  "save validation should prefer the generated wiki_slug marker in edited content"
+  "save validation should not use retired generated wiki_slug markers as public path authority"
 );
 
 assert.deepStrictEqual(
@@ -74,9 +74,9 @@ assert.deepStrictEqual(
   }, 43),
   {
     omitTid: 43,
-    pageSlug: "spectre-shadow-attack"
+    pageSlug: ""
   },
-  "move validation should retain a persisted generated page slug"
+  "move validation should not retain persisted generated page slug routing state"
 );
 
 const template = fs.readFileSync(path.join(root, "templates/wiki-page.tpl"), "utf8");
@@ -157,8 +157,131 @@ assert(
   library.includes("/westgate-wiki/page/owner"),
   "owner endpoint should be registered"
 );
+assert(
+  /validateCanonicalPagePlacement/.test(actions.moveWikiPage.toString()) &&
+    /validateCanonicalPagePlacement/.test(actions.saveWikiPage.toString()),
+  "wiki page save and move actions should validate against canonical tree placement before saving"
+);
+assert(
+  /getCanonicalPagePath/.test(fs.readFileSync(path.join(root, "lib/wiki-page-actions.js"), "utf8")),
+  "wiki page save and move actions should return canonical page paths after saving"
+);
 assert.strictEqual(
   typeof actions.saveWikiPage,
   "function",
   "wiki page save action should be exported"
 );
+
+(async () => {
+  const originalMainRequire = require.main.require.bind(require.main);
+  require.main.require = function requireNodebbStub(id) {
+    const stubs = {
+      "./src/controllers/helpers": {
+        formatApiResponse: (status, res, payload) => {
+          res.statusCode = status;
+          res.payload = payload;
+          return payload;
+        }
+      },
+      "./src/posts": {
+        edit: async () => {},
+        getPostFields: async () => ({ content: "<p>Saved</p>", sourceContent: "<p>Saved</p>" })
+      },
+      "./src/privileges": {
+        categories: {
+          get: async () => ({ read: true, "topics:read": true, "topics:create": true })
+        }
+      },
+      "./src/topics": {
+        getTopicData: async () => ({
+          tid: 70,
+          cid: 71,
+          mainPid: 700,
+          title: "Hidden Page",
+          titleRaw: "Hidden Page",
+          slug: "70/hidden-page"
+        })
+      }
+    };
+    return stubs[id] || originalMainRequire(id);
+  };
+
+  const patchedModules = [];
+  function patchModule(request, exports) {
+    const filename = require.resolve(request);
+    patchedModules.push([filename, require.cache[filename]]);
+    require.cache[filename] = {
+      id: filename,
+      filename,
+      loaded: true,
+      exports
+    };
+  }
+
+  patchModule("../lib/topic-service", {
+    getWikiPage: async () => ({
+      status: "ok",
+      canEditWikiPage: true,
+      topic: {
+        tid: 70,
+        cid: 71,
+        mainPid: 700,
+        title: "Hidden Page",
+        titleRaw: "Hidden Page"
+      }
+    })
+  });
+  patchModule("../lib/wiki-directory-service", {
+    invalidateNamespace: () => {}
+  });
+  patchModule("../lib/wiki-edit-locks", {
+    assertSaveLock: async () => ({ status: "ok" }),
+    getStatusMessage: () => "locked"
+  });
+  patchModule("../lib/wiki-page-validation", {
+    getValidationMessage: () => "",
+    isBlockingResult: () => false,
+    sanitizeAndValidateWikiMainBody: (content) => content
+  });
+  patchModule("../lib/wiki-paths", {
+    getCanonicalPagePath: async (topic, options) => (
+      options && parseInt(options.uid, 10) === 9 ? "" : "Hidden_Root/Readable_Child/Hidden_Page"
+    ),
+    invalidateWikiTreeIndex: () => {},
+    validateCanonicalPagePlacement: async () => ({ status: "ok" })
+  });
+
+  try {
+    const res = {};
+    await actions.saveWikiPage({
+      uid: 9,
+      body: {
+        tid: 70,
+        pid: 700,
+        title: "Hidden Page",
+        content: "<p>Saved</p>",
+        wikiEditLockToken: "token"
+      },
+      query: {}
+    }, res);
+
+    assert.strictEqual(res.statusCode, 200);
+    assert.strictEqual(
+      res.payload.wikiPath,
+      "",
+      "save response should not emit a canonical wikiPath hidden from the request user"
+    );
+  } finally {
+    patchedModules.reverse().forEach(([filename, previous]) => {
+      if (previous) {
+        require.cache[filename] = previous;
+      } else {
+        delete require.cache[filename];
+      }
+    });
+    require.main.require = originalMainRequire;
+  }
+})().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});

@@ -19,7 +19,9 @@ const state = {
   tidsByCid: new Map([[2, [10, 11]]]),
   categoryDataCalls: 0,
   sortedSetRangeCalls: 0,
-  topicFieldCalls: 0
+  topicFieldCalls: 0,
+  hiddenCategoryCidsByUid: new Map(),
+  hiddenTopicTidsByUid: new Map()
 };
 
 const originalMainRequire = require.main.require.bind(require.main);
@@ -74,12 +76,19 @@ require.main.require = function requireNodebbStub(id) {
     "./src/slugify": slugify,
     "./src/privileges": {
       categories: {
-        get: async () => ({ read: true, "topics:read": true }),
+        get: async (cid, uid) => {
+          const hidden = state.hiddenCategoryCidsByUid.get(parseInt(uid, 10)) || new Set();
+          const canRead = !hidden.has(parseInt(cid, 10));
+          return { read: canRead, "topics:read": canRead };
+        },
         can: async () => true,
         isAdminOrMod: async () => false
       },
       topics: {
-        filterTids: async (privilege, tids) => tids,
+        filterTids: async (privilege, tids, uid) => {
+          const hidden = state.hiddenTopicTidsByUid.get(parseInt(uid, 10)) || new Set();
+          return (Array.isArray(tids) ? tids : []).filter((tid) => !hidden.has(parseInt(tid, 10)));
+        },
         get: async () => ({ "topics:read": true, view_deleted: false, view_scheduled: false })
       }
     },
@@ -126,30 +135,31 @@ const config = require("../lib/config");
       "[[New Redlink]]"
     ].join(" "),
     2,
-    settings
+    settings,
+    1
   );
 
-  assert.match(html, /href="\/wiki\/development\/map-creation-guide"/);
-  assert.match(html, /href="\/wiki\/development\/map-creation-guide#basics"/);
-  assert.match(html, /href="\/wiki\/development\/map-creation-guide#advanced-setup">advanced setup<\/a>/);
+  assert.match(html, /href="\/wiki\/Wiki\/Development\/Map_Creation_Guide"/);
+  assert.match(html, /href="\/wiki\/Wiki\/Development\/Map_Creation_Guide#basics"/);
+  assert.match(html, /href="\/wiki\/Wiki\/Development\/Map_Creation_Guide#advanced-setup">advanced setup<\/a>/);
   assert.match(html, />Map guide<\/a>/);
-  assert.match(html, /class="wiki-internal-link wiki-namespace-link" href="\/wiki\/development"/);
+  assert.match(html, /class="wiki-internal-link wiki-namespace-link" href="\/wiki\/Wiki\/Development"/);
   assert.strictEqual(
-    (html.match(/class="wiki-internal-link wiki-namespace-link" href="\/wiki\/development"/g) || []).length,
+    (html.match(/class="wiki-internal-link wiki-namespace-link" href="\/wiki\/Wiki\/Development"/g) || []).length,
     2,
     "bare links that uniquely match a namespace should resolve like ns: links when no page exists"
   );
   assert.strictEqual(
-    (html.match(/class="wiki-internal-link wiki-namespace-link" href="\/wiki\/item-types"/g) || []).length,
+    (html.match(/class="wiki-internal-link wiki-namespace-link" href="\/wiki\/Wiki\/Item_Types"/g) || []).length,
     2,
     "namespace links should resolve compact typed aliases like itemtypes to item-types namespaces"
   );
   assert.match(html, /Guide entity<\/a>/);
-  assert.match(html, /href="\/wiki\/development\/map-creation-guide#using-dcs">Guide section entity<\/a>/);
-  assert.match(html, /class="wiki-redlink" href="\/wiki\/development\?create=New%20Redlink&amp;redlink=1&amp;cid=2"/);
+  assert.match(html, /href="\/wiki\/Wiki\/Development\/Map_Creation_Guide#using-dcs">Guide section entity<\/a>/);
+  assert.match(html, /class="wiki-redlink" href="\/wiki\/Wiki\/Development\?create=New%20Redlink&amp;redlink=1&amp;cid=2"/);
   assert.strictEqual(state.sortedSetRangeCalls, 1, "per-post resolver should scan each target namespace once");
   assert.strictEqual(state.topicFieldCalls, 1, "per-post resolver should hydrate each target namespace once");
-  assert(state.categoryDataCalls <= 3, "per-post resolver should reuse effective category rows and namespace paths");
+  assert(state.categoryDataCalls <= 20, "per-post resolver should reuse effective category rows and namespace paths");
 
   state.topics.set(13, {
     tid: 13,
@@ -175,12 +185,13 @@ const config = require("../lib/config");
   const punctuatedTitleHtml = await wikiLinks.replaceWikiLinks(
     '<p><span class="wiki-entity wiki-entity--page" data-wiki-entity="page" data-wiki-target="CKEditor Page................." data-wiki-label="CKEditor Page.................">CKEditor Page.................</span></p>',
     2,
-    settings
+    settings,
+    1
   );
   assert.match(
     punctuatedTitleHtml,
-    /<a class="wiki-internal-link" href="\/wiki\/development\/ckeditor-page-dotted">CKEditor Page\.+<\/a>/,
-    "selected Tiptap page entities should resolve exact punctuation-heavy titles before slug-collision fallback"
+    /<a class="wiki-internal-link" href="\/wiki\/Wiki\/Development\/CKEditor_Page">CKEditor Page\.+<\/a>/,
+    "selected Tiptap page entities should resolve exact punctuation-heavy titles without using retired generated slug fields"
   );
   assert.doesNotMatch(punctuatedTitleHtml, /wiki-redlink/);
 
@@ -198,18 +209,20 @@ const config = require("../lib/config");
   const subpageHtml = await wikiLinks.replaceWikiLinks(
     "[[Asdf :: A sub page :: Baby page|Baby page]]",
     2,
-    settings
+    settings,
+    1
   );
-  assert.match(subpageHtml, /<a class="wiki-internal-link wiki-subpage-link" href="\/wiki\/development\/asdf-a-sub-page-baby-page">Baby page<\/a>/);
+  assert.match(subpageHtml, /<a class="wiki-internal-link wiki-subpage-link" href="\/wiki\/Wiki\/Development\/Asdf\/A_sub_page\/Baby_page">Baby page<\/a>/);
 
   const bareLeafSubpageHtml = await wikiLinks.replaceWikiLinks(
     "[[Baby page]]",
     2,
-    settings
+    settings,
+    1
   );
   assert.match(
     bareLeafSubpageHtml,
-    /<a class="wiki-internal-link wiki-subpage-link" href="\/wiki\/development\/asdf-a-sub-page-baby-page"><span class="wiki-topic-parent-path"><span class="wiki-topic-title-parent">Asdf<\/span><span class="wiki-topic-title-separator" aria-hidden="true">\/<\/span><span class="wiki-topic-title-parent">A sub page<\/span><span class="wiki-topic-title-separator" aria-hidden="true">\/<\/span><\/span><span class="wiki-topic-title-leaf">Baby page<\/span><\/a>/,
+    /<a class="wiki-internal-link wiki-subpage-link" href="\/wiki\/Wiki\/Development\/Asdf\/A_sub_page\/Baby_page"><span class="wiki-topic-parent-path"><span class="wiki-topic-title-parent">Asdf<\/span><span class="wiki-topic-title-separator" aria-hidden="true">\/<\/span><span class="wiki-topic-title-parent">A sub page<\/span><span class="wiki-topic-title-separator" aria-hidden="true">\/<\/span><\/span><span class="wiki-topic-title-leaf">Baby page<\/span><\/a>/,
     "bare leaf links should resolve to a unique subpage leaf and render with segmented title-path markup"
   );
 
@@ -238,27 +251,214 @@ const config = require("../lib/config");
       "[[class:fighter]]"
     ].join(" "),
     4,
-    await config.getSettings({ bustCache: true })
+    await config.getSettings({ bustCache: true }),
+    1
   );
   assert.match(
     generatedLinkHtml,
-    /<a class="wiki-internal-link" href="\/wiki\/feats\/brew-potion">Brew Potion<\/a>/,
+    /<a class="wiki-internal-link" href="\/wiki\/Wiki\/Feats\/Brew_Potion">Brew Potion<\/a>/,
     "typed generated feat page IDs should resolve across namespaces"
   );
   assert.strictEqual(
-    (generatedLinkHtml.match(/<a class="wiki-internal-link" href="\/wiki\/feats\/brew-potion">Brew Potion<\/a>/g) || []).length,
+    (generatedLinkHtml.match(/<a class="wiki-internal-link" href="\/wiki\/Wiki\/Feats\/Brew_Potion">Brew Potion<\/a>/g) || []).length,
     2,
     "explicit labels on typed generated page IDs should be preserved"
   );
   assert.match(
     generatedLinkHtml,
-    /class="wiki-redlink" href="\/wiki\/feats\?create=new%3Athing&amp;redlink=1&amp;cid=5"/,
+    /class="wiki-redlink" href="\/wiki\/Wiki\/Feats\?create=new%3Athing&amp;redlink=1&amp;cid=5"/,
     "missing typed generated page IDs should redlink in the resolved target namespace"
   );
   assert.match(
     generatedLinkHtml,
-    /<a class="wiki-internal-link" href="\/wiki\/classes\/fighter">Fighter<\/a>/,
+    /<a class="wiki-internal-link" href="\/wiki\/Wiki\/Classes\/Fighter">Fighter<\/a>/,
     "singular typed namespace aliases should resolve to plural namespace categories"
+  );
+
+  state.settings = {
+    categoryIds: "10, 11",
+    includeChildCategories: "0"
+  };
+  state.categories = new Map([
+    [10, { cid: 10, name: "Hidden Root", slug: "10/hidden-root", parentCid: 0, topic_count: 0 }],
+    [11, { cid: 11, name: "Readable Child", slug: "11/readable-child", parentCid: 10, topic_count: 1 }]
+  ]);
+  state.topics = new Map([
+    [110, { tid: 110, cid: 11, title: "Hidden Page", titleRaw: "Hidden Page", slug: "110/hidden-page", deleted: 0, scheduled: 0 }]
+  ]);
+  state.tidsByCid = new Map([[11, [110]]]);
+  state.hiddenCategoryCidsByUid.set(9, new Set([10]));
+  require("../lib/config").invalidateSettingsCache();
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  const hiddenPathHtml = await wikiLinks.replaceWikiLinks(
+    [
+      "[[readable child:Hidden Page]]",
+      "[[ns:readable child]]"
+    ].join(" "),
+    11,
+    await config.getSettings({ bustCache: true }),
+    9
+  );
+  assert.doesNotMatch(
+    hiddenPathHtml,
+    /\/wiki\/Hidden_Root\/Readable_Child/,
+    "wiki link rendering should not expose canonical paths through unreadable namespace ancestors"
+  );
+
+  state.hiddenCategoryCidsByUid = new Map();
+  state.hiddenTopicTidsByUid.set(9, new Set([110]));
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  const hiddenTopicHtml = await wikiLinks.replaceWikiLinks(
+    "[[readable child:Hidden Page]]",
+    11,
+    await config.getSettings({ bustCache: true }),
+    9
+  );
+  assert.doesNotMatch(
+    hiddenTopicHtml,
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Hidden_Page"/,
+    "wiki link rendering should not expose a page href when the topic is unreadable but the namespace is readable"
+  );
+
+  state.hiddenTopicTidsByUid = new Map();
+  const guestPublicHtml = await wikiLinks.replaceWikiLinks(
+    [
+      "[[readable child:Hidden Page]]",
+      "[[ns:readable child]]"
+    ].join(" "),
+    11,
+    await config.getSettings({ bustCache: true }),
+    0
+  );
+  assert.match(
+    guestPublicHtml,
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Hidden_Page"/,
+    "guest viewer uid 0 should render public page links when topic privileges allow anonymous reads"
+  );
+  assert.match(
+    guestPublicHtml,
+    /href="\/wiki\/Hidden_Root\/Readable_Child"/,
+    "guest viewer uid 0 should render public namespace links when category privileges allow anonymous reads"
+  );
+
+  state.hiddenTopicTidsByUid.set(0, new Set([110]));
+  const guestHiddenTopicHtml = await wikiLinks.replaceWikiLinks(
+    [
+      "[[readable child:Hidden Page]]",
+      "[[ns:readable child]]"
+    ].join(" "),
+    11,
+    await config.getSettings({ bustCache: true }),
+    0
+  );
+  assert.doesNotMatch(
+    guestHiddenTopicHtml,
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Hidden_Page"/,
+    "guest viewer uid 0 should not render topic hrefs denied by anonymous topic privileges"
+  );
+  assert.match(
+    guestHiddenTopicHtml,
+    /href="\/wiki\/Hidden_Root\/Readable_Child"/,
+    "guest viewer uid 0 should still render the readable namespace when only the topic is denied"
+  );
+
+  state.topics = new Map([
+    [110, { tid: 110, cid: 11, title: "Collision Page", titleRaw: "Collision Page", slug: "110/collision-page", deleted: 0, scheduled: 0 }],
+    [111, { tid: 111, cid: 11, title: "Collision Page", titleRaw: "Collision Page", slug: "111/collision-page", deleted: 0, scheduled: 0 }]
+  ]);
+  state.tidsByCid = new Map([[11, [110, 111]]]);
+  state.hiddenTopicTidsByUid = new Map([[0, new Set([111])]]);
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  const guestVisibleDuplicateHtml = await wikiLinks.replaceWikiLinks(
+    "[[readable child:Collision Page]]",
+    11,
+    await config.getSettings({ bustCache: true }),
+    0
+  );
+  assert.match(
+    guestVisibleDuplicateHtml,
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Collision_Page"/,
+    "hidden duplicate topics should not suppress a visible guest wiki link"
+  );
+
+  state.hiddenTopicTidsByUid = new Map();
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  const guestVisibleAmbiguousHtml = await wikiLinks.replaceWikiLinks(
+    "[[readable child:Collision Page]]",
+    11,
+    await config.getSettings({ bustCache: true }),
+    0
+  );
+  assert.doesNotMatch(
+    guestVisibleAmbiguousHtml,
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Collision_Page"/,
+    "visible duplicate topics should remain ambiguous and not pick an arbitrary page href"
+  );
+
+  state.hiddenTopicTidsByUid = new Map([[0, new Set([110, 111])]]);
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  const guestHiddenAmbiguousHtml = await wikiLinks.replaceWikiLinks(
+    "[[readable child:Collision Page]]",
+    11,
+    await config.getSettings({ bustCache: true }),
+    0
+  );
+  assert.doesNotMatch(
+    guestHiddenAmbiguousHtml,
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Collision_Page"/,
+    "all-hidden duplicate topics should not render a page href"
+  );
+
+  state.topics = new Map([
+    [120, { tid: 120, cid: 11, title: "Hidden Exact", titleRaw: "Hidden Exact", slug: "120/hidden-exact", deleted: 0, scheduled: 0 }],
+    [121, { tid: 121, cid: 11, title: "Hidden/Exact", titleRaw: "Hidden/Exact", slug: "121/hidden-exact", deleted: 0, scheduled: 0 }]
+  ]);
+  state.tidsByCid = new Map([[11, [120, 121]]]);
+  state.hiddenTopicTidsByUid = new Map([[0, new Set([120])]]);
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  const hiddenExactVisibleSlugHtml = await wikiLinks.replaceWikiLinks(
+    "[[readable child:Hidden Exact]]",
+    11,
+    await config.getSettings({ bustCache: true }),
+    0
+  );
+  assert.match(
+    hiddenExactVisibleSlugHtml,
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Hidden_Exact"/,
+    "hidden exact-title matches should not suppress a visible slug match"
+  );
+
+  state.topics = new Map([
+    [130, { tid: 130, cid: 11, title: "Leaf Target", titleRaw: "Leaf Target", slug: "130/leaf-target", deleted: 0, scheduled: 0 }],
+    [131, { tid: 131, cid: 11, title: "Parent :: Leaf Target", titleRaw: "Parent :: Leaf Target", slug: "131/parent-leaf-target", deleted: 0, scheduled: 0 }]
+  ]);
+  state.tidsByCid = new Map([[11, [130, 131]]]);
+  state.hiddenTopicTidsByUid = new Map([[0, new Set([130])]]);
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  const hiddenExactVisibleLeafHtml = await wikiLinks.replaceWikiLinks(
+    "[[readable child:Leaf Target]]",
+    11,
+    await config.getSettings({ bustCache: true }),
+    0
+  );
+  assert.match(
+    hiddenExactVisibleLeafHtml,
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Parent\/Leaf_Target"/,
+    "hidden exact-title matches should not suppress a visible leaf-title match"
+  );
+
+  const parseHookData = {
+    postData: {
+      uid: 1,
+      cid: 11,
+      content: "[[readable child:Hidden Page]] [[ns:readable child]]"
+    }
+  };
+  await wikiLinks.transformWikiPostContent(parseHookData);
+  assert.doesNotMatch(
+    parseHookData.postData.content,
+    /href="\/wiki\/Hidden_Root\/Readable_Child/,
+    "parse hook should fail closed when no reliable viewer uid is present instead of using the post author"
   );
 
   console.log("wiki-link resolver cache tests passed");

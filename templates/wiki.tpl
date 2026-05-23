@@ -3,12 +3,78 @@
     <!-- IMPORT partials/wiki/breadcrumb-trail.tpl -->
     <!-- IMPORT partials/wiki/search-chrome.tpl -->
     <div class="wiki-page-heading">
+      <!-- IF canonicalNodeView -->
+      <h1 class="wiki-page-heading__title">{canonicalTitle}</h1>
+      <!-- ELSE -->
       <h1 class="wiki-page-heading__title">Westgate Wiki</h1>
+      <!-- ENDIF canonicalNodeView -->
     </div>
+    <!-- IF canonicalNodeView -->
+    <!-- ELSE -->
     <p class="wiki-hub-tagline mb-0 mt-2">
       Lore, factions, locations, rules, and player guidance for Shadows Over Westgate.
     </p>
+    <!-- ENDIF canonicalNodeView -->
   </header>
+
+  <!-- IF canonicalNodeView -->
+  <div class="wiki-content-layout">
+    <div class="wiki-page-main-column">
+      <!-- IF hasArticle -->
+      <section class="wiki-page-body mb-4">
+        <article class="wiki-page-content wiki-article-prose card">
+          <!-- IF article.hasArticleCss -->
+          <style data-westgate-wiki-article-css>
+{article.scopedArticleCss}
+          </style>
+          <!-- ENDIF article.hasArticleCss -->
+          <div class="card-body wiki-article-custom-css-scope-{article.topic.tid}">
+            {article.mainPost.content}
+          </div>
+        </article>
+      </section>
+      <!-- ENDIF hasArticle -->
+
+      <!-- IF hasNamespace -->
+      <!-- IF namespace.section.description -->
+      <section class="wiki-section-description wiki-article-prose mb-4">
+        {namespace.section.description}
+      </section>
+      <!-- ENDIF namespace.section.description -->
+      <!-- ENDIF hasNamespace -->
+
+      <!-- IF hasNodeListingRows -->
+      <section class="wiki-page-body">
+        <article class="wiki-page-content wiki-article-prose wiki-namespace-index card">
+          <div class="card-body">
+            <h2 class="wiki-index-subsection-title" style="margin-top:0;">Contents</h2>
+            <ul class="wiki-index-list">
+              <!-- BEGIN nodeListing.rows -->
+              <li class="wiki-index-entry">
+                <div class="wiki-index-entry-main">
+                  <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
+                    {./displayTitle}
+                  </a>
+                </div>
+              </li>
+              <!-- END nodeListing.rows -->
+            </ul>
+          </div>
+        </article>
+      </section>
+      <!-- ELSE -->
+      <!-- IF isBranchOnly -->
+      <section class="wiki-status-card card">
+        <div class="card-body">
+          <h2>No Visible Wiki Entries</h2>
+          <p class="mb-0">There are no visible child namespaces or wiki pages at this path.</p>
+        </div>
+      </section>
+      <!-- ENDIF isBranchOnly -->
+      <!-- ENDIF hasNodeListingRows -->
+    </div>
+  </div>
+  <!-- ELSE -->
 
   <!-- IF setupRequired -->
   <section class="wiki-status-card card mb-4">
@@ -157,4 +223,5 @@
   </section>
   <!-- ENDIF hasSections -->
   <!-- ENDIF showNamespaceIndex -->
+  <!-- ENDIF canonicalNodeView -->
 </div>

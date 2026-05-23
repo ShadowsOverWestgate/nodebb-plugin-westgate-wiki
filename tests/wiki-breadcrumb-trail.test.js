@@ -74,3 +74,21 @@ assert.deepStrictEqual(
   ["Shadows Over Westgate Wiki", "asdf", "zxcv"],
   "explicit subpage delimiter should create parent breadcrumbs"
 );
+
+assert.deepStrictEqual(
+  texts(wikiBreadcrumbTrail.forCanonicalNodeView({
+    ancestors: [
+      { segment: "Lore", wikiPath: "/wiki/Lore" },
+      { segment: "Deities", wikiPath: "/wiki/Lore/Deities" }
+    ],
+    node: {
+      canonicalPath: "Lore/Deities/Gond",
+      segments: ["Lore", "Deities", "Gond"],
+      page: { titlePath: ["Gond"] },
+      namespace: { category: { name: "Gond" } },
+      isComposite: true
+    }
+  })),
+  ["Lore", "Deities", "Gond"],
+  "canonical node breadcrumbs should use tree ancestors and render composite nodes once"
+);

@@ -28,14 +28,6 @@
       <input id="wiki-compose-title" class="form-control" type="text" value="{defaultTitle}" maxlength="255" />
     </div>
 
-    <!-- IF showNamespaceMainPageToggle -->
-    <div class="form-check mb-3">
-      <input id="wiki-compose-namespace-main-page" class="form-check-input" type="checkbox"<!-- IF isNamespaceMainPage --> checked<!-- ENDIF isNamespaceMainPage --> />
-      <label class="form-check-label" for="wiki-compose-namespace-main-page">Use as the main page for this namespace</label>
-      <p class="small text-muted mb-0">The main page is pinned to the top of this namespace's navigation.</p>
-    </div>
-    <!-- ENDIF showNamespaceMainPageToggle -->
-
     <!-- IF showDiscussionToggle -->
     <div class="form-check mb-3">
       <input id="wiki-compose-discussion-disabled" class="form-check-input" type="checkbox"<!-- IF discussionDisabled --> checked<!-- ENDIF discussionDisabled --> />

@@ -111,15 +111,20 @@ const wikiService = require("../lib/wiki-service");
   wikiDirectory.invalidateAllWikiCaches();
   wikiPaths.invalidateNamespaceIndexCache({ skipSettingsInvalidation: true });
 
-  assert.equal((await wikiPaths.resolveArticlePath("server-rules", 1)).status, "ok");
+  assert.equal((await wikiPaths.resolveArticlePath("wiki/server-rules", 1)).status, "ok");
   assert.equal(
-    (await wikiPaths.resolveArticlePath("third-party-content-credits", 1)).status,
+    (await wikiPaths.resolveArticlePath("wiki/third-party-content-credits", 1)).status,
     "ok",
     "article resolution should not disappear when category.topic_count is lower than the cid tids set"
   );
 
   const rootSection = await wikiService.getSection(1, 1);
   assert.equal(rootSection.status, "ok");
+  assert.equal(
+    rootSection.section.childSections[0].wikiPath,
+    "/wiki/Wiki/Rules",
+    "child namespace links should keep their full canonical parent path"
+  );
   assert.equal(
     rootSection.section.childSections[0].articleCount,
     0,

@@ -42,6 +42,128 @@
         </div>
         <!-- ENDIF hasSetupErrors -->
 
+        <div class="card mb-4" data-wiki-path-migration-panel>
+          <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+              <div>
+                <h5 class="card-title mb-1">Canonical path migration reports</h5>
+                <p class="form-text mb-0">
+                  Scan and Verify are read-only. Prepare previews the cutover data; Apply clears retired plugin-owned path overrides.
+                </p>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-wiki-path-migration-scan>
+                  Scan
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" data-wiki-path-migration-prepare>
+                  Prepare
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-wiki-path-migration-verify>
+                  Verify
+                </button>
+                <button type="button" class="btn btn-danger btn-sm" data-wiki-path-migration-apply>
+                  Apply
+                </button>
+              </div>
+            </div>
+            <div
+              class="alert alert-secondary mb-3"
+              role="status"
+              data-wiki-path-migration-blocking-status
+            >
+              No migration report has been run in this browser session.
+            </div>
+            <pre
+              class="form-control font-monospace mb-0"
+              style="min-height: 12rem; white-space: pre-wrap;"
+              data-wiki-path-migration-output
+            ></pre>
+          </div>
+        </div>
+
+        <div class="card mb-4" data-wiki-archive-panel>
+          <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+              <div>
+                <h5 class="card-title mb-1">Wiki archive</h5>
+                <p class="form-text mb-0">
+                  Export a private V1 archive ZIP, or upload one for a previewed merge. Apply only after reviewing reports, blockers, creates/updates/moves, asset rewrites, and optional settings mapping.
+                </p>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary btn-sm" data-wiki-archive-export-start>
+                  Start export
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-wiki-archive-export-status disabled>
+                  Refresh export
+                </button>
+                <a class="btn btn-outline-primary btn-sm disabled" href="#" data-wiki-archive-export-download>
+                  Download ZIP
+                </a>
+              </div>
+            </div>
+
+            <div class="alert alert-secondary mb-3" role="status" data-wiki-archive-status>
+              No archive job has been run in this browser session.
+            </div>
+
+            <p class="form-text mb-3">
+              Archives carry wiki page article HTML, per-page CSS/discussion metadata, portable page IDs, settings snapshots, and validated local uploads. They do not carry replies, permission tables, edit locks, watches, notifications, caches, or search indexes. Destination category permissions remain authoritative.
+            </p>
+
+            <div class="mb-3">
+              <label class="form-label" for="wikiArchiveImportFile">Import archive ZIP</label>
+              <input
+                id="wikiArchiveImportFile"
+                type="file"
+                class="form-control"
+                accept=".zip,application/zip"
+                data-wiki-archive-import-file
+              />
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+              <button type="button" class="btn btn-outline-primary btn-sm" data-wiki-archive-import-preview>
+                Preview import
+              </button>
+              <div class="form-check mb-0">
+                <input
+                  id="wikiArchiveIncludeSettings"
+                  class="form-check-input"
+                  type="checkbox"
+                  data-wiki-archive-include-settings
+                />
+                <label class="form-check-label" for="wikiArchiveIncludeSettings">
+                  Include mapped plugin settings from this preview
+                </label>
+              </div>
+              <div class="form-check mb-0">
+                <input
+                  id="wikiArchiveApplyApproved"
+                  class="form-check-input"
+                  type="checkbox"
+                  data-wiki-archive-apply-approved
+                />
+                <label class="form-check-label" for="wikiArchiveApplyApproved">
+                  I reviewed the current preview and approve apply
+                </label>
+              </div>
+              <button type="button" class="btn btn-danger btn-sm" data-wiki-archive-apply disabled>
+                Apply import
+              </button>
+            </div>
+
+            <pre
+              class="form-control font-monospace mb-0"
+              style="min-height: 12rem; white-space: pre-wrap;"
+              data-wiki-archive-output
+            ></pre>
+            <p class="form-text mt-2 mb-0">
+              Partial apply is journaled and rerunnable. Resolve failures, then run a fresh preview before applying again. Legacy slugs and topdata IDs are diagnostics only; canonical paths control placement.
+            </p>
+          </div>
+        </div>
+
         <div class="mb-4">
           <div class="d-flex justify-content-between align-items-center gap-3 mb-2">
             <label class="form-label mb-0" for="categoryIds">Wiki Namespaces</label>
@@ -110,6 +232,24 @@
             The <code>/wiki</code> route shows this topic as the wiki home (same layout as other wiki pages). Create a topic
             in any configured wiki namespace, then enter its numeric topic id here. This page cannot be removed from the wiki
             &quot;Remove page&quot; action.
+          </p>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label" for="routeRootCid">Explicit route root (category id)</label>
+          <input
+            id="routeRootCid"
+            type="text"
+            class="form-control"
+            name="routeRootCid"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            placeholder="e.g. 12 (leave empty for no route root)"
+            value="{routeRootCid}"
+          />
+          <p class="form-text">
+            When set, this category becomes the wiki route root and its own title segment is omitted from canonical public paths.
+            Migration Apply fills this automatically when it finds one safe legacy <code>/wiki</code> root.
           </p>
         </div>
 

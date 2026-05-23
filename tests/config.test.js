@@ -41,4 +41,10 @@ assert.deepStrictEqual(
   ["Wiki Editor", "administrators"]
 );
 
+assert.strictEqual(config.normalizeSettings({ routeRootCid: "12" }).routeRootCid, 12);
+assert.strictEqual(config.normalizeSettings({ routeRootCid: "0" }).routeRootCid, null);
+assert.strictEqual(config.normalizeSettings({ routeRootCid: "not-a-cid" }).routeRootCid, null);
+assert.strictEqual(config.normalizeSettings({ routeRootCid: " 12 " }).routeRootCidText, "12");
+assert.strictEqual(config.DEFAULT_SETTINGS.routeRootCid, "");
+
 console.log("config tests passed");

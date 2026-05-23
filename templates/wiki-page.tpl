@@ -32,6 +32,32 @@
   <div class="wiki-with-fab">
     <div class="wiki-content-layout">
       <div class="wiki-page-main-column">
+        <!-- IF hasCreateIntent -->
+        <section class="wiki-status-card wiki-status-card-redlink card mb-4">
+          <div class="card-body">
+            <h2>Missing Wiki Page</h2>
+            <p>
+              <strong>{createIntentTitle}</strong> does not exist in <strong>{createIntentNamespaceName}</strong> yet.
+            </p>
+            <p>
+              Follow the wiki pattern and create it directly in this namespace.
+            </p>
+            <a
+              class="wiki-card-link wiki-redlink-action"
+              href="#"
+              data-wiki-create-page="1"
+              data-cid="{createIntentCid}"
+              data-title="{createIntentTitle}"
+              <!-- IF createIntentAutoload -->
+              data-wiki-create-autoload="1"
+              <!-- ENDIF createIntentAutoload -->
+            >
+              Create {createIntentTitle}
+            </a>
+          </div>
+        </section>
+        <!-- ENDIF hasCreateIntent -->
+
         <section class="wiki-page-body">
           <!-- IF mainPost -->
           <article class="wiki-page-content wiki-article-prose card">
@@ -53,6 +79,27 @@
           </article>
           <!-- ENDIF mainPost -->
         </section>
+
+        <!-- IF hasNodeListingRows -->
+        <section class="wiki-page-body mt-4">
+          <article class="wiki-page-content wiki-article-prose wiki-namespace-index card">
+            <div class="card-body">
+              <h2 class="wiki-index-subsection-title" style="margin-top:0;">Contents</h2>
+              <ul class="wiki-index-list">
+                <!-- BEGIN nodeListing.rows -->
+                <li class="wiki-index-entry">
+                  <div class="wiki-index-entry-main">
+                    <a class="wiki-index-entry-title" href="{config.relative_path}{./wikiPath}">
+                      {./displayTitle}
+                    </a>
+                  </div>
+                </li>
+                <!-- END nodeListing.rows -->
+              </ul>
+            </div>
+          </article>
+        </section>
+        <!-- ENDIF hasNodeListingRows -->
       </div>
     </div>
 

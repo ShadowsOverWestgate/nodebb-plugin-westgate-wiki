@@ -113,6 +113,13 @@ const wikiPageValidation = require("../lib/wiki-page-validation");
 wikiEditLocks.setNowProvider(() => state.now);
 wikiEditLocks.setTokenProvider(() => `token-${state.now}`);
 
+assert.equal(
+  wikiPageValidation.getTopdataPublicPathMigrationState(
+    "<!-- sow-topdata-wiki:page=feat:power_attack wiki_slug=power-attack -->"
+  ).hasRetiredWikiSlug,
+  true
+);
+
 function resetRuntime() {
   state.now = 100000;
   state.objects = new Map();
@@ -164,17 +171,26 @@ function resetRuntime() {
   resetRuntime();
   {
     const lock = await wikiEditLocks.acquireLock(10, 2);
+    const markerContent = [
+      "<!-- sow-topdata-wiki:page=spells:pdk:fear wiki_slug=pdk-fear -->",
+      "<p>Updated</p>"
+    ].join("\n");
+    assert.deepEqual(
+      wikiPageValidation.getTopdataPublicPathMigrationState(markerContent),
+      {
+        hasMarker: true,
+        hasRetiredWikiSlug: true,
+        retiredWikiSlug: "pdk-fear"
+      }
+    );
     await wikiPageValidation.validatePostEdit({
       uid: 2,
       data: { pid: 100, wikiEditLockToken: lock.token },
       post: {
-        content: [
-          "<!-- sow-topdata-wiki:page=spells:pdk:fear wiki_slug=pdk-fear -->",
-          "<p>Updated</p>"
-        ].join("\n")
+        content: markerContent
       }
     });
-    assert.equal(state.topics.get(10).westgateWikiPageSlug, "pdk-fear");
+    assert.equal(state.topics.get(10).westgateWikiPageSlug, "");
   }
 
   resetRuntime();

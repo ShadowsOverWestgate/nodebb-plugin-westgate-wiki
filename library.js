@@ -4,6 +4,7 @@ const routeHelpers = require.main.require("./src/routes/helpers");
 const cacheService = require("./lib/cache-service");
 const config = require("./lib/config");
 const adminControllers = require("./lib/controllers/admin");
+const wikiArchiveAdminControllers = require("./lib/controllers/wiki-archive-admin");
 const serializer = require("./lib/serializer");
 const topicService = require("./lib/topic-service");
 const wikiLinkAutocomplete = require("./lib/wiki-link-autocomplete");
@@ -15,7 +16,6 @@ const wikiHtmlParse = require("./lib/wiki-html-parse");
 const wikiDiscussionPlaceholder = require("./lib/wiki-discussion-placeholder");
 const wikiDiscussionSettings = require("./lib/wiki-discussion-settings");
 const wikiArticleCss = require("./lib/wiki-article-css");
-const wikiNamespaceMainPages = require("./lib/wiki-namespace-main-pages");
 const wikiUserMentions = require("./lib/wiki-user-mentions");
 const wikiMentionNotifications = require("./lib/wiki-mention-notifications");
 const wikiArticleWatch = require("./lib/wiki-article-watch");
@@ -54,6 +54,69 @@ plugin.registerApiRoutes = async function ({ router, middleware }) {
   const wikiHomepage = require("./lib/wiki-homepage");
   const wikiPageToc = require("./lib/wiki-page-toc");
   const wikiNamespaceCreateController = require("./lib/controllers/wiki-namespace-create");
+  routeHelpers.setupApiRoute(
+    router,
+    "get",
+    "/westgate-wiki/path-migration/scan",
+    [middleware.ensureLoggedIn],
+    adminControllers.scanWikiPathMigrationReport
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "post",
+    "/westgate-wiki/path-migration/prepare",
+    [middleware.ensureLoggedIn],
+    adminControllers.prepareWikiPathMigrationReport
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "post",
+    "/westgate-wiki/path-migration/apply",
+    [middleware.ensureLoggedIn],
+    adminControllers.applyWikiPathMigration
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "get",
+    "/westgate-wiki/path-migration/verify",
+    [middleware.ensureLoggedIn],
+    adminControllers.verifyWikiPathMigration
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "post",
+    "/westgate-wiki/archive/export-jobs",
+    [middleware.ensureLoggedIn],
+    wikiArchiveAdminControllers.startExportJob
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "get",
+    "/westgate-wiki/archive/jobs/:jobId",
+    [middleware.ensureLoggedIn],
+    wikiArchiveAdminControllers.getArchiveJob
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "get",
+    "/westgate-wiki/archive/export-jobs/:jobId/download",
+    [middleware.ensureLoggedIn],
+    wikiArchiveAdminControllers.downloadExportJob
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "post",
+    "/westgate-wiki/archive/import-jobs",
+    [middleware.ensureLoggedIn],
+    wikiArchiveAdminControllers.startImportJob
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "put",
+    "/westgate-wiki/archive/import-jobs/:jobId/apply",
+    [middleware.ensureLoggedIn],
+    wikiArchiveAdminControllers.applyImportJob
+  );
   routeHelpers.setupApiRoute(
     router,
     "get",
@@ -168,13 +231,6 @@ plugin.registerApiRoutes = async function ({ router, middleware }) {
   );
   routeHelpers.setupApiRoute(
     router,
-    "put",
-    "/westgate-wiki/namespace-main-page",
-    [middleware.ensureLoggedIn, middleware.checkRequired.bind(null, ["tid"])],
-    wikiNamespaceMainPages.putNamespaceMainPage
-  );
-  routeHelpers.setupApiRoute(
-    router,
     "post",
     "/westgate-wiki/namespace",
     [middleware.ensureLoggedIn],
@@ -234,6 +290,11 @@ plugin.clearWikiPostParseCache = cacheService.clearWikiPostParseCache;
 plugin.syncPostedTopdataWikiPageSlug = wikiPageValidation.syncPostedTopdataWikiPageSlug;
 plugin.clearWikiPostEditCache = cacheService.clearWikiPostEditCache;
 plugin.onWikiTopicDelete = wikiTopicPurge.onTopicDelete;
+plugin.invalidateWikiPathCaches = function () {
+  const wikiDirectory = require("./lib/wiki-directory-service");
+  wikiDirectory.invalidateAllWikiCaches();
+  wikiPaths.invalidateWikiTreeIndex({ reason: "wiki-path-lifecycle" });
+};
 plugin.wikiFilterTopicPost = wikiPageValidation.validateTopicPost;
 plugin.wikiFilterPostEdit = wikiPageValidation.validatePostEdit;
 plugin.wikiFilterTopicEdit = wikiPageValidation.validateTopicEdit;
@@ -265,6 +326,7 @@ plugin.onWikiTopicMoved = async function (data) {
   if (Number.isInteger(toCid) && toCid > 0) {
     wikiDirectory.invalidateNamespace(toCid);
   }
+  wikiPaths.invalidateWikiTreeIndex({ reason: "wiki-topic-moved" });
 };
 plugin.wikiFilterPrivilegesTopicsGet = async function (data) {
   if (!data || data.tid === undefined || data.tid === null) {
@@ -322,7 +384,6 @@ plugin.services = {
   wikiArticleWatch,
   wikiEditLocks,
   wikiUserMentions,
-  wikiNamespaceMainPages,
   wikiPageValidation,
   wikiPaths,
   wikiService,
