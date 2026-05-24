@@ -520,10 +520,12 @@ function register(params) {
     const pageFacet = nodeResult.node && nodeResult.node.page;
     const namespaceFacet = nodeResult.node && nodeResult.node.namespace;
 
-    const [wikiPage, wikiSection] = await Promise.all([
-      pageFacet ? topicService.getWikiPage(pageFacet.tid, req.uid) : null,
-      namespaceFacet ? wikiService.getSection(namespaceFacet.cid, req.uid, { pinHomeTopic: true, fullDirectoryListing: true }) : null
-    ]);
+    const wikiPage = pageFacet ? await topicService.getWikiPage(pageFacet.tid, req.uid) : null;
+    const needsRenderableNamespaceListing = !!namespaceFacet && !(wikiPage && wikiPage.status === "ok");
+    const wikiSection = namespaceFacet ? await wikiService.getSection(namespaceFacet.cid, req.uid, {
+      pinHomeTopic: true,
+      ...(needsRenderableNamespaceListing ? { fullDirectoryListing: true } : {})
+    }) : null;
 
     const visiblePage = wikiPage && wikiPage.status === "ok" ? wikiPage : null;
     const visibleSection = wikiSection && wikiSection.status === "ok" ? wikiSection : null;
