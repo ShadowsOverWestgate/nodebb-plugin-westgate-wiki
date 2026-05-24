@@ -19,7 +19,7 @@ function tick() {
   });
 }
 
-async function createComposeDom(fetchImpl) {
+async function createComposeDom(fetchImpl, overrides = {}) {
   const payload = {
     relativePath: "",
     csrfToken: "csrf",
@@ -30,13 +30,14 @@ async function createComposeDom(fetchImpl) {
     postEditUrl: "/api/v3/posts/34",
     wikiPageSaveApiUrl: "/api/v3/plugins/westgate-wiki/page/save",
     pageTitleCheckUrl: "/api/v3/plugins/westgate-wiki/page-title",
-    initialContent: "<p>Existing body</p>"
+    initialContent: "<p>Existing body</p>",
+    ...overrides.payload
   };
   const dom = new JSDOM(`<!doctype html><html><body>
     <div id="westgate-wiki-compose" class="westgate-wiki-compose">
       <div id="westgate-wiki-compose-data" data-payload-b64="${encodePayloadB64(payload)}"></div>
       <label for="wiki-compose-title">Title</label>
-      <input id="wiki-compose-title" value="CKEditor Page">
+      <input id="wiki-compose-title" value="${overrides.title || "CKEditor Page"}">
       <div id="wiki-compose-editor"></div>
       <button id="wiki-compose-submit" type="button">Save</button>
       <p id="wiki-compose-status" class="text-muted"></p>
@@ -120,6 +121,57 @@ async function createComposeDom(fetchImpl) {
 
   assert.match(wikiCss, /\.wiki-compose-error-dialog-shell\s*{/);
   assert.match(wikiCss, /\.wiki-compose-error-dialog\s*{/);
+
+  const publishCalls = [];
+  const publishDom = await createComposeDom(async function (url, options) {
+    publishCalls.push({ url: String(url), options: options || {} });
+    if (String(url).includes("/page-title/check")) {
+      return {
+        ok: true,
+        statusText: "OK",
+        json: async function () {
+          return {
+            status: { code: "ok", message: "OK" },
+            response: { ok: true, status: "ok" }
+          };
+        }
+      };
+    }
+    return {
+      ok: true,
+      statusText: "OK",
+      json: async function () {
+        return {
+          status: { code: "ok", message: "OK" },
+          response: {
+            tid: 99,
+            slug: "99/alignment-lawful-good"
+          }
+        };
+      }
+    };
+  }, {
+    title: "Alignment :: Lawful Good",
+    payload: {
+      mode: "create",
+      tid: undefined,
+      mainPid: undefined,
+      postEditUrl: undefined,
+      sectionWikiPath: "/wiki/Guides"
+    }
+  });
+
+  publishDom.window.document.getElementById("wiki-compose-submit").click();
+  await tick();
+  await tick();
+  await tick();
+
+  assert.equal(
+    publishDom.window.document.getElementById("wiki-compose-return").getAttribute("href"),
+    "/wiki/Guides/Alignment/Lawful_Good",
+    "standalone compose fallback redirects should use canonical title-path segments instead of flattened NodeBB slugs"
+  );
+  assert.equal(publishCalls.length, 2);
 
   process.stdout.write("wiki-compose save client tests passed\n");
 })().catch(function (err) {

@@ -216,7 +216,7 @@
         </button>
         <!-- ENDIF canChangeWikiOwner -->
         <!-- IF canMakeWikiSubpage -->
-        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon" data-wiki-make-subpage="1" data-cid="{category.cid}" data-title="{subpageDraftTitle}" title="Make a subpage" aria-label="Make a subpage">
+        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon" data-wiki-make-subpage="1" data-cid="{category.cid}" data-title="{subpageDraftTitle}" data-wiki-create-namespace-path="{category.wikiPath}" title="Make a subpage" aria-label="Make a subpage">
           <i class="fa fa-fw fa-level-down" aria-hidden="true"></i>
         </button>
         <!-- ENDIF canMakeWikiSubpage -->

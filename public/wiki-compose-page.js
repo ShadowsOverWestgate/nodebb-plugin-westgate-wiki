@@ -79,6 +79,58 @@ function getRelativeWikiHref(relativePath, wikiPath) {
   return `${prefix}${path.charAt(0) === "/" ? path : `/${path}`}`;
 }
 
+function normalizeWikiCreateCanonicalSegment(value) {
+  const transliterations = {
+    "æ": "ae",
+    "œ": "oe",
+    "ø": "o",
+    "ß": "ss",
+    "þ": "th",
+    "ð": "d",
+    "đ": "d",
+    "ł": "l",
+    "ħ": "h",
+    "ı": "i",
+    "ŋ": "n",
+    "ŧ": "t"
+  };
+  let canonical = "";
+  let lastSeparator = false;
+
+  Array.from(String(value || "").trim().normalize("NFKD")).forEach(function (char) {
+    const transliterated = transliterations[char.toLocaleLowerCase("en-US")];
+    if (/^[A-Za-z0-9]$/.test(char)) {
+      canonical += char;
+      lastSeparator = false;
+    } else if (char === "_") {
+      if (canonical && !lastSeparator) {
+        canonical += "_";
+        lastSeparator = true;
+      }
+    } else if (/^\p{Mark}$/u.test(char) || /['"`´‘’‚‛“”„‟‹›«»′″＇＂]/.test(char)) {
+      return;
+    } else if (transliterated) {
+      canonical += char === char.toLocaleUpperCase("en-US") ?
+        transliterated.charAt(0).toLocaleUpperCase("en-US") + transliterated.slice(1) :
+        transliterated;
+      lastSeparator = false;
+    } else if (canonical && !lastSeparator) {
+      canonical += "_";
+      lastSeparator = true;
+    }
+  });
+
+  return canonical.replace(/^_+|_+$/g, "");
+}
+
+function normalizeWikiCreateCanonicalTitlePath(value) {
+  return String(value || "")
+    .split(/\s*::\s*/g)
+    .map(normalizeWikiCreateCanonicalSegment)
+    .filter(Boolean)
+    .join("/");
+}
+
 function showComposeErrorModal(options) {
   const details = options || {};
   const existing = document.querySelector(".wiki-compose-error-dialog-shell");
@@ -842,10 +894,11 @@ async function initWikiComposePage() {
           }
         }
 
+        const canonicalTitlePath = normalizeWikiCreateCanonicalTitlePath(title);
         const slugLeaf = wikiSlug ? String(wikiSlug).split("/").filter(Boolean).pop() : "";
         const cleanWikiPath = responsePayload && responsePayload.wikiPath
           ? responsePayload.wikiPath
-          : (payload.sectionWikiPath && slugLeaf ? `${payload.sectionWikiPath}/${slugLeaf}` : "");
+          : (payload.sectionWikiPath && (canonicalTitlePath || slugLeaf) ? `${payload.sectionWikiPath}/${canonicalTitlePath || slugLeaf}` : "");
 
         if (!cleanWikiPath) {
           throw new Error("Unexpected API response");

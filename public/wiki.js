@@ -76,6 +76,14 @@ $(document).ready(function () {
     return canonical.replace(/^_+|_+$/g, "");
   }
 
+  function normalizeWikiCreateCanonicalTitlePath(value) {
+    return String(value || "")
+      .split(/\s*::\s*/g)
+      .map(normalizeWikiCreateCanonicalSegment)
+      .filter(Boolean)
+      .join("/");
+  }
+
   function getSubmittedWikiCreateTitle(payload) {
     return String(
       (payload && payload.postData && payload.postData.title) ||
@@ -897,9 +905,9 @@ $(document).ready(function () {
         const submittedTitle = pendingWikiCreate && pendingWikiCreate.submittedTitle;
         const redirectTitleChanged = !!(submittedTitle && pendingWikiCreate && normalizeWikiCreateTitle(submittedTitle) !== normalizeWikiCreateTitle(pendingWikiCreate.title));
         const namespacePath = pendingWikiCreate && pendingWikiCreate.namespacePath;
-        const canonicalLeaf = redirectTitleChanged ? normalizeWikiCreateCanonicalSegment(submittedTitle) : "";
+        const canonicalTitlePath = normalizeWikiCreateCanonicalTitlePath(submittedTitle);
         const slugLeaf = String(payload.data.slug || "").split("/").filter(Boolean).pop();
-        const cleanPath = redirectPath && !redirectTitleChanged ? redirectPath : (namespacePath && (canonicalLeaf || slugLeaf) ? `${namespacePath.replace(/\/$/, "")}/${canonicalLeaf || slugLeaf}` : `wiki/${payload.data.slug}`);
+        const cleanPath = redirectPath && !redirectTitleChanged ? redirectPath : (namespacePath && (canonicalTitlePath || slugLeaf) ? `${namespacePath.replace(/\/$/, "")}/${canonicalTitlePath || slugLeaf}` : `wiki/${payload.data.slug}`);
         clearPendingWikiCreate();
         ajaxify.go(cleanPath.replace(/^\//, ""));
       }
@@ -1149,9 +1157,10 @@ $(document).ready(function () {
     const btn = event.currentTarget;
     const cid = parseInt(btn.getAttribute("data-cid"), 10);
     const title = btn.getAttribute("data-title") || "";
+    const namespacePath = (btn.getAttribute("data-wiki-create-namespace-path") || "").trim();
 
     event.preventDefault();
-    launchWikiCreate({ cid: cid, title: title });
+    launchWikiCreate({ cid: cid, title: title, namespacePath: namespacePath });
   });
 
   $(document).on("click", "[data-wiki-move-page]", function (event) {

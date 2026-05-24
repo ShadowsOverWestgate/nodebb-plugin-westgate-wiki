@@ -125,7 +125,23 @@ function createDom() {
   window.document.addEventListener("click", function (event) {
     delegated
       .filter((entry) => entry.eventName === "click" && event.target.matches(entry.selector))
-      .forEach((entry) => entry.handler.call(event.target, event));
+      .forEach((entry) => {
+        const delegatedEvent = Object.create(event);
+        Object.defineProperty(delegatedEvent, "currentTarget", {
+          configurable: true,
+          value: event.target
+        });
+        delegatedEvent.preventDefault = function () {
+          event.preventDefault();
+        };
+        delegatedEvent.stopPropagation = function () {
+          event.stopPropagation();
+        };
+        delegatedEvent.stopImmediatePropagation = function () {
+          event.stopImmediatePropagation();
+        };
+        entry.handler.call(event.target, delegatedEvent);
+      });
   });
 
   window.eval(wikiJs);
@@ -158,6 +174,43 @@ function createDom() {
     ajaxifyCalls[1],
     "wiki/Lore/Deities/Other_Page",
     "edited namespace-index titles should redirect under the parent namespace path using canonical wiki segments"
+  );
+
+  const subpageDom = createDom();
+  const { window: subpageWindow, hooks: subpageHooks, ajaxifyCalls: subpageAjaxifyCalls } = subpageDom;
+  subpageWindow.document.body.innerHTML = `
+    <button
+      id="make-subpage"
+      type="button"
+      data-wiki-make-subpage="1"
+      data-cid="30"
+      data-title="Alignment :: Lawful Good"
+      data-wiki-create-namespace-path="/wiki/Guides"
+    >Make subpage</button>
+  `;
+
+  subpageWindow.document.getElementById("make-subpage").dispatchEvent(new subpageWindow.MouseEvent("click", { bubbles: true, cancelable: true }));
+  await tick();
+  assert.equal(subpageAjaxifyCalls[0], "wiki/compose/30?title=Alignment%20%3A%3A%20Lawful%20Good");
+
+  const subpageSubmitPayload = {
+    action: "topics.post",
+    composerData: {},
+    postData: {
+      _wikiCreate: true,
+      title: "Alignment :: Lawful Good"
+    }
+  };
+  subpageHooks["filter:composer.submit"](subpageSubmitPayload);
+  subpageHooks["action:composer.topics.post"]({
+    composerData: subpageSubmitPayload.composerData,
+    data: { slug: "99/alignment-lawful-good" }
+  });
+
+  assert.equal(
+    subpageAjaxifyCalls[1],
+    "wiki/Guides/Alignment/Lawful_Good",
+    "subpage creation redirects should use title-path canonical segments instead of the flattened NodeBB topic slug"
   );
 
   process.stdout.write("wiki create index client tests passed\n");

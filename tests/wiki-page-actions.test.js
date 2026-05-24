@@ -115,6 +115,10 @@ assert(
   "Make Subpage action should be permission-gated"
 );
 assert(
+  /data-wiki-make-subpage="1"[\s\S]*data-wiki-create-namespace-path="\{category\.wikiPath\}"/.test(template),
+  "Make Subpage action should carry the canonical namespace path for post-create redirects"
+);
+assert(
   /<!-- IF rootNamespaceCanCreatePage -->[\s\S]*data-wiki-create-page[\s\S]*data-cid="{rootNamespaceCid}"[\s\S]*<!-- ENDIF rootNamespaceCanCreatePage -->/.test(template),
   "homepage FAB should expose root namespace page creation when allowed"
 );
