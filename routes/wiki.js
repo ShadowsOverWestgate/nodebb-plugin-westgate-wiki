@@ -522,7 +522,7 @@ function register(params) {
 
     const [wikiPage, wikiSection] = await Promise.all([
       pageFacet ? topicService.getWikiPage(pageFacet.tid, req.uid) : null,
-      namespaceFacet ? wikiService.getSection(namespaceFacet.cid, req.uid, { pinHomeTopic: true }) : null
+      namespaceFacet ? wikiService.getSection(namespaceFacet.cid, req.uid, { pinHomeTopic: true, fullDirectoryListing: true }) : null
     ]);
 
     const visiblePage = wikiPage && wikiPage.status === "ok" ? wikiPage : null;

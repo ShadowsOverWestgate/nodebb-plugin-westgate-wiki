@@ -4,20 +4,36 @@ const assert = require("node:assert/strict");
 
 const state = {
   settings: {
-    categoryIds: "1, 2",
+    categoryIds: "1, 2, 3",
     includeChildCategories: "0"
   },
   categories: new Map([
     [1, { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 1 }],
-    [2, { cid: 2, name: "Rules", slug: "2/rules", parentCid: 1, topic_count: 1 }]
+    [2, { cid: 2, name: "Rules", slug: "2/rules", parentCid: 1, topic_count: 1 }],
+    [3, { cid: 3, name: "Feats", slug: "3/feats", parentCid: 0, topic_count: 55 }]
   ]),
   topics: new Map([
     [10, { tid: 10, cid: 1, title: "Server Rules", slug: "10/server-rules", deleted: 0, scheduled: 0, postcount: 1 }],
     [11, { tid: 11, cid: 1, title: "Third-Party Content Credits", slug: "11/third-party-content-credits", deleted: 0, scheduled: 0, postcount: 1 }],
     [12, { tid: 12, cid: 1, title: "Rules", slug: "12/rules", deleted: 0, scheduled: 0, postcount: 1 }]
   ]),
-  tidsByCid: new Map([[1, [10, 11, 12]], [2, []]])
+  tidsByCid: new Map([[1, [10, 11, 12]], [2, []], [3, []]])
 };
+
+for (let i = 0; i < 55; i += 1) {
+  const tid = 300 + i;
+  const prefix = i < 20 ? "A" : (i < 40 ? "B" : "D");
+  state.topics.set(tid, {
+    tid,
+    cid: 3,
+    title: `${prefix} Feat ${i}`,
+    slug: `${tid}/${prefix.toLowerCase()}-feat-${i}`,
+    deleted: 0,
+    scheduled: 0,
+    postcount: 1
+  });
+  state.tidsByCid.get(3).push(tid);
+}
 
 const originalMainRequire = require.main.require.bind(require.main);
 
@@ -142,6 +158,31 @@ const wikiService = require("../lib/wiki-service");
     hub.sections[0].topics.map((topic) => topic.tid),
     [10, 11],
     "a child namespace index page should not be duplicated in wiki hub previews"
+  );
+
+  const featsPreviewSection = await wikiService.getSection(3, 1);
+  assert.equal(featsPreviewSection.status, "ok");
+  assert.equal(
+    featsPreviewSection.section.topics.length,
+    40,
+    "default directory windows should stay paginated for sidebars and API-like previews"
+  );
+
+  const featsSection = await wikiService.getSection(3, 1, { fullDirectoryListing: true });
+  assert.equal(featsSection.status, "ok");
+  assert.equal(
+    featsSection.section.topics.length,
+    55,
+    "namespace index pages should render every article, not only the directory API first page"
+  );
+  assert.equal(
+    featsSection.section.directoryHasMore,
+    false,
+    "full namespace index renders should not ask the client to load more rows"
+  );
+  assert.ok(
+    featsSection.section.topics.some((topic) => String(topic.title).startsWith("D ")),
+    "full namespace index renders should include later letter buckets"
   );
 
   console.log("wiki directory stale count tests passed");

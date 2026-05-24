@@ -72,7 +72,7 @@ test("namespace routes expose the Pages drawer navigation", function () {
   assert.match(sectionTemplateWithNavPartial, /data-wiki-directory-mode="nav"/);
   assert.match(sectionTemplateWithNavPartial, /data-cid="\{sectionNavigation\.cid\}"/);
   assert.match(routeSource, /buildWikiNavRenderData\(wikiSection\.section/);
-  assert.match(routeSource, /wikiService\.getSection\(namespaceFacet\.cid,\s*req\.uid,\s*\{\s*pinHomeTopic:\s*true\s*\}\)/);
+  assert.match(routeSource, /wikiService\.getSection\(namespaceFacet\.cid,\s*req\.uid,\s*\{\s*pinHomeTopic:\s*true,\s*fullDirectoryListing:\s*true\s*\}\)/);
   assert.doesNotMatch(sectionTemplate, /data-wiki-article-toc-root/);
 });
 

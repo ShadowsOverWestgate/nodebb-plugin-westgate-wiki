@@ -77,7 +77,7 @@
               <section class="wiki-index-pages-block" aria-labelledby="wiki-index-pages-heading">
                 <h3 class="wiki-index-subsection-title" id="wiki-index-pages-heading">Articles</h3>
                 <p class="wiki-index-subsection-lead mb-2">
-                  This page shows only a subset of pages. Search, jump by letter, or scroll to load more.
+                  Search or jump by letter.
                 </p>
 
                 <div
