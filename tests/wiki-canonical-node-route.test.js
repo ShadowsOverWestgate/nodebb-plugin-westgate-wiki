@@ -146,8 +146,8 @@ topicService.getWikiPage = async (tid) => {
   getWikiPageCalls.push(tid);
   return getWikiPageImpl(tid);
 };
-wikiService.getSection = async (cid) => {
-  getSectionCalls.push(cid);
+wikiService.getSection = async (cid, uid, options) => {
+  getSectionCalls.push({ cid, uid, options });
   return getSectionImpl(cid);
 };
 wikiService.getSections = async (uid) => getSectionsImpl(uid);
@@ -327,6 +327,9 @@ async function runHub() {
     requestPath: "Lore/Deities/Gond",
     options: { uid: 5, includeChildren: true }
   });
+  assert.deepEqual(getSectionCalls, [
+    { cid: 42, uid: 5, options: { pinHomeTopic: true } }
+  ]);
   assert.equal(legacyNamespaceCalls, 0);
   assert.equal(legacyArticleCalls, 0);
 
@@ -552,6 +555,11 @@ async function runHub() {
   assert.equal(namespaceOnly.renderCalls[0].data.namespaceIndexCreateRedirectPath, "/wiki/Lore/Deities/Gond");
   assert.equal(namespaceOnly.renderCalls[0].data.namespaceIndexCreateNamespacePath, "/wiki/Lore/Deities");
   assert.deepEqual(getWikiPageCalls, []);
+  assert.deepEqual(getSectionCalls[0], {
+    cid: 42,
+    uid: 5,
+    options: { pinHomeTopic: true, fullDirectoryListing: true }
+  });
 
   resetStubs();
   resolveWikiNodeResult = baseNodeResult({
