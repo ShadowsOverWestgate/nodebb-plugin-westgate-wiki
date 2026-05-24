@@ -80,6 +80,11 @@ assert.match(
   /\.wiki-article-prose :where\(td, th\)\.wiki-table-cell-valign-bottom\s*\{[\s\S]*vertical-align:\s*bottom;[\s\S]*\}/,
   "bottom table cell vertical alignment should render from the durable class fallback"
 );
+assert.match(
+  articleBodyCss,
+  /\.wiki-article-prose \.wiki-class-progression :where\(th, td\)\.wiki-class-progression-attack\s*\{[\s\S]*white-space:\s*nowrap;[\s\S]*width:\s*var\(--wiki-class-progression-attack-width,\s*5\.5rem\);[\s\S]*\}/,
+  "class progression attack sequences should stay on one line and reserve enough width for long APR values"
+);
 
 assert.match(libraryJs, /const wikiArticleCss = require\("\.\/lib\/wiki-article-css"\)/);
 assert.match(libraryJs, /"\/westgate-wiki\/article-css"/);

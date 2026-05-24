@@ -608,6 +608,11 @@
   table-layout: fixed;
 }
 
+.wiki-article-prose .wiki-class-progression :where(th, td).wiki-class-progression-attack {
+  white-space: nowrap;
+  width: var(--wiki-class-progression-attack-width, 5.5rem);
+}
+
 .wiki-article-prose :where(th, td) {
   border: 1px solid var(--wiki-prose-table-border, var(--bs-border-color-translucent, var(--bs-border-color, #dee2e6)));
   padding: 0.5rem 0.65rem;
