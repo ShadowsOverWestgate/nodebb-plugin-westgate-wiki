@@ -32,6 +32,10 @@
       "method": "registerApiRoutes"
     },
     {
+      "hook": "static:privileges.categories.init",
+      "method": "addWikiRevisionCategoryPrivileges"
+    },
+    {
       "hook": "filter:markdown.beforeParse",
       "method": "wikiMarkdownBeforeParse",
       "priority": 4

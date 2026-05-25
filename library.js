@@ -22,6 +22,7 @@ const wikiArticleWatch = require("./lib/wiki-article-watch");
 const wikiEditLocks = require("./lib/wiki-edit-locks");
 const wikiPageActions = require("./lib/wiki-page-actions");
 const wikiTopdataBotPrivileges = require("./lib/wiki-topdata-bot-privileges");
+const wikiRevisionPermissions = require("./lib/wiki-revision-permissions");
 const wikiService = require("./lib/wiki-service");
 const wikiPaths = require("./lib/wiki-paths");
 const wikiPageValidation = require("./lib/wiki-page-validation");
@@ -301,6 +302,7 @@ plugin.wikiFilterTopicPost = wikiPageValidation.validateTopicPost;
 plugin.wikiFilterPostEdit = wikiPageValidation.validatePostEdit;
 plugin.wikiFilterTopicEdit = wikiPageValidation.validateTopicEdit;
 plugin.wikiFilterPrivilegesPostsEdit = wikiTopdataBotPrivileges.filterPostEditPrivilege;
+plugin.addWikiRevisionCategoryPrivileges = wikiRevisionPermissions.addCategoryPrivileges;
 plugin.wikiFilterTopicDelete = async function (data) {
   if (!data || !data.topicData) {
     return data;
@@ -388,6 +390,7 @@ plugin.services = {
   wikiEditLocks,
   wikiUserMentions,
   wikiPageValidation,
+  wikiRevisionPermissions,
   wikiPaths,
   wikiService,
   wikiDirectory: require("./lib/wiki-directory-service")
