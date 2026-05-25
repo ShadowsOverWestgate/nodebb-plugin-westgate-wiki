@@ -21,6 +21,7 @@ const wikiMentionNotifications = require("./lib/wiki-mention-notifications");
 const wikiArticleWatch = require("./lib/wiki-article-watch");
 const wikiEditLocks = require("./lib/wiki-edit-locks");
 const wikiPageActions = require("./lib/wiki-page-actions");
+const wikiRevisionActions = require("./lib/wiki-revision-actions");
 const wikiTopdataBotPrivileges = require("./lib/wiki-topdata-bot-privileges");
 const wikiRevisionPermissions = require("./lib/wiki-revision-permissions");
 const wikiRevisions = require("./lib/wiki-revisions");
@@ -196,6 +197,48 @@ plugin.registerApiRoutes = async function ({ router, middleware }) {
     "/westgate-wiki/page/save",
     [middleware.ensureLoggedIn],
     wikiPageActions.saveWikiPage
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "get",
+    "/westgate-wiki/revisions/:tid",
+    [middleware.ensureLoggedIn],
+    wikiRevisionActions.listRevisions
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "get",
+    "/westgate-wiki/revisions/:tid/:revisionId",
+    [middleware.ensureLoggedIn],
+    wikiRevisionActions.getRevision
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "get",
+    "/westgate-wiki/revisions/:tid/:fromRevisionId/:toRevisionId/diff",
+    [middleware.ensureLoggedIn],
+    wikiRevisionActions.diffRevisions
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "put",
+    "/westgate-wiki/revisions/:tid/:revisionId/restore",
+    [middleware.ensureLoggedIn],
+    wikiRevisionActions.restoreRevision
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "put",
+    "/westgate-wiki/page/tombstone",
+    [middleware.ensureLoggedIn],
+    wikiRevisionActions.tombstonePage
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "delete",
+    "/westgate-wiki/page/hard-purge",
+    [middleware.ensureLoggedIn],
+    wikiRevisionActions.hardPurgePage
   );
   routeHelpers.setupApiRoute(
     router,

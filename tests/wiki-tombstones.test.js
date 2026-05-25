@@ -174,7 +174,73 @@ require.main.require = function requireNodebbStub(id) {
       memo[field] = "";
       return memo;
     }, {}));
+    assert.deepEqual(state.setTopicFieldCalls.map((call) => call.field), [
+      "westgateWikiTombstoneAt",
+      "westgateWikiTombstoneUid",
+      "westgateWikiTombstoneRevisionId",
+      "westgateWikiTombstoneReason",
+      "westgateWikiTombstoned"
+    ]);
 
+    await tombstones.setTombstone({
+      tid: 42,
+      uid: 7,
+      revisionId: "rev-delete-clear-partial",
+      reason: "partial",
+      timestamp: 12346
+    });
+    state.setTopicFieldCalls = [];
+    state.failSetTopicField = "westgateWikiTombstoneRevisionId";
+    await assert.rejects(
+      () => tombstones.clearTombstone("42"),
+      /failed-westgateWikiTombstoneRevisionId/
+    );
+    assert.equal(topic(42).westgateWikiTombstoned, "1");
+    assert.deepEqual(state.setTopicFieldCalls.map((call) => call.field), [
+      "westgateWikiTombstoneAt",
+      "westgateWikiTombstoneUid",
+      "westgateWikiTombstoneRevisionId"
+    ]);
+    state.failSetTopicField = "";
+    await tombstones.clearTombstone("42");
+
+    await tombstones.setTombstone({
+      tid: 42,
+      uid: 7,
+      revisionId: "rev-match",
+      reason: "",
+      timestamp: 12347
+    });
+    const unmatchedClear = await tombstones.clearTombstoneIfRevision(42, "rev-other");
+    assert.deepEqual(unmatchedClear, { tid: 42, cleared: false, matched: false });
+    assert.equal(topic(42).westgateWikiTombstoneRevisionId, "rev-match");
+    const matchedClear = await tombstones.clearTombstoneIfRevision(42, "rev-match");
+    assert.deepEqual(matchedClear, { tid: 42, cleared: true, matched: true });
+    assert.deepEqual(topic(42), TOMBSTONE_FIELDS.reduce((memo, field) => {
+      memo[field] = "";
+      return memo;
+    }, {}));
+
+    const noTombstoneClear = await tombstones.clearTombstoneIfRevision(42, "rev-match");
+    assert.deepEqual(noTombstoneClear, { tid: 42, cleared: false, matched: false });
+
+    await tombstones.setTombstone({
+      tid: 42,
+      uid: 7,
+      revisionId: "rev-assert",
+      reason: "",
+      timestamp: 12348
+    });
+    assert.deepEqual(await tombstones.getTombstoneIfRevision(42, "rev-assert"), {
+      tombstoned: true,
+      at: 12348,
+      uid: 7,
+      revisionId: "rev-assert",
+      reason: ""
+    });
+    assert.equal(await tombstones.getTombstoneIfRevision(42, "rev-other"), null);
+
+    reset();
     await assert.rejects(
       () => tombstones.hardPurgeTombstone(42, 7),
       /wiki-page-not-tombstoned/
@@ -206,9 +272,41 @@ require.main.require = function requireNodebbStub(id) {
       reason: "",
       timestamp: 12346
     });
+    const comparePurged = await tombstones.hardPurgeTombstoneIfRevision("42", "8", "rev-delete-2");
+    assert.deepEqual(comparePurged, { tid: 42, purged: true });
+    assert.deepEqual(state.purgeCalls, [{ tids: [42], uid: 8 }]);
+
+    const checkedPurged = await tombstones.hardPurgeCheckedTombstone("42", "8", {
+      tombstoned: true,
+      at: 12346,
+      uid: 7,
+      revisionId: "rev-delete-2",
+      reason: ""
+    });
+    assert.deepEqual(checkedPurged, { tid: 42, purged: true });
+    assert.deepEqual(state.purgeCalls, [{ tids: [42], uid: 8 }, { tids: [42], uid: 8 }]);
+
+    await assert.rejects(
+      () => tombstones.hardPurgeCheckedTombstone("42", "8", {
+        tombstoned: true,
+        at: 12346,
+        uid: 7,
+        revisionId: "",
+        reason: ""
+      }),
+      /wiki-page-tombstone-incomplete/
+    );
+    assert.deepEqual(state.purgeCalls, [{ tids: [42], uid: 8 }, { tids: [42], uid: 8 }]);
+
+    await assert.rejects(
+      () => tombstones.hardPurgeTombstoneIfRevision("42", "8", "rev-other"),
+      /wiki-page-tombstone-stale/
+    );
+    assert.deepEqual(state.purgeCalls, [{ tids: [42], uid: 8 }, { tids: [42], uid: 8 }]);
+
     const purged = await tombstones.hardPurgeTombstone("42", "8");
     assert.deepEqual(purged, { tid: 42, purged: true });
-    assert.deepEqual(state.purgeCalls, [{ tids: [42], uid: 8 }]);
+    assert.deepEqual(state.purgeCalls, [{ tids: [42], uid: 8 }, { tids: [42], uid: 8 }, { tids: [42], uid: 8 }]);
 
     await assert.rejects(
       () => tombstones.setTombstone({ tid: 0, uid: 1, revisionId: "rev" }),
@@ -232,6 +330,18 @@ require.main.require = function requireNodebbStub(id) {
     );
     await assert.rejects(
       () => tombstones.clearTombstone(0),
+      /invalid-wiki-tombstone/
+    );
+    await assert.rejects(
+      () => tombstones.clearTombstoneIfRevision(0, "rev"),
+      /invalid-wiki-tombstone/
+    );
+    await assert.rejects(
+      () => tombstones.hardPurgeTombstoneIfRevision(0, 1, "rev"),
+      /invalid-wiki-tombstone/
+    );
+    await assert.rejects(
+      () => tombstones.hardPurgeCheckedTombstone(0, 1, { tombstoned: true, at: 1, uid: 1, revisionId: "rev" }),
       /invalid-wiki-tombstone/
     );
     await assert.rejects(

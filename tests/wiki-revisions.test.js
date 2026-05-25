@@ -4,6 +4,9 @@ const assert = require("node:assert/strict");
 
 const state = {
   now: 1000,
+  deleteAllCalls: [],
+  failListPrependKey: "",
+  failSetObjectKey: "",
   objects: new Map(),
   lists: new Map()
 };
@@ -24,12 +27,29 @@ require.main.require = function requireNodebbStub(id) {
         const value = state.objects.get(key);
         return value ? { ...value } : null;
       },
-      setObject: async (key, value) => state.objects.set(key, { ...value }),
+      setObject: async (key, value) => {
+        if (key === state.failSetObjectKey) {
+          throw new Error(`failed-setObject-${key}`);
+        }
+        state.objects.set(key, { ...value });
+      },
       delete: async (key) => {
         state.objects.delete(key);
         state.lists.delete(key);
       },
-      listPrepend: async (key, value) => list(key).unshift(String(value)),
+      deleteAll: async (keys) => {
+        state.deleteAllCalls.push(keys.slice());
+        keys.forEach((key) => {
+          state.objects.delete(key);
+          state.lists.delete(key);
+        });
+      },
+      listPrepend: async (key, value) => {
+        if (key === state.failListPrependKey) {
+          throw new Error(`failed-listPrepend-${key}`);
+        }
+        list(key).unshift(String(value));
+      },
       listAppend: async (key, value) => list(key).push(String(value)),
       getListRange: async (key, start, stop) => {
         const rows = list(key);
@@ -46,6 +66,9 @@ require.main.require = function requireNodebbStub(id) {
 
 function reset() {
   state.now = 1000;
+  state.deleteAllCalls = [];
+  state.failListPrependKey = "";
+  state.failSetObjectKey = "";
   state.objects = new Map();
   state.lists = new Map();
 }
@@ -119,6 +142,19 @@ function reset() {
     assert.notEqual(fullSecondRecord.patch, "");
     assert.equal(fullSecondRecord.checkpointSource, "");
 
+    await revisions.purgeRevisions(10);
+    assert.equal(await revisions.hasRevisions(10), false);
+    assert.deepEqual(list("westgate-wiki:revisions:10"), []);
+    assert.equal(state.objects.has("westgate-wiki:revisions:10:meta"), false);
+    assert.equal(state.objects.has(`westgate-wiki:revision:10:${first.revisionId}`), false);
+    assert.equal(state.objects.has(`westgate-wiki:revision:10:${second.revisionId}`), false);
+    assert.deepEqual(state.deleteAllCalls, [[
+      `westgate-wiki:revision:10:${second.revisionId}`,
+      `westgate-wiki:revision:10:${first.revisionId}`,
+      "westgate-wiki:revisions:10",
+      "westgate-wiki:revisions:10:meta"
+    ]]);
+
     reset();
     const tinyBase = await revisions.appendRevision({ tid: 13, pid: 130, cid: 5, uid: 1, action: "edit", title: "Tiny", oldSource: "", newSource: "<p>A</p>" });
     state.now += 1;
@@ -137,6 +173,13 @@ function reset() {
     const parentMeta = { ...state.objects.get("westgate-wiki:revisions:14:meta") };
     state.now += 1;
     await assert.rejects(
+      () => revisions.assertCanAppendRevision({ tid: 14, pid: 140, cid: 5, uid: 1, action: "edit", title: "Parent", oldSource: "<p>Stale</p>", newSource: "<p>Next</p>" }),
+      /revision-parent-hash-mismatch/
+    );
+    assert.equal(state.objects.size, parentObjectCount);
+    assert.equal(list("westgate-wiki:revisions:14").length, parentListLength);
+    assert.deepEqual(state.objects.get("westgate-wiki:revisions:14:meta"), parentMeta);
+    await assert.rejects(
       () => revisions.appendRevision({ tid: 14, pid: 140, cid: 5, uid: 1, action: "edit", title: "Parent", oldSource: "<p>Stale</p>", newSource: "<p>Next</p>" }),
       /revision-parent-hash-mismatch/
     );
@@ -146,6 +189,12 @@ function reset() {
     assert.equal((await revisions.reconstructRevision(14, parentBase.revisionId)).source, "<p>Fresh</p>");
 
     reset();
+    await assert.rejects(
+      () => revisions.assertCanAppendRevision({ tid: 15, pid: 150, cid: 5, uid: 1, action: "edit", title: "Missing Parent", parentRevisionId: "missing-parent", oldSource: "<p>Missing</p>", newSource: "<p>Next</p>" }),
+      /revision-parent-not-found/
+    );
+    assert.equal(state.objects.size, 0);
+    assert.equal(list("westgate-wiki:revisions:15").length, 0);
     await assert.rejects(
       () => revisions.appendRevision({ tid: 15, pid: 150, cid: 5, uid: 1, action: "edit", title: "Missing Parent", parentRevisionId: "missing-parent", oldSource: "<p>Missing</p>", newSource: "<p>Next</p>" }),
       /revision-parent-not-found/
@@ -159,11 +208,87 @@ function reset() {
     await revisions.appendRevision({ tid: 16, pid: 160, cid: 5, uid: 1, action: "edit", title: "Branch", oldSource: "<p>Base</p>", newSource: "<p>Latest</p>" });
     state.now += 1;
     await assert.rejects(
+      () => revisions.assertCanAppendRevision({ tid: 16, pid: 160, cid: 5, uid: 1, action: "edit", title: "Branch", parentRevisionId: staleParent.revisionId, oldSource: "<p>Base</p>", newSource: "<p>Branched</p>" }),
+      /revision-parent-not-latest/
+    );
+    assert.equal(list("westgate-wiki:revisions:16").length, 2);
+    assert.equal(state.objects.get("westgate-wiki:revisions:16:meta").revisionCount, "2");
+    await assert.rejects(
       () => revisions.appendRevision({ tid: 16, pid: 160, cid: 5, uid: 1, action: "edit", title: "Branch", parentRevisionId: staleParent.revisionId, oldSource: "<p>Base</p>", newSource: "<p>Branched</p>" }),
       /revision-parent-not-latest/
     );
     assert.equal(list("westgate-wiki:revisions:16").length, 2);
     assert.equal(state.objects.get("westgate-wiki:revisions:16:meta").revisionCount, "2");
+
+    reset();
+    const marker = await revisions.beginRevisionPurge(17, {
+      uid: 7,
+      cid: 5,
+      tombstoneRevisionId: "rev-tombstone"
+    });
+    assert.equal(marker.uid, 7);
+    assert.equal(marker.cid, 5);
+    assert.equal(marker.tombstoneRevisionId, "rev-tombstone");
+    assert.equal(marker.topicPurged, false);
+    assert.equal(await revisions.isRevisionPurgeActive(17), true);
+    assert.deepEqual(await revisions.getRevisionPurge(17), {
+      tid: 17,
+      uid: 7,
+      cid: 5,
+      tombstoneRevisionId: "rev-tombstone",
+      topicPurged: false,
+      startedAt: "1000"
+    });
+    state.now += 1;
+    const topicPurgedMarker = await revisions.markRevisionPurgeTopicPurged(17);
+    assert.equal(topicPurgedMarker.topicPurged, true);
+    assert.equal(topicPurgedMarker.uid, 7);
+    assert.deepEqual(await revisions.getRevisionPurge(17), {
+      tid: 17,
+      uid: 7,
+      cid: 5,
+      tombstoneRevisionId: "rev-tombstone",
+      topicPurged: true,
+      startedAt: "1000",
+      topicPurgedAt: "1001"
+    });
+    await assert.rejects(
+      () => revisions.assertCanAppendRevision({ tid: 17, pid: 170, cid: 5, uid: 1, action: "edit", title: "Purging", oldSource: "", newSource: "<p>Blocked</p>" }),
+      /revision-purge-active/
+    );
+    await assert.rejects(
+      () => revisions.appendRevision({ tid: 17, pid: 170, cid: 5, uid: 1, action: "edit", title: "Purging", oldSource: "", newSource: "<p>Blocked</p>" }),
+      /revision-purge-active/
+    );
+    assert.equal(list("westgate-wiki:revisions:17").length, 0);
+    await revisions.clearRevisionPurge(17);
+    assert.equal(await revisions.isRevisionPurgeActive(17), false);
+    assert.equal(await revisions.getRevisionPurge(17), null);
+    const unblocked = await revisions.appendRevision({ tid: 17, pid: 170, cid: 5, uid: 1, action: "edit", title: "Purging", oldSource: "", newSource: "<p>Allowed</p>" });
+    assert.equal(list("westgate-wiki:revisions:17")[0], unblocked.revisionId);
+
+    reset();
+    state.failSetObjectKey = "westgate-wiki:revisions:18:meta";
+    await assert.rejects(
+      () => revisions.appendRevision({ tid: 18, pid: 180, cid: 5, uid: 1, action: "edit", title: "Partial", oldSource: "", newSource: "<p>Blocked</p>" }),
+      /failed-setObject-westgate-wiki:revisions:18:meta/
+    );
+    assert.equal(state.objects.has("westgate-wiki:revision:18:rev-18-1000-edit"), false);
+    assert.equal(state.objects.has("westgate-wiki:revisions:18:meta"), false);
+    assert.deepEqual(list("westgate-wiki:revisions:18"), []);
+
+    reset();
+    const previous = await revisions.appendRevision({ tid: 19, pid: 190, cid: 5, uid: 1, action: "edit", title: "Partial", oldSource: "", newSource: "<p>Previous</p>" });
+    const previousMeta = { ...state.objects.get("westgate-wiki:revisions:19:meta") };
+    state.now += 1;
+    state.failListPrependKey = "westgate-wiki:revisions:19";
+    await assert.rejects(
+      () => revisions.appendRevision({ tid: 19, pid: 190, cid: 5, uid: 1, action: "edit", title: "Partial", oldSource: "<p>Previous</p>", newSource: "<p>Blocked</p>" }),
+      /failed-listPrepend-westgate-wiki:revisions:19/
+    );
+    assert.equal(state.objects.has("westgate-wiki:revision:19:rev-19-1001-edit"), false);
+    assert.deepEqual(state.objects.get("westgate-wiki:revisions:19:meta"), previousMeta);
+    assert.deepEqual(list("westgate-wiki:revisions:19"), [previous.revisionId]);
 
     reset();
     await revisions.appendRevision({ tid: 11, pid: 110, cid: 5, uid: 1, action: "edit", title: "Blanked", oldSource: "", newSource: "<p>Safe</p>" });
