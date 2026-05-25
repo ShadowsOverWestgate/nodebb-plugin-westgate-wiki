@@ -115,6 +115,10 @@ assert(
   "Make Subpage action should be permission-gated"
 );
 assert(
+  /data-wiki-article-watch="1"[\s\S]*<!-- IF wikiArticleWatched -->fa-eye-slash<!-- ELSE -->fa-eye<!-- ENDIF wikiArticleWatched -->/.test(template),
+  "article watch action should show the crossed-out eye while watched and the open eye while unwatched"
+);
+assert(
   /data-wiki-make-subpage="1"[\s\S]*data-wiki-create-namespace-path="\{category\.wikiPath\}"/.test(template),
   "Make Subpage action should carry the canonical namespace path for post-create redirects"
 );
@@ -135,6 +139,10 @@ assert(
 assert(
   client.includes("/api/v3/plugins/westgate-wiki/page/owner"),
   "client should call the wiki page owner endpoint"
+);
+assert(
+  /icon\.classList\.toggle\("fa-eye", !watched\);[\s\S]*icon\.classList\.toggle\("fa-eye-slash", watched\);/.test(client),
+  "client watch action state should show the crossed-out eye while watched and the open eye while unwatched"
 );
 
 const library = fs.readFileSync(path.join(root, "library.js"), "utf8");
