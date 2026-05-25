@@ -23,6 +23,7 @@ const wikiEditLocks = require("./lib/wiki-edit-locks");
 const wikiPageActions = require("./lib/wiki-page-actions");
 const wikiTopdataBotPrivileges = require("./lib/wiki-topdata-bot-privileges");
 const wikiRevisionPermissions = require("./lib/wiki-revision-permissions");
+const wikiRevisions = require("./lib/wiki-revisions");
 const wikiService = require("./lib/wiki-service");
 const wikiPaths = require("./lib/wiki-paths");
 const wikiPageValidation = require("./lib/wiki-page-validation");
@@ -290,6 +291,69 @@ plugin.filterWikiDiscussionTopicBuild = wikiDiscussionPlaceholder.filterTopicBui
 plugin.filterWikiDiscussionTopicReply = wikiDiscussionSettings.filterTopicReply;
 plugin.clearWikiPostParseCache = cacheService.clearWikiPostParseCache;
 plugin.syncPostedTopdataWikiPageSlug = wikiPageValidation.syncPostedTopdataWikiPageSlug;
+plugin.recordWikiCreateRevision = async function (data) {
+  if (!data) {
+    return data;
+  }
+
+  const posts = require.main.require("./src/posts");
+  const topics = require.main.require("./src/topics");
+  const settings = await config.getSettings();
+  const effectiveCategoryIds = Array.isArray(settings.effectiveCategoryIds) ? settings.effectiveCategoryIds : [];
+  const post = data.post || data.postData || {};
+  const topicInput = data.topic || data.topicData || {};
+  const tid = parseInt(topicInput.tid || post.tid || data.tid, 10);
+  if (!Number.isInteger(tid) || tid <= 0) {
+    return data;
+  }
+
+  const topic = topicInput.cid && topicInput.mainPid ?
+    topicInput :
+    (await topics.getTopicData(tid) || topicInput);
+  const cid = parseInt(topic && topic.cid, 10);
+  if (!Number.isInteger(cid) || cid <= 0 || !effectiveCategoryIds.includes(cid)) {
+    return data;
+  }
+
+  const mainPid = parseInt(topic && topic.mainPid, 10);
+  const pid = parseInt(post.pid || data.pid || mainPid, 10);
+  if (!Number.isInteger(mainPid) || mainPid <= 0 || !Number.isInteger(pid) || pid !== mainPid) {
+    return data;
+  }
+
+  const uid = parseInt(data.uid || post.uid || topic.uid, 10);
+  if (!Number.isInteger(uid) || uid <= 0) {
+    return data;
+  }
+
+  if (await wikiRevisions.hasRevisions(tid)) {
+    return data;
+  }
+
+  let source = String(post.sourceContent || post.content || "");
+  if (!source && typeof posts.getPostFields === "function") {
+    const stored = await posts.getPostFields(mainPid, ["content", "sourceContent"]);
+    source = stored ? String(stored.sourceContent || stored.content || "") : "";
+  }
+  if (!source.trim()) {
+    return data;
+  }
+
+  await wikiRevisions.appendRevision({
+    tid,
+    pid: mainPid,
+    cid,
+    uid,
+    action: "create",
+    title: String(topic.titleRaw || topic.title || ""),
+    oldSource: "",
+    newSource: source,
+    canonicalPath: String(topic.canonicalPath || ""),
+    wikiPath: String(topic.wikiPath || "")
+  });
+
+  return data;
+};
 plugin.clearWikiPostEditCache = cacheService.clearWikiPostEditCache;
 plugin.onWikiTopicDelete = wikiTopicPurge.onTopicDelete;
 plugin.onWikiTopicsPurge = wikiTopicPurge.onTopicsPurge;
@@ -391,6 +455,7 @@ plugin.services = {
   wikiUserMentions,
   wikiPageValidation,
   wikiRevisionPermissions,
+  wikiRevisions,
   wikiPaths,
   wikiService,
   wikiDirectory: require("./lib/wiki-directory-service")

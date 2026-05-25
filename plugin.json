@@ -88,6 +88,10 @@
       "method": "syncPostedTopdataWikiPageSlug"
     },
     {
+      "hook": "action:topic.post",
+      "method": "recordWikiCreateRevision"
+    },
+    {
       "hook": "action:post.save",
       "method": "handleWikiMentionPostSave",
       "priority": 1

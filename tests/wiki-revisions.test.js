@@ -58,6 +58,8 @@ function reset() {
     revisions.setRevisionIdProvider((input) => `rev-${input.tid}-${input.timestamp}-${input.action}`);
 
     reset();
+    assert.equal(await revisions.hasRevisions(10), false);
+    assert.equal(await revisions.hasRevisions("not-a-topic"), false);
     const originalSource = Array.from({ length: 80 }, (_, i) => `<p>Line ${i}</p>`).join("\n");
     const updatedSource = `${originalSource}\n<p>Line 80</p>`;
     const first = await revisions.appendRevision({
@@ -70,6 +72,7 @@ function reset() {
       oldSource: "",
       newSource: originalSource
     });
+    assert.equal(await revisions.hasRevisions(10), true);
     assert.equal(first.checkpoint, true);
     const firstRecord = state.objects.get(`westgate-wiki:revision:10:${first.revisionId}`);
     assert.equal(firstRecord.checkpoint, "1");

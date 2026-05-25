@@ -186,6 +186,25 @@ assert.strictEqual(
 
 (async () => {
   const originalMainRequire = require.main.require.bind(require.main);
+  const revisionCalls = [];
+  let storedPostFields = { content: "<p>Old</p>", sourceContent: "<p>Old Source</p>" };
+  let postData = { content: "<p>Move Source</p>", sourceContent: "<p>Move Source</p>" };
+  const movedPayloads = [];
+  let topicData = {
+    tid: 70,
+    cid: 71,
+    mainPid: 700,
+    title: "Hidden Page",
+    titleRaw: "Hidden Page",
+    slug: "70/hidden-page"
+  };
+  let wikiPageTopic = {
+    tid: 70,
+    cid: 71,
+    mainPid: 700,
+    title: "Hidden Page",
+    titleRaw: "Hidden Page"
+  };
   require.main.require = function requireNodebbStub(id) {
     const stubs = {
       "./src/controllers/helpers": {
@@ -196,8 +215,18 @@ assert.strictEqual(
         }
       },
       "./src/posts": {
-        edit: async () => {},
-        getPostFields: async () => ({ content: "<p>Saved</p>", sourceContent: "<p>Saved</p>" })
+        edit: async (payload) => {
+          storedPostFields = {
+            content: payload.content,
+            sourceContent: payload.sourceContent
+          };
+        },
+        getPostData: async () => postData,
+        getPostFields: async () => storedPostFields,
+        setPostFields: async (pid, fields) => {
+          storedPostFields = { ...storedPostFields, ...fields };
+        },
+        clearCachedPost: () => {}
       },
       "./src/privileges": {
         categories: {
@@ -205,14 +234,13 @@ assert.strictEqual(
         }
       },
       "./src/topics": {
-        getTopicData: async () => ({
-          tid: 70,
-          cid: 71,
-          mainPid: 700,
-          title: "Hidden Page",
-          titleRaw: "Hidden Page",
-          slug: "70/hidden-page"
-        })
+        getTopicData: async () => topicData,
+        tools: {
+          move: async (tid, payload) => {
+            movedPayloads.push({ tid, payload });
+            topicData = { ...topicData, cid: payload.cid };
+          }
+        }
       }
     };
     return stubs[id] || originalMainRequire(id);
@@ -234,13 +262,7 @@ assert.strictEqual(
     getWikiPage: async () => ({
       status: "ok",
       canEditWikiPage: true,
-      topic: {
-        tid: 70,
-        cid: 71,
-        mainPid: 700,
-        title: "Hidden Page",
-        titleRaw: "Hidden Page"
-      }
+      topic: wikiPageTopic
     })
   });
   patchModule("../lib/wiki-directory-service", {
@@ -259,8 +281,15 @@ assert.strictEqual(
     getCanonicalPagePath: async (topic, options) => (
       options && parseInt(options.uid, 10) === 9 ? "" : "Hidden_Root/Readable_Child/Hidden_Page"
     ),
+    getNamespaceEntry: async () => ({ status: "ok" }),
     invalidateWikiTreeIndex: () => {},
     validateCanonicalPagePlacement: async () => ({ status: "ok" })
+  });
+  patchModule("../lib/wiki-revisions", {
+    appendRevision: async (payload) => {
+      revisionCalls.push(payload);
+      return { revisionId: `rev-${revisionCalls.length}` };
+    }
   });
 
   try {
@@ -283,6 +312,102 @@ assert.strictEqual(
       "",
       "save response should not emit a canonical wikiPath hidden from the request user"
     );
+    assert.deepStrictEqual(
+      revisionCalls[0],
+      {
+        tid: 70,
+        pid: 700,
+        cid: 71,
+        uid: 9,
+        action: "edit",
+        title: "Hidden Page",
+        oldSource: "<p>Old Source</p>",
+        newSource: "<p>Saved</p>",
+        canonicalPath: "",
+        wikiPath: ""
+      },
+      "successful wiki page saves should append an edit revision from previous source to sanitized source"
+    );
+
+    revisionCalls.length = 0;
+    movedPayloads.length = 0;
+    storedPostFields = { content: "<p>Move Source</p>", sourceContent: "<p>Move Source</p>" };
+    postData = { content: "<p>Move Source</p>", sourceContent: "<p>Move Source</p>" };
+    wikiPageTopic = {
+      tid: 70,
+      cid: 71,
+      mainPid: 700,
+      title: "Hidden Page",
+      titleRaw: "Hidden Page"
+    };
+    topicData = {
+      tid: 70,
+      cid: 72,
+      mainPid: 700,
+      title: "Renamed Page",
+      titleRaw: "Renamed Page",
+      slug: "70/renamed-page"
+    };
+
+    const moveRes = {};
+    await actions.moveWikiPage({
+      uid: 5,
+      body: {
+        tid: 70,
+        cid: 72,
+        title: "Renamed Page"
+      }
+    }, moveRes);
+
+    assert.strictEqual(moveRes.statusCode, 200, String(moveRes.payload && moveRes.payload.stack || moveRes.payload));
+    assert.strictEqual(movedPayloads.length, 1, "category changes should move the topic before revision append");
+    assert.deepStrictEqual(
+      revisionCalls[0],
+      {
+        tid: 70,
+        pid: 700,
+        cid: 72,
+        uid: 5,
+        action: "move",
+        title: "Renamed Page",
+        oldSource: "<p>Move Source</p>",
+        newSource: "<p>Move Source</p>",
+        canonicalPath: "Hidden_Root/Readable_Child/Hidden_Page",
+        wikiPath: "/wiki/Hidden_Root/Readable_Child/Hidden_Page"
+      },
+      "wiki page moves should append a move revision with unchanged source"
+    );
+
+    revisionCalls.length = 0;
+    movedPayloads.length = 0;
+    wikiPageTopic = {
+      tid: 70,
+      cid: 72,
+      mainPid: 700,
+      title: "Renamed Page",
+      titleRaw: "Renamed Page"
+    };
+    topicData = {
+      tid: 70,
+      cid: 72,
+      mainPid: 700,
+      title: "Renamed Page",
+      titleRaw: "Renamed Page",
+      slug: "70/renamed-page"
+    };
+
+    const noopMoveRes = {};
+    await actions.moveWikiPage({
+      uid: 5,
+      body: {
+        tid: 70,
+        cid: 72,
+        title: "Renamed Page"
+      }
+    }, noopMoveRes);
+
+    assert.strictEqual(noopMoveRes.statusCode, 200);
+    assert.strictEqual(revisionCalls.length, 0, "unchanged move payloads should not append a move revision");
   } finally {
     patchedModules.reverse().forEach(([filename, previous]) => {
       if (previous) {
