@@ -490,6 +490,45 @@ const config = require("../lib/config");
     "stable forum namespace markers should resolve by category id and render with the wiki icon"
   );
 
+  state.topics.set(141, {
+    tid: 141,
+    cid: 11,
+    title: "Secret Tombstone Title",
+    titleRaw: "Secret Tombstone Title",
+    slug: "141/secret-tombstone-title",
+    deleted: 0,
+    scheduled: 0,
+    westgateWikiTombstoned: "1"
+  });
+  state.tidsByCid.set(11, [140, 141]);
+  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  const tombstoneStableMarkerHtml = await wikiLinks.replaceWikiLinks(
+    "[[tid:141]] [[tid:141|explicit label]]",
+    null,
+    await config.getSettings({ bustCache: true }),
+    0
+  );
+  assert.doesNotMatch(
+    tombstoneStableMarkerHtml,
+    /<a\b/,
+    "stable tombstoned page markers should not render public links"
+  );
+  assert.doesNotMatch(
+    tombstoneStableMarkerHtml,
+    /Secret Tombstone Title/,
+    "stable tombstoned page markers should not leak the topic title"
+  );
+  assert.match(
+    tombstoneStableMarkerHtml,
+    /tid:141/,
+    "bare stable tombstoned page markers should fall back to the marker text"
+  );
+  assert.match(
+    tombstoneStableMarkerHtml,
+    /explicit label/,
+    "explicit labels on stable tombstoned page markers should remain visible"
+  );
+
   const staleAnchorHookData = {
     postData: {
       uid: 1,

@@ -15,9 +15,10 @@ const state = {
   topics: new Map([
     [10, { tid: 10, cid: 1, title: "Server Rules", slug: "10/server-rules", deleted: 0, scheduled: 0, postcount: 1 }],
     [11, { tid: 11, cid: 1, title: "Third-Party Content Credits", slug: "11/third-party-content-credits", deleted: 0, scheduled: 0, postcount: 1 }],
-    [12, { tid: 12, cid: 1, title: "Rules", slug: "12/rules", deleted: 0, scheduled: 0, postcount: 1 }]
+    [12, { tid: 12, cid: 1, title: "Rules", slug: "12/rules", deleted: 0, scheduled: 0, postcount: 1 }],
+    [20, { tid: 20, cid: 2, title: "Tombstoned Child Page", slug: "20/tombstoned-child-page", deleted: 0, scheduled: 0, postcount: 1, westgateWikiTombstoned: "1" }]
   ]),
-  tidsByCid: new Map([[1, [10, 11, 12]], [2, []], [3, []]])
+  tidsByCid: new Map([[1, [10, 11, 12]], [2, [20]], [3, []]])
 };
 
 for (let i = 0; i < 55; i += 1) {
@@ -145,7 +146,7 @@ const wikiService = require("../lib/wiki-service");
   assert.equal(
     rootSection.section.childSections[0].articleCount,
     0,
-    "child namespace article counts should use the live cid tids set instead of stale category.topic_count"
+    "child namespace article counts should not include tombstoned pages"
   );
   assert.deepEqual(
     rootSection.section.topics.map((topic) => topic.tid),
