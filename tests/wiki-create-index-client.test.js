@@ -26,6 +26,9 @@ function createDom() {
       data-wiki-create-redirect-path="/wiki/Lore/Deities/Gond"
       data-wiki-create-namespace-path="/wiki/Lore/Deities"
     >Create index page</a>
+    <div class="posts">
+      <a id="root-redlink" href="/wiki?create=wiki-page&redlink=1&cid=5">Wiki page</a>
+    </div>
   </body></html>`, {
     pretendToBeVisual: true,
     runScripts: "outside-only",
@@ -100,7 +103,12 @@ function createDom() {
   JQueryCollection.prototype.attr = function (name) {
     return this.nodes[0] ? this.nodes[0].getAttribute(name) : undefined;
   };
-  JQueryCollection.prototype.addClass = function () {
+  JQueryCollection.prototype.addClass = function (className) {
+    this.nodes.forEach(function (node) {
+      if (node && node.classList && className) {
+        String(className).split(/\s+/).filter(Boolean).forEach((token) => node.classList.add(token));
+      }
+    });
     return this;
   };
   JQueryCollection.prototype.removeClass = function () {
@@ -151,10 +159,21 @@ function createDom() {
 (async () => {
   const { window, hooks, ajaxifyCalls } = createDom();
   const createLink = window.document.getElementById("create-index");
+  const rootRedlink = window.document.getElementById("root-redlink");
+
+  assert.equal(rootRedlink.classList.contains("wiki-redlink"), true, "root namespace redlink hrefs should be marked as redlinks");
+
+  rootRedlink.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
+  await tick();
+  assert.equal(
+    ajaxifyCalls[0],
+    "wiki/compose/5?title=wiki-page",
+    "root namespace redlink hrefs should launch create mode instead of navigating to the wiki homepage"
+  );
 
   createLink.dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true }));
   await tick();
-  assert.equal(ajaxifyCalls[0], "wiki/compose/20?title=Gond");
+  assert.equal(ajaxifyCalls[1], "wiki/compose/20?title=Gond");
 
   const submitPayload = {
     action: "topics.post",
@@ -171,7 +190,7 @@ function createDom() {
   });
 
   assert.equal(
-    ajaxifyCalls[1],
+    ajaxifyCalls[2],
     "wiki/Lore/Deities/Other_Page",
     "edited namespace-index titles should redirect under the parent namespace path using canonical wiki segments"
   );

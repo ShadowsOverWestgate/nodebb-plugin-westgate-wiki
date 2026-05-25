@@ -1729,12 +1729,14 @@ a.wiki-link-from-forum .wiki-forum-link-text {
   text-decoration: inherit;
 }
 
+a.wiki-redlink,
 .westgate-wiki a.wiki-redlink,
 .westgate-wiki .wiki-article-prose a.wiki-redlink,
 .westgate-wiki .wiki-page-content a.wiki-redlink,
 .westgate-wiki .wiki-section-description a.wiki-redlink,
 .westgate-wiki .wiki-card-description a.wiki-redlink,
 .westgate-wiki .wiki-status-card a.wiki-redlink,
+a[href*="/wiki?"][href*="redlink=1"],
 a[href*="/wiki/"][href*="redlink=1"] {
   color: var(--wiki-redlink-color, var(--bs-danger, #dc3545));
   text-decoration: var(--wiki-redlink-decoration, underline dotted);

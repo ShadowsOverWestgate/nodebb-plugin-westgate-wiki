@@ -93,7 +93,7 @@ require.main.require = function requireNodebbStub(id) {
       }
     },
     "./src/topics": {
-      getTopicData: async () => null,
+      getTopicData: async (tid) => state.topics.get(parseInt(tid, 10)) || null,
       getTopicsFields: async (tids) => {
         state.topicFieldCalls += 1;
         return (Array.isArray(tids) ? tids : [])
@@ -471,6 +471,47 @@ const config = require("../lib/config");
     parseHookData.postData.content,
     /href="\/wiki\/Hidden_Root\/Readable_Child"/,
     "parse hook should preserve public namespace links when no reliable viewer uid is present"
+  );
+
+  const stablePageMarkerHtml = await wikiLinks.replaceWikiLinks(
+    "[[tid:140|Public Page]] [[cid:11|Readable Child]]",
+    null,
+    await config.getSettings({ bustCache: true }),
+    0
+  );
+  assert.match(
+    stablePageMarkerHtml,
+    /<a class="wiki-internal-link wiki-link-from-forum" href="\/wiki\/Hidden_Root\/Readable_Child\/Public_Page"><i class="fa-solid fa-fw fa-book wiki-forum-link-icon"/,
+    "stable forum page markers should resolve by topic id and render with the wiki article icon"
+  );
+  assert.match(
+    stablePageMarkerHtml,
+    /<a class="wiki-internal-link wiki-namespace-link wiki-link-from-forum" href="\/wiki\/Hidden_Root\/Readable_Child"><i class="fa-solid fa-fw fa-book wiki-forum-link-icon"/,
+    "stable forum namespace markers should resolve by category id and render with the wiki icon"
+  );
+
+  const staleAnchorHookData = {
+    postData: {
+      uid: 1,
+      cid: 99,
+      content: '<p>Check <a href="/wiki/readable-child/public-page">Public Page</a> before reading.</p>'
+    }
+  };
+  await wikiLinks.transformWikiPostContent(staleAnchorHookData);
+  assert.match(
+    staleAnchorHookData.postData.content,
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Public_Page"/,
+    "parse hook should repair stale hard-coded wiki article hrefs to the current canonical path"
+  );
+  assert.match(
+    staleAnchorHookData.postData.content,
+    /wiki-link-from-forum/,
+    "repaired hard-coded wiki article hrefs in forum posts should regain the forum wiki icon treatment"
+  );
+  assert.doesNotMatch(
+    staleAnchorHookData.postData.content,
+    /href="\/wiki\/readable-child\/public-page"/,
+    "parse hook should replace the stale hard-coded wiki href instead of leaving both paths"
   );
 
   console.log("wiki-link resolver cache tests passed");

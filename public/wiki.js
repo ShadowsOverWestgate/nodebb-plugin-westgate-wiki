@@ -106,7 +106,9 @@ $(document).ready(function () {
       return null;
     }
 
-    if (url.origin !== window.location.origin || !url.pathname.includes("/wiki/")) {
+    const relativePath = String((window.config && window.config.relative_path) || "").replace(/\/+$/g, "");
+    const wikiRootPath = `${relativePath}/wiki`;
+    if (url.origin !== window.location.origin || (url.pathname !== wikiRootPath && !url.pathname.startsWith(`${wikiRootPath}/`))) {
       return null;
     }
 
@@ -122,7 +124,7 @@ $(document).ready(function () {
     return {
       cid: cid,
       title: title,
-      namespacePath: url.pathname.replace(((window.config && window.config.relative_path) || ""), "") || url.pathname,
+      namespacePath: url.pathname.replace(relativePath, "") || url.pathname,
       href: url.toString(),
       isRedlink: url.searchParams.get("redlink") === "1"
     };
@@ -432,7 +434,7 @@ $(document).ready(function () {
   }
 
   function markRedLinks() {
-    $(".westgate-wiki a").each(function () {
+    $("a").each(function () {
       const intent = getCreateIntentFromUrl($(this).attr("href"));
 
       if (intent && intent.isRedlink) {
