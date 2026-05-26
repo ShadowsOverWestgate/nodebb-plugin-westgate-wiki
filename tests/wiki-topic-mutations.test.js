@@ -131,7 +131,11 @@ test("withTopicMutationGuard does not refresh a busy DB lock on rejected attempt
   const originalMainRequire = require.main.require.bind(require.main);
   const key = topicLockKey(42);
   const { calls, db, locks } = createOwnerLockDb({
-    initialLocks: [[key, { count: 1, owner: "owner-a" }]]
+    initialLocks: [[key, {
+      count: 1,
+      owner: "owner-a",
+      expiresAt: Date.now() + 60_000
+    }]]
   });
 
   require.main.require = function requireNodebbStub(id) {
@@ -153,6 +157,124 @@ test("withTopicMutationGuard does not refresh a busy DB lock on rejected attempt
       false,
       "rejected attempts must not extend a stale lock's TTL"
     );
+  } finally {
+    require.main.require = originalMainRequire;
+    clearMutationsModule();
+  }
+});
+
+test("withTopicMutationGuard recovers a partial DB lock left before owner and TTL setup", async () => {
+  const originalMainRequire = require.main.require.bind(require.main);
+  const key = topicLockKey(42);
+  const { calls, db, locks } = createOwnerLockDb({
+    initialLocks: [[key, { count: 1 }]]
+  });
+
+  require.main.require = function requireNodebbStub(id) {
+    if (id === "./src/database") {
+      return db;
+    }
+    return originalMainRequire(id);
+  };
+
+  try {
+    const mutations = loadFreshMutations();
+    assert.equal(
+      await mutations.withTopicMutationGuard(42, async () => "recovered"),
+      "recovered"
+    );
+    assert.equal(locks.has(key), false);
+    assert(calls.some((call) => call.startsWith(`set:${key}:owner:`)));
+    assert(calls.some((call) => call.startsWith(`set:${key}:expiresAt:`)));
+    assert(calls.some((call) => call.startsWith(`pexpire:${key}:`)));
+  } finally {
+    require.main.require = originalMainRequire;
+    clearMutationsModule();
+  }
+});
+
+test("withTopicMutationGuard recovers an expired owner lock without deleting a newer owner on release", async () => {
+  const originalMainRequire = require.main.require.bind(require.main);
+  const key = topicLockKey(42);
+  const { db, locks } = createOwnerLockDb({
+    initialLocks: [[key, {
+      count: 1,
+      owner: "stale-owner",
+      expiresAt: Date.now() - 60_000
+    }]]
+  });
+
+  require.main.require = function requireNodebbStub(id) {
+    if (id === "./src/database") {
+      return db;
+    }
+    return originalMainRequire(id);
+  };
+
+  try {
+    const mutations = loadFreshMutations();
+    assert.equal(
+      await mutations.withTopicMutationGuard(42, async () => {
+        locks.set(key, {
+          count: 1,
+          owner: "newer-owner",
+          expiresAt: Date.now() + 60_000
+        });
+        return "recovered-stale";
+      }),
+      "recovered-stale"
+    );
+    assert.equal(locks.get(key).owner, "newer-owner");
+  } finally {
+    require.main.require = originalMainRequire;
+    clearMutationsModule();
+  }
+});
+
+test("withTopicMutationGuard does not delete a newer live owner while repairing a stale lock", async () => {
+  const originalMainRequire = require.main.require.bind(require.main);
+  const key = topicLockKey(42);
+  const staleExpiresAt = Date.now() - 60_000;
+  const liveExpiresAt = Date.now() + 60_000;
+  const { calls, db, locks } = createOwnerLockDb({
+    initialLocks: [[key, {
+      count: 1,
+      owner: "stale-owner",
+      expiresAt: staleExpiresAt
+    }]]
+  });
+  const originalGetObjectField = db.getObjectField;
+  let promotedNewOwner = false;
+  db.getObjectField = async (lockKey, field) => {
+    const value = await originalGetObjectField(lockKey, field);
+    if (lockKey === key && field === "expiresAt" && !promotedNewOwner) {
+      promotedNewOwner = true;
+      locks.set(key, {
+        count: 2,
+        owner: "newer-owner",
+        expiresAt: liveExpiresAt
+      });
+      return staleExpiresAt;
+    }
+    return value;
+  };
+
+  require.main.require = function requireNodebbStub(id) {
+    if (id === "./src/database") {
+      return db;
+    }
+    return originalMainRequire(id);
+  };
+
+  try {
+    const mutations = loadFreshMutations();
+    await assert.rejects(
+      () => mutations.withTopicMutationGuard(42, async () => "stolen"),
+      /wiki-topic-mutation-locked/
+    );
+    assert.equal(locks.get(key).owner, "newer-owner");
+    assert.equal(locks.get(key).expiresAt, liveExpiresAt);
+    assert.equal(calls.includes(`delete:${key}`), false);
   } finally {
     require.main.require = originalMainRequire;
     clearMutationsModule();
