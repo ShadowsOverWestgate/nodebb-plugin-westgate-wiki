@@ -15,6 +15,25 @@ function clearProjectModule(relativePath) {
   delete require.cache[require.resolve(modulePath)];
 }
 
+function patchProjectModule(relativePath, exports) {
+  const modulePath = path.join(root, relativePath);
+  const filename = require.resolve(modulePath);
+  const previous = require.cache[filename];
+  require.cache[filename] = {
+    id: filename,
+    filename,
+    loaded: true,
+    exports
+  };
+  return () => {
+    if (previous) {
+      require.cache[filename] = previous;
+    } else {
+      delete require.cache[filename];
+    }
+  };
+}
+
 async function withNodebbStubs(stubs, fn) {
   const previousMainRequire = require.main.require;
   require.main.require = function requireNodebbStub(id) {
@@ -178,6 +197,103 @@ test("runtime apply services provide page, asset, identity, and upload associati
     assert(state.events.includes("topic.field:101:westgateWikiArchivePageId:wgap_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
     assert(state.events.includes("uploads.sync:1001"));
   });
+});
+
+test("runtime updatePage routes updates through wiki page actions and an internal edit lock", async () => {
+  const uploadPath = await fs.mkdtemp(path.join(os.tmpdir(), "wg-runtime-update-page-"));
+  const state = { uploadPath, events: [] };
+
+  const restorePageActions = patchProjectModule("lib/wiki-page-actions.js", {
+    moveWikiPage: async (req, res) => {
+      state.events.push(`action.move:${req.body.tid}:${req.body.cid}:${req.body.title}:${req.uid}`);
+      res.statusCode = 200;
+      res.payload = {
+        tid: req.body.tid,
+        cid: req.body.cid,
+        title: req.body.title,
+        wikiPath: "/wiki/Lore/Deities/Gond"
+      };
+      return res.payload;
+    },
+    saveWikiPage: async (req, res) => {
+      state.events.push(`action.save:${req.body.tid}:${req.body.pid}:${req.body.title}:${req.uid}:${req.body.wikiEditLockToken}:${req.body.content}`);
+      res.statusCode = 200;
+      res.payload = {
+        tid: req.body.tid,
+        pid: req.body.pid,
+        cid: 11,
+        title: req.body.title,
+        content: req.body.content,
+        sourceContent: req.body.content
+      };
+      return res.payload;
+    }
+  });
+  const restoreEditLocks = patchProjectModule("lib/wiki-edit-locks.js", {
+    acquireLock: async (tid, uid) => {
+      state.events.push(`lock.acquire:${tid}:${uid}`);
+      return { status: "ok", token: "runtime-lock-token" };
+    },
+    getStatusMessage: () => "lock failed",
+    releaseLock: async (tid, uid, token) => {
+      state.events.push(`lock.release:${tid}:${uid}:${token}`);
+      return { status: "ok", released: true };
+    }
+  });
+
+  try {
+    await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
+      clearProjectModule("lib/wiki-archive-runtime.js");
+      const runtime = require("../lib/wiki-archive-runtime");
+      const services = runtime.createApplyServices();
+
+      assert.equal(typeof services.pages.updatePage, "function");
+      assert.deepEqual(await services.pages.updatePage({
+        uid: 9,
+        tid: 77,
+        pid: 770,
+        previousCid: 10,
+        cid: 11,
+        title: "Gond",
+        content: "<p>Article</p>",
+        operation: {
+          changes: {
+            category: { from: 10, to: 11 },
+            title: { from: "Old Gond", to: "Gond" }
+          }
+        }
+      }), { tid: 77, pid: 770, mainPid: 770, cid: 11 });
+
+      assert.deepEqual(state.events, [
+        "action.move:77:11:Gond:9",
+        "lock.acquire:77:9",
+        "action.save:77:770:Gond:9:runtime-lock-token:<p>Article</p>",
+        "lock.release:77:9:runtime-lock-token"
+      ]);
+
+      state.events.length = 0;
+      assert.deepEqual(await services.pages.updatePage({
+        uid: 9,
+        tid: 78,
+        pid: 780,
+        previousCid: 11,
+        cid: 11,
+        title: "Gond",
+        content: "<p>Updated</p>",
+        operation: { changes: {} }
+      }), { tid: 78, pid: 780, mainPid: 780, cid: 11 });
+
+      assert.deepEqual(state.events, [
+        "lock.acquire:78:9",
+        "action.save:78:780:Gond:9:runtime-lock-token:<p>Updated</p>",
+        "lock.release:78:9:runtime-lock-token"
+      ]);
+    });
+  } finally {
+    restorePageActions();
+    restoreEditLocks();
+    clearProjectModule("lib/wiki-archive-runtime.js");
+  }
 });
 
 test("runtime apply settings preserves routeRootCid", async () => {

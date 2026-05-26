@@ -747,14 +747,12 @@ async function applyWithMissingService(servicePath, expectedCode) {
     };
     const preview = await buildApprovedPreview(archive, { destination });
     const { services, events } = createServices();
-    const fallbackMovePayloads = [];
     delete services.pages.updatePage;
     services.topics.getTopicField = async (tid, field) => {
       events.push(`topic.get:${tid}:${field}`);
       return "";
     };
     services.topics.tools.move = async (tid, payload) => {
-      fallbackMovePayloads.push(payload);
       events.push(`topic.move:${tid}:${payload.cid}:${payload.uid}`);
     };
 
@@ -768,17 +766,13 @@ async function applyWithMissingService(servicePath, expectedCode) {
       services
     });
 
-    assert.equal(report.status, "completed");
-    assert.deepEqual(report.maps.pages[PAGE_ID], { tid: 79, pid: 882, cid: 11 });
-    assert(events.some((event) => event === "topic.move:79:11:9"));
-    assert.equal(
-      require("../lib/wiki-topic-mutations").isManagedMutation(fallbackMovePayloads[0]),
-      true,
-      "archive fallback topic moves should be marked as managed wiki mutations"
-    );
+    assert.equal(report.status, "failed");
+    assert.equal(report.results[report.results.length - 1].type, "page.update");
+    assert.equal(report.results[report.results.length - 1].code, "archive-apply-page-update-service-unavailable");
+    assert.equal(events.some((event) => event.startsWith("topic.move:79:")), false);
+    assert.equal(events.some((event) => event.startsWith("post.edit:882:")), false);
     assert.equal(events.some((event) => event.startsWith("topic.get:79:mainPid")), false);
-    assert(events.some((event) => event === "post.edit:882:Gond:9:<p>Article</p>"));
-    assert(events.some((event) => event === "uploads.sync:882:79:<p>Article</p>"));
+    assert.equal(events.some((event) => event === "uploads.sync:882:79:<p>Article</p>"), false);
   }
 
   {
@@ -817,8 +811,9 @@ async function applyWithMissingService(servicePath, expectedCode) {
 
     assert.equal(report.status, "failed");
     assert.equal(report.results[report.results.length - 1].type, "page.update");
-    assert.equal(report.results[report.results.length - 1].code, "archive-apply-page-pid-lookup-service-unavailable");
+    assert.equal(report.results[report.results.length - 1].code, "archive-apply-page-update-service-unavailable");
     assert.equal(events.some((event) => event.startsWith("topic.move:80:")), false);
+    assert.equal(events.some((event) => event.startsWith("post.edit:")), false);
   }
 
   {
