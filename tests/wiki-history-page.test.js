@@ -1267,3 +1267,23 @@ test("wiki history client clears fullscreen body lock on ajax navigation start",
 
   assert.equal(dom.window.document.body.classList.contains("wiki-history-fullscreen-open"), false);
 });
+
+test("wiki history css styles compare tabs source diff rows and fullscreen viewer", () => {
+  const css = readProjectFile("public/wiki.css");
+
+  assert.match(css, /\.wiki-history-inspector\b/);
+  assert.match(css, /\.wiki-history-tab\b/);
+  assert.match(css, /\.wiki-history-tab:focus-visible\s*\{[^}]*\b(?:outline|box-shadow):/);
+  assert.match(css, /\.wiki-history-compare\b/);
+  assert.match(css, /\.wiki-history-compare-pane\b/);
+  assert.match(css, /\.wiki-history-diff\s*\{[^}]*\bwhite-space:\s*normal;/);
+  assert.match(css, /\.wiki-history-diff-line__content\s*\{[^}]*\bwhite-space:\s*pre-wrap;/);
+  assert.doesNotMatch(css, /\.wiki-history-fullscreen__source\s*\{[^}]*\bwhite-space:\s*normal;/);
+  assert.doesNotMatch(css, /\.wiki-history-diff,\s*\.wiki-history-fullscreen__source\s*\{[^}]*\bwhite-space:\s*normal;/);
+  assert.match(css, /\.wiki-history-diff-line--add\b/);
+  assert.match(css, /\.wiki-history-diff-line--remove\b/);
+  assert.match(css, /\.wiki-history-diff-line--meta\b/);
+  assert.match(css, /\.wiki-history-fullscreen\b/);
+  assert.match(css, /\.wiki-history-fullscreen__dialog\b/);
+  assert.match(css, /@media \(max-width: 991px\)[\s\S]*\.wiki-history-compare/);
+});
