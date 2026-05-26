@@ -167,6 +167,59 @@ function reset() {
     assert.equal(tinyEditRecord.checkpointSource, "<p>B</p>");
 
     reset();
+    const baseline = await revisions.ensureRevisionBaseline({
+      tid: 20,
+      pid: 200,
+      cid: 5,
+      uid: 1,
+      title: "Imported Page",
+      source: "<p>Pre-existing body</p>",
+      canonicalPath: "Lore/Imported_Page",
+      wikiPath: "/wiki/Lore/Imported_Page"
+    });
+    assert.equal(baseline.action, "repair-checkpoint");
+    assert.equal(baseline.checkpoint, true);
+    assert.equal(baseline.parentRevisionId, "");
+    state.now += 1;
+    const firstEditAfterBaseline = await revisions.appendRevision({
+      tid: 20,
+      pid: 200,
+      cid: 5,
+      uid: 2,
+      action: "edit",
+      title: "Imported Page",
+      oldSource: "<p>Pre-existing body</p>",
+      newSource: "<p>Edited body</p>"
+    });
+    assert.equal(firstEditAfterBaseline.parentRevisionId, baseline.revisionId);
+    const repairedRows = await revisions.listRevisions(20);
+    assert.deepEqual(
+      repairedRows.map((row) => row.action),
+      ["edit", "repair-checkpoint"]
+    );
+    assert.equal((await revisions.reconstructRevision(20, baseline.revisionId)).source, "<p>Pre-existing body</p>");
+    assert.equal((await revisions.reconstructRevision(20, firstEditAfterBaseline.revisionId)).source, "<p>Edited body</p>");
+    assert.equal(await revisions.ensureRevisionBaseline({
+      tid: 20,
+      pid: 200,
+      cid: 5,
+      uid: 1,
+      title: "Imported Page",
+      source: "<p>Pre-existing body</p>"
+    }), null);
+
+    reset();
+    assert.equal(await revisions.ensureRevisionBaseline({
+      tid: 21,
+      pid: 210,
+      cid: 5,
+      uid: 1,
+      title: "Blank Imported Page",
+      source: " \n "
+    }), null);
+    assert.equal(await revisions.hasRevisions(21), false);
+
+    reset();
     const parentBase = await revisions.appendRevision({ tid: 14, pid: 140, cid: 5, uid: 1, action: "edit", title: "Parent", oldSource: "", newSource: "<p>Fresh</p>" });
     const parentObjectCount = state.objects.size;
     const parentListLength = list("westgate-wiki:revisions:14").length;

@@ -202,10 +202,15 @@ assert.strictEqual(
 
 (async () => {
   const originalMainRequire = require.main.require.bind(require.main);
+  const events = [];
   const revisionCalls = [];
+  const baselineCalls = [];
+  const preflightCalls = [];
   let storedPostFields = { content: "<p>Old</p>", sourceContent: "<p>Old Source</p>" };
   let postData = { content: "<p>Move Source</p>", sourceContent: "<p>Move Source</p>" };
   const movedPayloads = [];
+  let appendError = null;
+  let storageCannotBeRepaired = false;
   let topicData = {
     tid: 70,
     cid: 71,
@@ -222,6 +227,40 @@ assert.strictEqual(
     titleRaw: "Hidden Page"
   };
   require.main.require = function requireNodebbStub(id) {
+    const postsStub = {
+      edit: async (payload) => {
+        events.push(`post.edit:${payload.pid}:${payload.title}:${payload.content}`);
+        if (!storageCannotBeRepaired) {
+          storedPostFields = {
+            content: payload.content,
+            sourceContent: payload.sourceContent
+          };
+          postData = {
+            content: payload.content,
+            sourceContent: payload.sourceContent
+          };
+        }
+        topicData = {
+          ...topicData,
+          title: payload.title,
+          titleRaw: payload.title
+        };
+        wikiPageTopic = {
+          ...wikiPageTopic,
+          title: payload.title,
+          titleRaw: payload.title
+        };
+      },
+      getPostData: async () => postData,
+      getPostFields: async () => storedPostFields,
+      clearCachedPost: () => {}
+    };
+    if (!storageCannotBeRepaired) {
+      postsStub.setPostFields = async (pid, fields) => {
+        events.push(`post.setFields:${pid}:${fields.content}`);
+        storedPostFields = { ...storedPostFields, ...fields };
+      };
+    }
     const stubs = {
       "./src/controllers/helpers": {
         formatApiResponse: (status, res, payload) => {
@@ -230,20 +269,7 @@ assert.strictEqual(
           return payload;
         }
       },
-      "./src/posts": {
-        edit: async (payload) => {
-          storedPostFields = {
-            content: payload.content,
-            sourceContent: payload.sourceContent
-          };
-        },
-        getPostData: async () => postData,
-        getPostFields: async () => storedPostFields,
-        setPostFields: async (pid, fields) => {
-          storedPostFields = { ...storedPostFields, ...fields };
-        },
-        clearCachedPost: () => {}
-      },
+      "./src/posts": postsStub,
       "./src/privileges": {
         categories: {
           get: async () => ({ read: true, "topics:read": true, "topics:create": true })
@@ -253,8 +279,10 @@ assert.strictEqual(
         getTopicData: async () => topicData,
         tools: {
           move: async (tid, payload) => {
+            events.push(`topic.move:${tid}:${payload.cid}`);
             movedPayloads.push({ tid, payload });
             topicData = { ...topicData, cid: payload.cid };
+            wikiPageTopic = { ...wikiPageTopic, cid: payload.cid };
           }
         }
       }
@@ -302,9 +330,23 @@ assert.strictEqual(
     validateCanonicalPagePlacement: async () => ({ status: "ok" })
   });
   patchModule("../lib/wiki-revisions", {
+    assertCanAppendRevision: async (payload) => {
+      events.push(`revision.preflight:${payload.action}:${payload.title}`);
+      preflightCalls.push(payload);
+      return true;
+    },
     appendRevision: async (payload) => {
+      events.push(`revision.append:${payload.action}:${payload.title}`);
+      if (appendError) {
+        throw appendError;
+      }
       revisionCalls.push(payload);
       return { revisionId: `rev-${revisionCalls.length}` };
+    },
+    ensureRevisionBaseline: async (payload) => {
+      events.push(`revision.baseline:${payload.title}`);
+      baselineCalls.push(payload);
+      return { revisionId: `baseline-${baselineCalls.length}` };
     }
   });
 
@@ -323,6 +365,31 @@ assert.strictEqual(
     }, res);
 
     assert.strictEqual(res.statusCode, 200);
+    assert.deepStrictEqual(
+      events.slice(0, 4),
+      [
+        "revision.baseline:Hidden Page",
+        "revision.preflight:edit:Hidden Page",
+        "post.edit:700:Hidden Page:<p>Saved</p>",
+        "revision.append:edit:Hidden Page"
+      ],
+      "save should repair the baseline and preflight the edit before mutating the post"
+    );
+    assert.deepStrictEqual(
+      baselineCalls[0],
+      {
+        tid: 70,
+        pid: 700,
+        cid: 71,
+        uid: 9,
+        title: "Hidden Page",
+        source: "<p>Old Source</p>",
+        canonicalPath: "",
+        wikiPath: ""
+      },
+      "first save on a no-journal page should seed a repair checkpoint from the old source"
+    );
+    assert.strictEqual(preflightCalls.length, 1, "save should preflight the actual edit revision");
     assert.strictEqual(
       res.payload.wikiPath,
       "",
@@ -345,7 +412,92 @@ assert.strictEqual(
       "successful wiki page saves should append an edit revision from previous source to sanitized source"
     );
 
+    events.length = 0;
     revisionCalls.length = 0;
+    baselineCalls.length = 0;
+    preflightCalls.length = 0;
+    appendError = new Error("append failed");
+    storedPostFields = { content: "<p>Rollback Old</p>", sourceContent: "<p>Rollback Old</p>" };
+    postData = { content: "<p>Rollback Old</p>", sourceContent: "<p>Rollback Old</p>" };
+    wikiPageTopic = {
+      tid: 70,
+      cid: 71,
+      mainPid: 700,
+      title: "Hidden Page",
+      titleRaw: "Hidden Page"
+    };
+    topicData = {
+      tid: 70,
+      cid: 71,
+      mainPid: 700,
+      title: "Hidden Page",
+      titleRaw: "Hidden Page",
+      slug: "70/hidden-page"
+    };
+
+    const appendFailRes = {};
+    await actions.saveWikiPage({
+      uid: 9,
+      body: {
+        tid: 70,
+        pid: 700,
+        title: "Hidden Page",
+        content: "<p>Attempted</p>",
+        wikiEditLockToken: "token"
+      },
+      query: {}
+    }, appendFailRes);
+
+    assert.strictEqual(appendFailRes.statusCode, 500);
+    assert.deepStrictEqual(storedPostFields, {
+      content: "<p>Rollback Old</p>",
+      sourceContent: "<p>Rollback Old</p>"
+    });
+    assert.deepStrictEqual(
+      events,
+      [
+        "revision.baseline:Hidden Page",
+        "revision.preflight:edit:Hidden Page",
+        "post.edit:700:Hidden Page:<p>Attempted</p>",
+        "revision.append:edit:Hidden Page",
+        "post.edit:700:Hidden Page:<p>Rollback Old</p>"
+      ],
+      "save should roll the post back when revision append fails"
+    );
+    appendError = null;
+
+    events.length = 0;
+    revisionCalls.length = 0;
+    baselineCalls.length = 0;
+    preflightCalls.length = 0;
+    storageCannotBeRepaired = true;
+    storedPostFields = { content: "<p>Verify Old</p>", sourceContent: "<p>Verify Old</p>" };
+    postData = { content: "<p>Verify Old</p>", sourceContent: "<p>Verify Old</p>" };
+
+    const originalStoredPostFields = storedPostFields;
+    const storageFailRes = {};
+    await actions.saveWikiPage({
+      uid: 9,
+      body: {
+        tid: 70,
+        pid: 700,
+        title: "Hidden Page",
+        content: "<p>Unverified</p>",
+        wikiEditLockToken: "token"
+      },
+      query: {}
+    }, storageFailRes);
+
+    assert.strictEqual(storageFailRes.statusCode, 500);
+    assert.match(storageFailRes.payload.message, /wiki-save-storage-unverified/);
+    assert.deepStrictEqual(storedPostFields, originalStoredPostFields);
+    assert.strictEqual(revisionCalls.length, 0, "unverified storage should not append a success revision");
+    storageCannotBeRepaired = false;
+
+    revisionCalls.length = 0;
+    baselineCalls.length = 0;
+    preflightCalls.length = 0;
+    events.length = 0;
     movedPayloads.length = 0;
     storedPostFields = { content: "<p>Move Source</p>", sourceContent: "<p>Move Source</p>" };
     postData = { content: "<p>Move Source</p>", sourceContent: "<p>Move Source</p>" };
@@ -376,7 +528,32 @@ assert.strictEqual(
     }, moveRes);
 
     assert.strictEqual(moveRes.statusCode, 200, String(moveRes.payload && moveRes.payload.stack || moveRes.payload));
+    assert.deepStrictEqual(
+      events,
+      [
+        "revision.baseline:Hidden Page",
+        "revision.preflight:move:Renamed Page",
+        "topic.move:70:72",
+        "post.edit:700:Renamed Page:<p>Move Source</p>",
+        "revision.append:move:Renamed Page"
+      ],
+      "move should repair the baseline and preflight the move before mutating topic state"
+    );
     assert.strictEqual(movedPayloads.length, 1, "category changes should move the topic before revision append");
+    assert.deepStrictEqual(
+      baselineCalls[0],
+      {
+        tid: 70,
+        pid: 700,
+        cid: 71,
+        uid: 5,
+        title: "Hidden Page",
+        source: "<p>Move Source</p>",
+        canonicalPath: "Hidden_Root/Readable_Child/Hidden_Page",
+        wikiPath: "/wiki/Hidden_Root/Readable_Child/Hidden_Page"
+      },
+      "first move on a no-journal page should seed a repair checkpoint from the old source and path"
+    );
     assert.deepStrictEqual(
       revisionCalls[0],
       {
@@ -395,6 +572,65 @@ assert.strictEqual(
     );
 
     revisionCalls.length = 0;
+    baselineCalls.length = 0;
+    preflightCalls.length = 0;
+    events.length = 0;
+    movedPayloads.length = 0;
+    appendError = new Error("move append failed");
+    storedPostFields = { content: "<p>Move Rollback</p>", sourceContent: "<p>Move Rollback</p>" };
+    postData = { content: "<p>Move Rollback</p>", sourceContent: "<p>Move Rollback</p>" };
+    wikiPageTopic = {
+      tid: 70,
+      cid: 71,
+      mainPid: 700,
+      title: "Hidden Page",
+      titleRaw: "Hidden Page"
+    };
+    topicData = {
+      tid: 70,
+      cid: 71,
+      mainPid: 700,
+      title: "Hidden Page",
+      titleRaw: "Hidden Page",
+      slug: "70/hidden-page"
+    };
+
+    const moveAppendFailRes = {};
+    await actions.moveWikiPage({
+      uid: 5,
+      body: {
+        tid: 70,
+        cid: 72,
+        title: "Renamed Page"
+      }
+    }, moveAppendFailRes);
+
+    assert.strictEqual(moveAppendFailRes.statusCode, 500);
+    assert.deepStrictEqual(storedPostFields, {
+      content: "<p>Move Rollback</p>",
+      sourceContent: "<p>Move Rollback</p>"
+    });
+    assert.strictEqual(topicData.cid, 71);
+    assert.strictEqual(topicData.title, "Hidden Page");
+    assert.deepStrictEqual(
+      events,
+      [
+        "revision.baseline:Hidden Page",
+        "revision.preflight:move:Renamed Page",
+        "topic.move:70:72",
+        "post.edit:700:Renamed Page:<p>Move Rollback</p>",
+        "revision.append:move:Renamed Page",
+        "post.edit:700:Hidden Page:<p>Move Rollback</p>",
+        "topic.move:70:71"
+      ],
+      "move should roll title and category back when revision append fails"
+    );
+    appendError = null;
+
+    revisionCalls.length = 0;
+    baselineCalls.length = 0;
+    preflightCalls.length = 0;
+    events.length = 0;
     movedPayloads.length = 0;
     wikiPageTopic = {
       tid: 70,

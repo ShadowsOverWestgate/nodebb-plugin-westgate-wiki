@@ -131,6 +131,7 @@ function resetRuntime() {
     const lock = await wikiEditLocks.acquireLock(10, 2);
     const data = await wikiPageValidation.validateTopicEdit({
       uid: 2,
+      westgateWikiManagedMutation: true,
       wikiEditLockToken: lock.token,
       topic: { tid: 10, cid: 1, title: "Locked Page" },
       post: { pid: 100, content: "<p>Updated</p>", sourceContent: "<p>Updated</p>" }
@@ -144,6 +145,7 @@ function resetRuntime() {
     const lock = await wikiEditLocks.acquireLock(10, 2);
     const data = await wikiPageValidation.validatePostEdit({
       uid: 2,
+      westgateWikiManagedMutation: true,
       data: { pid: 100, wikiEditLockToken: lock.token },
       post: {
         content: '<p style="text-align: center; position: fixed">Updated</p>',
@@ -159,6 +161,7 @@ function resetRuntime() {
     const lock = await wikiEditLocks.acquireLock(10, 2);
     const data = await wikiPageValidation.validatePostEdit({
       uid: 2,
+      westgateWikiManagedMutation: true,
       data: { pid: 100, wikiEditLockToken: lock.token },
       post: {
         content: '<table><tbody><tr><td style="text-align: right"><p>Updated</p></td></tr></tbody></table>'
@@ -185,6 +188,7 @@ function resetRuntime() {
     );
     await wikiPageValidation.validatePostEdit({
       uid: 2,
+      westgateWikiManagedMutation: true,
       data: { pid: 100, wikiEditLockToken: lock.token },
       post: {
         content: markerContent
@@ -212,6 +216,7 @@ function resetRuntime() {
     const lock = await wikiEditLocks.acquireLock(10, 2);
     const data = await wikiPageValidation.validateTopicEdit({
       uid: 2,
+      westgateWikiManagedMutation: true,
       req: { query: { wikiEditLockToken: lock.token } },
       topic: { tid: 10, cid: 1, title: "Locked Page" },
       post: { pid: 100, content: "<p>Updated</p>" }
@@ -225,6 +230,7 @@ function resetRuntime() {
     await assert.rejects(
       () => wikiPageValidation.validateTopicEdit({
         uid: 3,
+        westgateWikiManagedMutation: true,
         wikiEditLockToken: lock.token,
         topic: { tid: 10, cid: 1, title: "Locked Page" },
         post: { pid: 100, content: "<p>Updated</p>" }
@@ -238,11 +244,63 @@ function resetRuntime() {
     await assert.rejects(
       () => wikiPageValidation.validateTopicEdit({
         uid: 2,
+        westgateWikiManagedMutation: true,
         topic: { tid: 10, cid: 1, title: "Locked Page" },
         post: { pid: 100, content: "<p>Updated</p>" }
       }),
       /Open the wiki editor again/
     );
+  }
+
+  resetRuntime();
+  {
+    const lock = await wikiEditLocks.acquireLock(10, 2);
+    await assert.rejects(
+      () => wikiPageValidation.validatePostEdit({
+        uid: 2,
+        data: { pid: 100, wikiEditLockToken: lock.token },
+        post: {
+          content: "<p>Native Edit</p>",
+          sourceContent: "<p>Native Edit</p>"
+        }
+      }),
+      /Use the wiki editor/
+    );
+  }
+
+  resetRuntime();
+  {
+    const lock = await wikiEditLocks.acquireLock(10, 2);
+    await assert.rejects(
+      () => wikiPageValidation.validateTopicEdit({
+        uid: 2,
+        wikiEditLockToken: lock.token,
+        topic: { tid: 10, cid: 1, title: "Native Title" },
+        post: { pid: 100, content: "<p>Native Edit</p>" }
+      }),
+      /Use the wiki editor/
+    );
+  }
+
+  resetRuntime();
+  {
+    const data = await wikiPageValidation.validateTopicDelete({
+      topicData: { tid: 10, cid: 1 },
+      canDelete: true
+    });
+    assert.equal(data.canDelete, false, "generic topic delete should be blocked for wiki pages");
+  }
+
+  resetRuntime();
+  {
+    state.settings.homeTopicId = 10;
+    const data = await wikiPageValidation.validateTopicDelete({
+      topicData: { tid: 10, cid: 1 },
+      westgateWikiManagedMutation: true,
+      canDelete: true
+    });
+    assert.equal(data.canDelete, false, "wiki home topic should remain blocked from native delete");
+    delete state.settings.homeTopicId;
   }
 
   console.log("wiki-edit-lock validation tests passed");

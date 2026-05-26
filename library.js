@@ -410,16 +410,7 @@ plugin.wikiFilterPostEdit = wikiPageValidation.validatePostEdit;
 plugin.wikiFilterTopicEdit = wikiPageValidation.validateTopicEdit;
 plugin.wikiFilterPrivilegesPostsEdit = wikiTopdataBotPrivileges.filterPostEditPrivilege;
 plugin.addWikiRevisionCategoryPrivileges = wikiRevisionPermissions.addCategoryPrivileges;
-plugin.wikiFilterTopicDelete = async function (data) {
-  if (!data || !data.topicData) {
-    return data;
-  }
-  const settings = await config.getSettings();
-  if (settings.homeTopicId && parseInt(data.topicData.tid, 10) === settings.homeTopicId) {
-    data.canDelete = false;
-  }
-  return data;
-};
+plugin.wikiFilterTopicDelete = wikiPageValidation.validateTopicDelete;
 plugin.filterCategoriesBuild = filterCategoriesForum.filterCategoriesBuild;
 plugin.filterCategoryBuild = filterCategoriesForum.filterCategoryBuild;
 plugin.filterTopicsUpdateRecent = filterForumFeeds.filterTopicsUpdateRecent;
