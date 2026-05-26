@@ -145,7 +145,22 @@ const wikiLinkAutocomplete = require("../lib/wiki-link-autocomplete");
   );
   assert.strictEqual(
     canonicalPageResults[0].insertText,
-    "[Inspire Competence](/wiki/Feats/Inspire_Competence)"
+    "[[tid:50|Inspire Competence]]"
+  );
+
+  const forumNamespaceResults = await wikiLinkAutocomplete.search({
+    q: "feats",
+    scope: "all-wiki",
+    type: "namespace",
+    context: "forum",
+    uid: 1,
+    limit: 10
+  });
+
+  assert.strictEqual(
+    forumNamespaceResults.find((row) => parseInt(row.cid, 10) === 5).insertText,
+    "[[cid:5|Feats]]",
+    "forum namespace autocomplete should store stable category markers instead of hard-coded wiki hrefs"
   );
 
   console.log("wiki-link autocomplete tests passed");

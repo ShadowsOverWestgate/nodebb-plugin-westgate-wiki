@@ -181,6 +181,11 @@
           <i class="fa fa-fw fa-pencil" aria-hidden="true"></i>
         </a>
         <!-- ENDIF canEditWikiPage -->
+        <!-- IF canViewWikiHistory -->
+        <a class="wiki-fab-btn wiki-fab-btn--icon" href="{config.relative_path}/wiki/history/{topic.tid}" title="View page history" aria-label="View page history">
+          <i class="fa fa-fw fa-history" aria-hidden="true"></i>
+        </a>
+        <!-- ENDIF canViewWikiHistory -->
         <!-- IF namespaceIndexCanCreatePage -->
         <a class="wiki-fab-btn wiki-fab-btn--icon" href="#" data-wiki-create-page="1" data-cid="{namespaceIndexActionCid}" title="Create a new wiki page in this namespace" aria-label="Create a new wiki page in this namespace">
           <i class="fa fa-fw fa-file-text" aria-hidden="true"></i>
@@ -192,7 +197,7 @@
         </a>
         <!-- ENDIF namespaceIndexCanCreateWikiNamespaces -->
         <!-- IF canDeleteWikiPage -->
-        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon wiki-fab-btn--danger wiki-delete-page" data-wiki-delete-topic="1" data-tid="{topic.tid}" data-redirect-href="{config.relative_path}{namespaceIndexDeleteRedirectPath}" title="Remove namespace index page" aria-label="Remove namespace index page">
+        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon wiki-fab-btn--danger wiki-delete-page" data-wiki-tombstone-page="1" data-tid="{topic.tid}" data-redirect-href="{config.relative_path}{namespaceIndexDeleteRedirectPath}" title="Hide namespace index page" aria-label="Hide namespace index page">
           <i class="fa fa-fw fa-trash-o" aria-hidden="true"></i>
         </button>
         <!-- ENDIF canDeleteWikiPage -->
@@ -205,6 +210,11 @@
           <i class="fa fa-fw fa-pencil" aria-hidden="true"></i>
         </a>
         <!-- ENDIF canEditWikiPage -->
+        <!-- IF canViewWikiHistory -->
+        <a class="wiki-fab-btn wiki-fab-btn--icon" href="{config.relative_path}/wiki/history/{topic.tid}" title="View page history" aria-label="View page history">
+          <i class="fa fa-fw fa-history" aria-hidden="true"></i>
+        </a>
+        <!-- ENDIF canViewWikiHistory -->
         <!-- IF canMoveWikiPage -->
         <button type="button" class="wiki-fab-btn wiki-fab-btn--icon" data-wiki-move-page="1" data-tid="{topic.tid}" data-cid="{category.cid}" data-title="{pageTitle}" data-parent-title="{pageParentTitle}" data-namespace-name="{category.name}" title="Move this wiki page" aria-label="Move this wiki page">
           <i class="fa fa-fw fa-arrows" aria-hidden="true"></i>
@@ -232,7 +242,7 @@
         <!-- ENDIF rootNamespaceCanCreateWikiNamespaces -->
         <!-- IF canWatchWikiArticle -->
         <button type="button" class="wiki-fab-btn wiki-fab-btn--icon<!-- IF wikiArticleWatched --> active<!-- ENDIF wikiArticleWatched -->" data-wiki-article-watch="1" data-tid="{topic.tid}" data-watching="<!-- IF wikiArticleWatched -->1<!-- ELSE -->0<!-- ENDIF wikiArticleWatched -->" title="<!-- IF wikiArticleWatched -->Stop watching wiki article edits<!-- ELSE -->Watch wiki article edits<!-- ENDIF wikiArticleWatched -->" aria-label="<!-- IF wikiArticleWatched -->Stop watching wiki article edits<!-- ELSE -->Watch wiki article edits<!-- ENDIF wikiArticleWatched -->" aria-pressed="<!-- IF wikiArticleWatched -->true<!-- ELSE -->false<!-- ENDIF wikiArticleWatched -->">
-          <i class="fa fa-fw <!-- IF wikiArticleWatched -->fa-eye<!-- ELSE -->fa-eye-slash<!-- ENDIF wikiArticleWatched -->" aria-hidden="true"></i>
+          <i class="fa fa-fw <!-- IF wikiArticleWatched -->fa-eye-slash<!-- ELSE -->fa-eye<!-- ENDIF wikiArticleWatched -->" aria-hidden="true"></i>
         </button>
         <!-- ENDIF canWatchWikiArticle -->
         <!-- IF showWikiDiscussionLink -->
@@ -241,7 +251,7 @@
         </a>
         <!-- ENDIF showWikiDiscussionLink -->
         <!-- IF canDeleteWikiPage -->
-        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon wiki-fab-btn--danger wiki-delete-page" data-wiki-delete-topic="1" data-tid="{topic.tid}" data-redirect-href="{config.relative_path}{category.wikiPath}" title="Permanently remove this wiki page" aria-label="Remove this wiki page">
+        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon wiki-fab-btn--danger wiki-delete-page" data-wiki-tombstone-page="1" data-tid="{topic.tid}" data-redirect-href="{config.relative_path}{category.wikiPath}" title="Hide this wiki page" aria-label="Hide this wiki page">
           <i class="fa fa-fw fa-trash-o" aria-hidden="true"></i>
         </button>
         <!-- ENDIF canDeleteWikiPage -->

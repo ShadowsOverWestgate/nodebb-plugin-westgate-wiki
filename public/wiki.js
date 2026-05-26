@@ -106,7 +106,9 @@ $(document).ready(function () {
       return null;
     }
 
-    if (url.origin !== window.location.origin || !url.pathname.includes("/wiki/")) {
+    const relativePath = String((window.config && window.config.relative_path) || "").replace(/\/+$/g, "");
+    const wikiRootPath = `${relativePath}/wiki`;
+    if (url.origin !== window.location.origin || (url.pathname !== wikiRootPath && !url.pathname.startsWith(`${wikiRootPath}/`))) {
       return null;
     }
 
@@ -122,7 +124,7 @@ $(document).ready(function () {
     return {
       cid: cid,
       title: title,
-      namespacePath: url.pathname.replace(((window.config && window.config.relative_path) || ""), "") || url.pathname,
+      namespacePath: url.pathname.replace(relativePath, "") || url.pathname,
       href: url.toString(),
       isRedlink: url.searchParams.get("redlink") === "1"
     };
@@ -432,7 +434,7 @@ $(document).ready(function () {
   }
 
   function markRedLinks() {
-    $(".westgate-wiki a").each(function () {
+    $("a").each(function () {
       const intent = getCreateIntentFromUrl($(this).attr("href"));
 
       if (intent && intent.isRedlink) {
@@ -1148,8 +1150,8 @@ $(document).ready(function () {
     btn.setAttribute("aria-label", watched ? "Stop watching wiki article edits" : "Watch wiki article edits");
     btn.classList.toggle("active", watched);
     if (icon) {
-      icon.classList.toggle("fa-eye", watched);
-      icon.classList.toggle("fa-eye-slash", !watched);
+      icon.classList.toggle("fa-eye", !watched);
+      icon.classList.toggle("fa-eye-slash", watched);
     }
   }
 
@@ -1232,7 +1234,7 @@ $(document).ready(function () {
     }
   });
 
-  $(document).on("click", "[data-wiki-delete-topic]", async function (event) {
+  $(document).on("click", "[data-wiki-tombstone-page]", async function (event) {
     const btn = event.currentTarget;
     const tid = parseInt(btn.getAttribute("data-tid"), 10);
     const redirectHref = btn.getAttribute("data-redirect-href") || "";
@@ -1243,24 +1245,26 @@ $(document).ready(function () {
 
     event.preventDefault();
 
-    if (!window.confirm("Remove this wiki page? The topic will be purged (hard delete) and CANNOT be restored.")) {
+    if (!window.confirm("Hide this wiki page? Staff can restore it later from revision history.")) {
       return;
     }
 
     const rel = getRelativePath();
     const base = rel.endsWith("/") ? rel.slice(0, -1) : rel;
-    const url = `${base}/api/v3/topics/${tid}/state`;
+    const url = `${base}/api/v3/plugins/westgate-wiki/page/tombstone`;
     const csrf = getCsrfToken();
 
     btn.disabled = true;
 
     try {
       const res = await fetch(url, {
-        method: "DELETE",
+        method: "PUT",
         credentials: "same-origin",
         headers: {
+          "content-type": "application/json",
           "x-csrf-token": csrf
-        }
+        },
+        body: JSON.stringify({ tid: tid })
       });
       let body = null;
       const ct = res.headers.get("content-type");
