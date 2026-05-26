@@ -81,12 +81,45 @@
     };
   }
 
-  function renderPreview(previewMount, previewHtml) {
-    previewMount.innerHTML = String(previewHtml || "");
+  function renderServerPreview(previewMount, previewHtml) {
+    if (previewMount) {
+      previewMount.innerHTML = String(previewHtml || "");
+    }
+  }
+
+  function renderTextMessage(mount, message) {
+    if (mount) {
+      mount.textContent = message || "";
+    }
+  }
+
+  function revisionLabel(revision, fallback) {
+    return String(revision && revision.revisionId || fallback || "revision");
+  }
+
+  async function fetchRevisionDetail(state, revision) {
+    if (!revision || !revision.revisionId) {
+      return null;
+    }
+    const revisionId = revision.revisionId;
+    if (!state.detailsByRevisionId[revisionId]) {
+      const detailPromise = fetchJson(`${apiBase()}/${encodeURIComponent(state.tid)}/${encodeURIComponent(revisionId)}`).catch(function (err) {
+        if (state.detailsByRevisionId[revisionId] === detailPromise) {
+          delete state.detailsByRevisionId[revisionId];
+        }
+        throw err;
+      });
+      state.detailsByRevisionId[revisionId] = detailPromise;
+    }
+    return state.detailsByRevisionId[revisionId];
   }
 
   function renderDiff(diffMount, diff) {
     diffMount.textContent = String(diff || "");
+  }
+
+  function renderInitialSource(diffMount, source) {
+    renderDiff(diffMount, String(source || ""));
   }
 
   function getDiffBaseRevision(state, revision) {
@@ -98,20 +131,36 @@
     return state.revisions[revision.index + 1] || null;
   }
 
+  function setFullscreenButtonsDisabled(root, disabled) {
+    root.querySelectorAll("[data-wiki-history-fullscreen-open]").forEach(function (button) {
+      button.disabled = disabled;
+    });
+  }
+
+  function clearLoadedDetails(state) {
+    state.selectedDetail = null;
+    state.baseDetail = null;
+  }
+
   async function loadRevision(root, state, revision) {
     if (!revision || !revision.revisionId || state.loadingRevisionId === revision.revisionId) {
       return;
     }
 
+    const beforePreview = root.querySelector("[data-wiki-history-before-preview]");
+    const afterPreview = root.querySelector("[data-wiki-history-after-preview]");
+    const beforeLabel = root.querySelector("[data-wiki-history-before-label]");
+    const afterLabel = root.querySelector("[data-wiki-history-after-label]");
     const diffMount = root.querySelector("[data-wiki-history-diff]");
-    const previewMount = root.querySelector("[data-wiki-history-preview]");
-    if (!diffMount || !previewMount) {
+    if (!beforePreview || !afterPreview || !diffMount) {
       return;
     }
 
     state.loadingRevisionId = revision.revisionId;
     state.requestId += 1;
     const requestId = state.requestId;
+    clearLoadedDetails(state);
+    setFullscreenButtonsDisabled(root, true);
     state.selectedRevision = revision;
     state.revisions.forEach(function (row) {
       const active = row.revisionId === revision.revisionId;
@@ -126,17 +175,38 @@
     }
 
     setStatus(root, "Loading revision...", "muted");
-    renderDiff(diffMount, "Loading diff...");
-    previewMount.textContent = "Loading preview...";
+    renderTextMessage(beforePreview, "Loading previous revision...");
+    renderTextMessage(afterPreview, "Loading selected revision...");
+    renderDiff(diffMount, "Loading source diff...");
 
     try {
-      const detail = await fetchJson(`${apiBase()}/${encodeURIComponent(state.tid)}/${encodeURIComponent(revision.revisionId)}`);
+      const detail = await fetchRevisionDetail(state, revision);
+      const baseRevision = getDiffBaseRevision(state, revision);
+      const baseDetail = baseRevision && baseRevision.revisionId ? await fetchRevisionDetail(state, baseRevision) : null;
       if (requestId !== state.requestId) {
         return;
       }
-      renderPreview(previewMount, detail.previewHtml || "");
 
-      const baseRevision = getDiffBaseRevision(state, revision);
+      state.selectedDetail = detail || null;
+      state.baseDetail = baseDetail || null;
+
+      if (baseDetail) {
+        renderServerPreview(beforePreview, baseDetail.previewHtml || "");
+        if (beforeLabel) {
+          beforeLabel.textContent = revisionLabel(baseDetail.revision, baseRevision.revisionId);
+        }
+      } else {
+        renderTextMessage(beforePreview, "Initial revision. No earlier rendered version is available.");
+        if (beforeLabel) {
+          beforeLabel.textContent = "No parent revision";
+        }
+      }
+
+      renderServerPreview(afterPreview, detail.previewHtml || "");
+      if (afterLabel) {
+        afterLabel.textContent = revisionLabel(detail.revision, revision.revisionId);
+      }
+
       if (baseRevision && baseRevision.revisionId) {
         const diff = await fetchJson(`${apiBase()}/${encodeURIComponent(state.tid)}/${encodeURIComponent(baseRevision.revisionId)}/${encodeURIComponent(revision.revisionId)}/diff`);
         if (requestId !== state.requestId) {
@@ -144,14 +214,21 @@
         }
         renderDiff(diffMount, diff.diff || "");
       } else {
-        renderDiff(diffMount, "Initial revision. No earlier revision is available for comparison.");
+        renderInitialSource(diffMount, detail.source || "");
       }
+
+      setFullscreenButtonsDisabled(root, false);
 
       const action = detail.revision && detail.revision.action ? detail.revision.action : "revision";
       setStatus(root, `Viewing ${action} ${revision.revisionId}`, "muted");
     } catch (err) {
+      if (requestId !== state.requestId) {
+        return;
+      }
+      clearLoadedDetails(state);
       renderDiff(diffMount, "");
-      previewMount.textContent = "";
+      renderTextMessage(beforePreview, "");
+      renderTextMessage(afterPreview, "");
       setStatus(root, (err && err.message) || String(err), "error");
     } finally {
       if (requestId === state.requestId) {
@@ -325,6 +402,9 @@
       loadingRevisionId: "",
       requestId: 0,
       selectedRevision: null,
+      selectedDetail: null,
+      baseDetail: null,
+      detailsByRevisionId: Object.create(null),
       revisions: buttons.map(revisionFromButton).filter(function (row) {
         return !!row.revisionId;
       })

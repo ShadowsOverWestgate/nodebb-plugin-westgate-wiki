@@ -466,7 +466,8 @@ test("wiki history client is loaded and renders unsafe surfaces defensively", ()
   );
   assert.match(client, /api\/v3\/plugins\/westgate-wiki\/revisions/);
   assert.match(client, /textContent\s*=\s*[^;]*diff/);
-  assert.match(client, /querySelector\("\[data-wiki-history-preview\]"\)/);
+  assert.match(client, /querySelector\("\[data-wiki-history-before-preview\]"\)/);
+  assert.match(client, /querySelector\("\[data-wiki-history-after-preview\]"\)/);
   assert.doesNotMatch(client, /\beval\s*\(/);
   assert.doesNotMatch(client, /new Function\s*\(/);
 });
@@ -478,9 +479,223 @@ test("wiki history client uses server preview html and restores through an acqui
   assert.match(client, /method:\s*"PUT"[\s\S]*x-csrf-token/);
   assert.match(client, /method:\s*"DELETE"[\s\S]*x-csrf-token/);
   assert.match(client, /wikiEditLockToken:\s*lock\.token/);
-  assert.match(client, /renderPreview\(previewMount,\s*detail\.previewHtml\s*\|\|\s*""\)/);
-  assert.doesNotMatch(client, /renderPreview\(previewMount,\s*detail\.source/);
+  assert.match(client, /renderServerPreview\(afterPreview,\s*detail\.previewHtml\s*\|\|\s*""\)/);
+  assert.doesNotMatch(client, /renderServerPreview\(afterPreview,\s*detail\.source/);
   assert.doesNotMatch(client, /removeDangerousPreviewMarkup/);
+});
+
+test("wiki history client renders selected and base revision previews in before-after panes", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="1" data-page-title="Moonlit Page" data-hard-purge-redirect="/wiki/Lore">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-2" data-parent-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-restore disabled></button>
+      <button type="button" data-wiki-history-fullscreen-open="rendered" disabled></button>
+      <button type="button" data-wiki-history-fullscreen-open="source" disabled></button>
+      <button type="button" data-wiki-history-tab="rendered" aria-selected="true" class="active"></button>
+      <button type="button" data-wiki-history-tab="source" aria-selected="false"></button>
+      <section data-wiki-history-tab-panel="rendered"></section>
+      <section data-wiki-history-tab-panel="source" hidden></section>
+      <span data-wiki-history-before-label></span>
+      <span data-wiki-history-after-label></span>
+      <div data-wiki-history-before-preview></div>
+      <div data-wiki-history-after-preview></div>
+      <div data-wiki-history-diff></div>
+      <div data-wiki-history-fullscreen hidden>
+        <button type="button" data-wiki-history-fullscreen-close></button>
+        <button type="button" data-wiki-history-fullscreen-mode="rendered"></button>
+        <button type="button" data-wiki-history-fullscreen-mode="source"></button>
+        <p data-wiki-history-fullscreen-meta></p>
+        <article data-wiki-history-fullscreen-rendered></article>
+        <pre data-wiki-history-fullscreen-source hidden></pre>
+      </div>
+    </div>`, {
+    runScripts: "outside-only",
+    url: "https://forum.example/wiki/history/42"
+  });
+
+  const fetchCalls = [];
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    fetchCalls.push(String(url));
+    if (String(url).endsWith("/42/rev-2")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-2", action: "edit" }, source: "<p>After</p>", previewHtml: "<p>After preview</p>" } }) };
+    }
+    if (String(url).endsWith("/42/rev-1")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-1", action: "create" }, source: "<p>Before</p>", previewHtml: "<p>Before preview</p>" } }) };
+    }
+    if (String(url).endsWith("/42/rev-1/rev-2/diff")) {
+      return { ok: true, json: async () => ({ response: { diff: "@@ -1 +1 @@\n-<p>Before</p>\n+<p>After</p>" } }) };
+    }
+    throw new Error(`unexpected fetch ${url}`);
+  };
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  assert.deepEqual(fetchCalls, [
+    "/api/v3/plugins/westgate-wiki/revisions/42/rev-2",
+    "/api/v3/plugins/westgate-wiki/revisions/42/rev-1",
+    "/api/v3/plugins/westgate-wiki/revisions/42/rev-1/rev-2/diff"
+  ]);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-before-preview]").innerHTML, "<p>Before preview</p>");
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-after-preview]").innerHTML, "<p>After preview</p>");
+  assert.match(dom.window.document.querySelector("[data-wiki-history-before-label]").textContent, /rev-1/);
+  assert.match(dom.window.document.querySelector("[data-wiki-history-after-label]").textContent, /rev-2/);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-restore]").disabled, false);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-fullscreen-open=\"rendered\"]").disabled, false);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-fullscreen-open=\"source\"]").disabled, false);
+});
+
+test("wiki history client ignores stale revision detail responses after a newer selection", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="0">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-2" data-parent-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-fullscreen-open="rendered" disabled></button>
+      <button type="button" data-wiki-history-fullscreen-open="source" disabled></button>
+      <button type="button" data-wiki-history-tab="rendered" aria-selected="true" class="active"></button>
+      <button type="button" data-wiki-history-tab="source" aria-selected="false"></button>
+      <section data-wiki-history-tab-panel="rendered"></section>
+      <section data-wiki-history-tab-panel="source" hidden></section>
+      <span data-wiki-history-before-label></span><span data-wiki-history-after-label></span>
+      <div data-wiki-history-before-preview></div><div data-wiki-history-after-preview></div>
+      <div data-wiki-history-diff></div>
+      <div data-wiki-history-fullscreen hidden><p data-wiki-history-fullscreen-meta></p><article data-wiki-history-fullscreen-rendered></article><pre data-wiki-history-fullscreen-source hidden></pre></div>
+    </div>`, {
+    runScripts: "outside-only",
+    url: "https://forum.example/wiki/history/42"
+  });
+
+  let resolveRev2;
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    if (String(url).endsWith("/42/rev-2")) {
+      return new Promise((resolve) => {
+        resolveRev2 = () => resolve({
+          ok: true,
+          json: async () => ({ response: { revision: { revisionId: "rev-2", action: "edit" }, source: "<p>Stale</p>", previewHtml: "<p>Stale selected preview</p>" } })
+        });
+      });
+    }
+    if (String(url).endsWith("/42/rev-1")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-1", action: "create" }, source: "<p>Current</p>", previewHtml: "<p>Current selected preview</p>" } }) };
+    }
+    return { ok: true, json: async () => ({ response: { diff: "@@ -1 +1 @@" } }) };
+  };
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  dom.window.document.querySelector("[data-revision-id=\"rev-1\"]").dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-after-preview]").innerHTML, "<p>Current selected preview</p>");
+
+  resolveRev2();
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-after-preview]").innerHTML, "<p>Current selected preview</p>");
+});
+
+test("wiki history client ignores stale revision detail rejections after a newer selection", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="0">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-2" data-parent-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-fullscreen-open="rendered" disabled></button>
+      <button type="button" data-wiki-history-fullscreen-open="source" disabled></button>
+      <span data-wiki-history-before-label></span><span data-wiki-history-after-label></span>
+      <div data-wiki-history-before-preview></div><div data-wiki-history-after-preview></div>
+      <div data-wiki-history-diff></div>
+    </div>`, {
+    runScripts: "outside-only",
+    url: "https://forum.example/wiki/history/42"
+  });
+
+  let rejectRev2;
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    if (String(url).endsWith("/42/rev-2")) {
+      return new Promise((resolve, reject) => {
+        rejectRev2 = () => reject(new Error("stale rev-2 failed"));
+      });
+    }
+    if (String(url).endsWith("/42/rev-1")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-1", action: "create" }, source: "<p>Current</p>", previewHtml: "<p>Current selected preview</p>" } }) };
+    }
+    throw new Error(`unexpected fetch ${url}`);
+  };
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  dom.window.document.querySelector("[data-revision-id=\"rev-1\"]").dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-after-preview]").innerHTML, "<p>Current selected preview</p>");
+  assert.match(dom.window.document.querySelector("[data-wiki-history-status]").textContent, /Viewing create rev-1/);
+
+  rejectRev2();
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-after-preview]").innerHTML, "<p>Current selected preview</p>");
+  assert.match(dom.window.document.querySelector("[data-wiki-history-status]").textContent, /Viewing create rev-1/);
+});
+
+test("wiki history client retries revision detail after a rejected detail request", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="0">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-2"></button>
+      <div data-wiki-history-before-preview></div><div data-wiki-history-after-preview></div>
+      <div data-wiki-history-diff></div>
+    </div>`, {
+    runScripts: "outside-only",
+    url: "https://forum.example/wiki/history/42"
+  });
+
+  let rev2Fetches = 0;
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    if (String(url).endsWith("/42/rev-2")) {
+      rev2Fetches += 1;
+      if (rev2Fetches === 1) {
+        return {
+          ok: false,
+          statusText: "temporary failure",
+          json: async () => ({ status: { message: "temporary failure" } })
+        };
+      }
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-2", action: "edit" }, source: "<p>Recovered</p>", previewHtml: "<p>Recovered preview</p>" } }) };
+    }
+    throw new Error(`unexpected fetch ${url}`);
+  };
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  assert.equal(rev2Fetches, 1);
+  assert.match(dom.window.document.querySelector("[data-wiki-history-status]").textContent, /temporary failure/);
+
+  dom.window.document.querySelector("[data-revision-id=\"rev-2\"]").dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  assert.equal(rev2Fetches, 2);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-after-preview]").innerHTML, "<p>Recovered preview</p>");
 });
 
 test("wiki history client requires exact title confirmation before hard purge DELETE", async () => {
