@@ -220,9 +220,111 @@
     });
   }
 
+  function clearFullscreenBodyLock() {
+    document.body.classList.remove("wiki-history-fullscreen-open");
+  }
+
   function clearLoadedDetails(state) {
     state.selectedDetail = null;
     state.baseDetail = null;
+  }
+
+  function setActiveTab(root, activeTab) {
+    const tabName = activeTab === "source" ? "source" : "rendered";
+    root.querySelectorAll("[data-wiki-history-tab]").forEach(function (button) {
+      const active = button.getAttribute("data-wiki-history-tab") === tabName;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+    });
+    root.querySelectorAll("[data-wiki-history-tab-panel]").forEach(function (panel) {
+      panel.hidden = panel.getAttribute("data-wiki-history-tab-panel") !== tabName;
+    });
+  }
+
+  function setFullscreenMode(root, mode) {
+    const sourceMode = mode === "source";
+    const rendered = root.querySelector("[data-wiki-history-fullscreen-rendered]");
+    const source = root.querySelector("[data-wiki-history-fullscreen-source]");
+    if (rendered) {
+      rendered.hidden = sourceMode;
+    }
+    if (source) {
+      source.hidden = !sourceMode;
+    }
+    root.querySelectorAll("[data-wiki-history-fullscreen-mode]").forEach(function (button) {
+      const active = button.getAttribute("data-wiki-history-fullscreen-mode") === (sourceMode ? "source" : "rendered");
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  function focusableElements(container) {
+    return Array.from(container.querySelectorAll("a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex=\"-1\"])")).filter(function (element) {
+      return !element.hidden && !element.disabled && !element.closest("[hidden]");
+    });
+  }
+
+  function closeFullscreen(root, state) {
+    const overlay = root.querySelector("[data-wiki-history-fullscreen]");
+    if (!overlay || overlay.hidden) {
+      return;
+    }
+    overlay.hidden = true;
+    clearFullscreenBodyLock();
+    const opener = state.fullscreenOpener;
+    state.fullscreenOpener = null;
+    if (opener && typeof opener.focus === "function") {
+      opener.focus();
+    }
+  }
+
+  function openFullscreen(root, state, mode, opener) {
+    if (!state.selectedDetail) {
+      return;
+    }
+    const overlay = root.querySelector("[data-wiki-history-fullscreen]");
+    const rendered = root.querySelector("[data-wiki-history-fullscreen-rendered]");
+    const source = root.querySelector("[data-wiki-history-fullscreen-source]");
+    const meta = root.querySelector("[data-wiki-history-fullscreen-meta]");
+    if (!overlay || !rendered || !source) {
+      return;
+    }
+    state.fullscreenOpener = opener || document.activeElement;
+    renderServerPreview(rendered, state.selectedDetail.previewHtml || "");
+    source.textContent = String(state.selectedDetail.source || "");
+    if (meta) {
+      meta.textContent = `Viewing ${revisionLabel(state.selectedDetail.revision, state.selectedRevision && state.selectedRevision.revisionId)}`;
+    }
+    setFullscreenMode(root, mode);
+    overlay.hidden = false;
+    document.body.classList.add("wiki-history-fullscreen-open");
+    const focusables = focusableElements(overlay);
+    (focusables[0] || overlay).focus();
+  }
+
+  function handleFullscreenKeydown(root, state, event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeFullscreen(root, state);
+      return;
+    }
+    if (event.key !== "Tab") {
+      return;
+    }
+    const overlay = root.querySelector("[data-wiki-history-fullscreen]");
+    const focusables = overlay ? focusableElements(overlay) : [];
+    if (!focusables.length) {
+      return;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   async function loadRevision(root, state, revision) {
@@ -487,6 +589,7 @@
       selectedRevision: null,
       selectedDetail: null,
       baseDetail: null,
+      fullscreenOpener: null,
       detailsByRevisionId: Object.create(null),
       revisions: buttons.map(revisionFromButton).filter(function (row) {
         return !!row.revisionId;
@@ -510,6 +613,37 @@
     if (hardPurgeButton) {
       hardPurgeButton.addEventListener("click", function () {
         hardPurgePage(root, state);
+      });
+    }
+
+    root.querySelectorAll("[data-wiki-history-tab]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        setActiveTab(root, button.getAttribute("data-wiki-history-tab"));
+      });
+    });
+
+    root.querySelectorAll("[data-wiki-history-fullscreen-open]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        openFullscreen(root, state, button.getAttribute("data-wiki-history-fullscreen-open"), button);
+      });
+    });
+
+    root.querySelectorAll("[data-wiki-history-fullscreen-mode]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        setFullscreenMode(root, button.getAttribute("data-wiki-history-fullscreen-mode"));
+      });
+    });
+
+    root.querySelectorAll("[data-wiki-history-fullscreen-close]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        closeFullscreen(root, state);
+      });
+    });
+
+    const fullscreen = root.querySelector("[data-wiki-history-fullscreen]");
+    if (fullscreen) {
+      fullscreen.addEventListener("keydown", function (event) {
+        handleFullscreenKeydown(root, state, event);
       });
     }
 
@@ -537,8 +671,12 @@
   }
 
   if (typeof window.jQuery !== "undefined" && window.jQuery.fn) {
+    window.jQuery(window).on("action:ajaxify.start", clearFullscreenBodyLock);
     window.jQuery(window).on("action:ajaxify.end", function () {
+      clearFullscreenBodyLock();
       window.setTimeout(init, 0);
     });
   }
+
+  window.addEventListener("pagehide", clearFullscreenBodyLock);
 }());

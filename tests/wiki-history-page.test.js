@@ -1110,3 +1110,160 @@ test("wiki history client handles initial revision without base or diff request 
     assert.equal(row.classList.contains("wiki-history-diff-line--meta"), false);
   });
 });
+
+test("wiki history client switches tabs and opens fullscreen rendered and source modes", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <button id="before">Before opener</button>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="0">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-fullscreen-open="rendered" disabled>Rendered fullscreen</button>
+      <button type="button" data-wiki-history-fullscreen-open="source" disabled>Source fullscreen</button>
+      <button type="button" data-wiki-history-tab="rendered" aria-selected="true" class="active"></button>
+      <button type="button" data-wiki-history-tab="source" aria-selected="false"></button>
+      <section data-wiki-history-tab-panel="rendered"></section>
+      <section data-wiki-history-tab-panel="source" hidden></section>
+      <span data-wiki-history-before-label></span><span data-wiki-history-after-label></span>
+      <div data-wiki-history-before-preview></div><div data-wiki-history-after-preview></div>
+      <div data-wiki-history-diff></div>
+      <div data-wiki-history-fullscreen hidden>
+        <button type="button" data-wiki-history-fullscreen-close>Close</button>
+        <button type="button" data-wiki-history-fullscreen-mode="rendered">Rendered</button>
+        <button type="button" data-wiki-history-fullscreen-mode="source">Source</button>
+        <p data-wiki-history-fullscreen-meta></p>
+        <article data-wiki-history-fullscreen-rendered></article>
+        <pre data-wiki-history-fullscreen-source hidden></pre>
+      </div>
+    </div>`, { runScripts: "outside-only", url: "https://forum.example/wiki/history/42" });
+
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    assert.equal(url, "/api/v3/plugins/westgate-wiki/revisions/42/rev-1");
+    return {
+      ok: true,
+      json: async () => ({
+        response: {
+          revision: { revisionId: "rev-1", action: "create" },
+          source: "<p>Initial source</p>",
+          previewHtml: "<p>Initial preview</p><a href=\"/hidden-rendered-link\">Hidden rendered link</a><button type=\"button\">Hidden rendered button</button>"
+        }
+      })
+    };
+  };
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  const sourceTab = dom.window.document.querySelector("[data-wiki-history-tab=\"source\"]");
+  const sourcePanel = dom.window.document.querySelector("[data-wiki-history-tab-panel=\"source\"]");
+  const renderedPanel = dom.window.document.querySelector("[data-wiki-history-tab-panel=\"rendered\"]");
+  sourceTab.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  assert.equal(sourceTab.getAttribute("aria-selected"), "true");
+  assert.equal(sourcePanel.hidden, false);
+  assert.equal(renderedPanel.hidden, true);
+
+  const sourceOpen = dom.window.document.querySelector("[data-wiki-history-fullscreen-open=\"source\"]");
+  sourceOpen.focus();
+  sourceOpen.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  const overlay = dom.window.document.querySelector("[data-wiki-history-fullscreen]");
+  assert.equal(overlay.hidden, false);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-fullscreen-rendered]").hidden, true);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-fullscreen-source]").hidden, false);
+  assert.match(dom.window.document.querySelector("[data-wiki-history-fullscreen-source]").textContent, /<p>Initial source<\/p>/);
+  assert.match(dom.window.document.querySelector("[data-wiki-history-fullscreen-meta]").textContent, /rev-1/);
+
+  const closeFullscreen = dom.window.document.querySelector("[data-wiki-history-fullscreen-close]");
+  const renderedMode = dom.window.document.querySelector("[data-wiki-history-fullscreen-mode=\"rendered\"]");
+  const sourceMode = dom.window.document.querySelector("[data-wiki-history-fullscreen-mode=\"source\"]");
+  const hiddenRenderedLink = dom.window.document.querySelector("[data-wiki-history-fullscreen-rendered] a");
+  assert.equal(dom.window.document.activeElement, closeFullscreen);
+
+  closeFullscreen.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }));
+  assert.equal(dom.window.document.activeElement, sourceMode);
+  assert.notEqual(dom.window.document.activeElement, hiddenRenderedLink);
+
+  sourceMode.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+  assert.equal(dom.window.document.activeElement, closeFullscreen);
+  assert.notEqual(dom.window.document.activeElement, hiddenRenderedLink);
+
+  overlay.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  assert.equal(overlay.hidden, true);
+  assert.equal(dom.window.document.activeElement, sourceOpen);
+
+  const renderedOpen = dom.window.document.querySelector("[data-wiki-history-fullscreen-open=\"rendered\"]");
+  renderedOpen.focus();
+  renderedOpen.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  assert.equal(overlay.hidden, false);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-fullscreen-rendered]").hidden, false);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-fullscreen-rendered]").innerHTML, "<p>Initial preview</p><a href=\"/hidden-rendered-link\">Hidden rendered link</a><button type=\"button\">Hidden rendered button</button>");
+
+  sourceMode.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-fullscreen-rendered]").hidden, true);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-fullscreen-source]").hidden, false);
+
+  dom.window.document.querySelector("[data-wiki-history-fullscreen-close]").dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  assert.equal(overlay.hidden, true);
+  assert.equal(dom.window.document.activeElement, renderedOpen);
+});
+
+test("wiki history client clears fullscreen body lock on ajax navigation start", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="0">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-fullscreen-open="rendered" disabled>Rendered fullscreen</button>
+      <span data-wiki-history-before-label></span><span data-wiki-history-after-label></span>
+      <div data-wiki-history-before-preview></div><div data-wiki-history-after-preview></div>
+      <div data-wiki-history-diff></div>
+      <div data-wiki-history-fullscreen hidden>
+        <button type="button" data-wiki-history-fullscreen-close>Close</button>
+        <button type="button" data-wiki-history-fullscreen-mode="rendered">Rendered</button>
+        <button type="button" data-wiki-history-fullscreen-mode="source">Source</button>
+        <p data-wiki-history-fullscreen-meta></p>
+        <article data-wiki-history-fullscreen-rendered></article>
+        <pre data-wiki-history-fullscreen-source hidden></pre>
+      </div>
+    </div>`, { runScripts: "outside-only", url: "https://forum.example/wiki/history/42" });
+
+  const jqueryHandlers = {};
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    assert.equal(url, "/api/v3/plugins/westgate-wiki/revisions/42/rev-1");
+    return {
+      ok: true,
+      json: async () => ({
+        response: {
+          revision: { revisionId: "rev-1", action: "create" },
+          source: "<p>Initial source</p>",
+          previewHtml: "<p>Initial preview</p>"
+        }
+      })
+    };
+  };
+  dom.window.jQuery = function jQuery() {
+    return {
+      on(eventName, handler) {
+        jqueryHandlers[eventName] = jqueryHandlers[eventName] || [];
+        jqueryHandlers[eventName].push(handler);
+      }
+    };
+  };
+  dom.window.jQuery.fn = {};
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  dom.window.document.querySelector("[data-wiki-history-fullscreen-open=\"rendered\"]").dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  assert.equal(dom.window.document.body.classList.contains("wiki-history-fullscreen-open"), true);
+
+  assert.ok((jqueryHandlers["action:ajaxify.start"] || []).length > 0, "ajaxify start cleanup handler should be registered");
+  jqueryHandlers["action:ajaxify.start"].forEach((handler) => handler());
+
+  assert.equal(dom.window.document.body.classList.contains("wiki-history-fullscreen-open"), false);
+});
