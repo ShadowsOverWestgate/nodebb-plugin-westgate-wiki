@@ -55,6 +55,8 @@ async function withStubs(stubs, fn) {
 function createHarness() {
   const calls = {
     move: [],
+    purge: [],
+    purgePostsAndTopic: [],
     postFields: [],
     topicFields: []
   };
@@ -88,7 +90,19 @@ function createHarness() {
           topic.cid = payload.cid;
         }
         return { tid, cid: payload.cid };
+      },
+      purge: async (tid, uid) => {
+        calls.purge.push({ source: "tools.purge", tid, uid });
+        return { tid, uid };
       }
+    },
+    purgePostsAndTopic: async (tids, uid) => {
+      calls.purgePostsAndTopic.push({ tids, uid });
+      return { tids, uid };
+    },
+    purge: async (tids, uid) => {
+      calls.purge.push({ source: "topics.purge", tids, uid });
+      return { tids, uid };
     }
   };
 
@@ -200,5 +214,71 @@ test("installed topic move wrapper blocks unmanaged wiki moves and allows manage
     ));
     assert.deepEqual(managed, { tid: 42, cid: 9 });
     assert.equal(harness.calls.move.length, 2);
+  });
+});
+
+test("installed topic purge wrappers block unmanaged wiki purges before native deletion", async () => {
+  const harness = createHarness();
+
+  await withStubs(harness.stubs, async (guards) => {
+    guards.install();
+
+    await assert.rejects(
+      () => harness.topicsStub.tools.purge(42, 9),
+      /Use the wiki page actions/
+    );
+    assert.equal(harness.calls.purge.length, 0);
+
+    await assert.rejects(
+      () => harness.topicsStub.purgePostsAndTopic(42, 9),
+      /Use the wiki page actions/
+    );
+    assert.equal(harness.calls.purgePostsAndTopic.length, 0);
+
+    await assert.rejects(
+      () => harness.topicsStub.purge(42, 9),
+      /Use the wiki page actions/
+    );
+    assert.equal(harness.calls.purge.length, 0);
+
+    await harness.topicsStub.tools.purge(52, 9);
+    await harness.topicsStub.purgePostsAndTopic(52, 9);
+    await harness.topicsStub.purge(52, 9);
+    assert.equal(harness.calls.purge.length, 2);
+    assert.equal(harness.calls.purgePostsAndTopic.length, 1);
+  });
+});
+
+test("installed topic purge wrappers allow managed wiki hard purge contexts", async () => {
+  const harness = createHarness();
+
+  await withStubs(harness.stubs, async (guards) => {
+    guards.install();
+
+    const wikiTopicMutations = require("../lib/wiki-topic-mutations");
+    await wikiTopicMutations.withManagedMutationContext(async () => {
+      await harness.topicsStub.tools.purge(42, 9);
+      await harness.topicsStub.purgePostsAndTopic(42, 9);
+      await harness.topicsStub.purge(42, 9);
+    });
+
+    assert.equal(harness.calls.purge.length, 2);
+    assert.equal(harness.calls.purgePostsAndTopic.length, 1);
+  });
+});
+
+test("topic purge installation is idempotent", async () => {
+  const harness = createHarness();
+
+  await withStubs(harness.stubs, async (guards) => {
+    guards.install();
+    guards.install();
+
+    await harness.topicsStub.tools.purge(52, 9);
+    await harness.topicsStub.purgePostsAndTopic(52, 9);
+    await harness.topicsStub.purge(52, 9);
+
+    assert.equal(harness.calls.purge.length, 2);
+    assert.equal(harness.calls.purgePostsAndTopic.length, 1);
   });
 });
