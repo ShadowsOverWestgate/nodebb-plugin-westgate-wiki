@@ -106,6 +106,18 @@
       "method": "wikiFilterPostEdit"
     },
     {
+      "hook": "filter:post.delete",
+      "method": "wikiFilterPostDelete"
+    },
+    {
+      "hook": "filter:post.restore",
+      "method": "wikiFilterPostRestore"
+    },
+    {
+      "hook": "filter:posts.purge",
+      "method": "wikiFilterPostsPurge"
+    },
+    {
       "hook": "filter:topic.edit",
       "method": "wikiFilterTopicEdit"
     },

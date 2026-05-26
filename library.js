@@ -21,6 +21,7 @@ const wikiMentionNotifications = require("./lib/wiki-mention-notifications");
 const wikiArticleWatch = require("./lib/wiki-article-watch");
 const wikiEditLocks = require("./lib/wiki-edit-locks");
 const wikiPageActions = require("./lib/wiki-page-actions");
+const wikiNativeMutationGuards = require("./lib/wiki-native-mutation-guards");
 const wikiRevisionActions = require("./lib/wiki-revision-actions");
 const wikiTopdataBotPrivileges = require("./lib/wiki-topdata-bot-privileges");
 const wikiRevisionPermissions = require("./lib/wiki-revision-permissions");
@@ -43,6 +44,7 @@ plugin.init = async function (params) {
 
   await config.ensureDefaults();
   await forumExclusionService.removeWikiTopicsFromRecentSet();
+  wikiNativeMutationGuards.install();
 
   routeHelpers.setupAdminPageRoute(
     router,
@@ -408,6 +410,9 @@ plugin.invalidateWikiPathCaches = function () {
 plugin.wikiFilterTopicPost = wikiPageValidation.validateTopicPost;
 plugin.wikiFilterPostEdit = wikiPageValidation.validatePostEdit;
 plugin.wikiFilterTopicEdit = wikiPageValidation.validateTopicEdit;
+plugin.wikiFilterPostDelete = wikiNativeMutationGuards.validatePostDelete;
+plugin.wikiFilterPostRestore = wikiNativeMutationGuards.validatePostRestore;
+plugin.wikiFilterPostsPurge = wikiNativeMutationGuards.validatePostsPurge;
 plugin.wikiFilterPrivilegesPostsEdit = wikiTopdataBotPrivileges.filterPostEditPrivilege;
 plugin.addWikiRevisionCategoryPrivileges = wikiRevisionPermissions.addCategoryPrivileges;
 plugin.wikiFilterTopicDelete = wikiPageValidation.validateTopicDelete;

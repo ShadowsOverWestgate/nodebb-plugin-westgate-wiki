@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const wikiTopicMutations = require("../lib/wiki-topic-mutations");
 
 const TOMBSTONE_FIELDS = [
   "westgateWikiTombstoned",
@@ -13,6 +14,7 @@ const TOMBSTONE_FIELDS = [
 const state = {
   topicFields: new Map(),
   getTopicFieldsCalls: [],
+  purgeManagedStates: [],
   purgeCalls: [],
   setTopicFieldsCalls: [],
   setTopicFieldCalls: [],
@@ -43,6 +45,7 @@ const topicsStub = {
     topic(tid)[field] = String(value);
   },
   purgePostsAndTopic: async (tids, uid) => {
+    state.purgeManagedStates.push(wikiTopicMutations.isManagedMutation({}));
     state.purgeCalls.push({ tids, uid });
   }
 };
@@ -58,6 +61,7 @@ function topic(tid) {
 function reset() {
   state.topicFields = new Map();
   state.getTopicFieldsCalls = [];
+  state.purgeManagedStates = [];
   state.purgeCalls = [];
   state.setTopicFieldsCalls = [];
   state.setTopicFieldCalls = [];
@@ -285,6 +289,11 @@ require.main.require = function requireNodebbStub(id) {
     });
     assert.deepEqual(checkedPurged, { tid: 42, purged: true });
     assert.deepEqual(state.purgeCalls, [{ tids: [42], uid: 8 }, { tids: [42], uid: 8 }]);
+    assert.equal(
+      state.purgeManagedStates[state.purgeManagedStates.length - 1],
+      true,
+      "plugin hard-purge should run NodeBB topic purge inside a managed wiki mutation context"
+    );
 
     await assert.rejects(
       () => tombstones.hardPurgeCheckedTombstone("42", "8", {

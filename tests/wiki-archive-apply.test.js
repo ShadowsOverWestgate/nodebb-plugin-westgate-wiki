@@ -747,10 +747,15 @@ async function applyWithMissingService(servicePath, expectedCode) {
     };
     const preview = await buildApprovedPreview(archive, { destination });
     const { services, events } = createServices();
+    const fallbackMovePayloads = [];
     delete services.pages.updatePage;
     services.topics.getTopicField = async (tid, field) => {
       events.push(`topic.get:${tid}:${field}`);
       return "";
+    };
+    services.topics.tools.move = async (tid, payload) => {
+      fallbackMovePayloads.push(payload);
+      events.push(`topic.move:${tid}:${payload.cid}:${payload.uid}`);
     };
 
     const report = await archiveApply.applyArchive({
@@ -766,6 +771,11 @@ async function applyWithMissingService(servicePath, expectedCode) {
     assert.equal(report.status, "completed");
     assert.deepEqual(report.maps.pages[PAGE_ID], { tid: 79, pid: 882, cid: 11 });
     assert(events.some((event) => event === "topic.move:79:11:9"));
+    assert.equal(
+      require("../lib/wiki-topic-mutations").isManagedMutation(fallbackMovePayloads[0]),
+      true,
+      "archive fallback topic moves should be marked as managed wiki mutations"
+    );
     assert.equal(events.some((event) => event.startsWith("topic.get:79:mainPid")), false);
     assert(events.some((event) => event === "post.edit:882:Gond:9:<p>Article</p>"));
     assert(events.some((event) => event === "uploads.sync:882:79:<p>Article</p>"));

@@ -1302,9 +1302,34 @@ test("hardPurgePage requires wiki:hard-purge, only purges complete tombstones, a
     assert.equal(res.statusCode, 200);
     assert.deepEqual(recovery.calls.getRevisionPurge, [{ tid: 42 }]);
     assert.equal(recovery.calls.getWikiPage.length, 0);
+    assert.deepEqual(recovery.calls.canHardPurge, [{ cid: 7, uid: 9 }]);
     assert.deepEqual(recovery.calls.purgeRevisions, [{ tid: 42 }]);
     assert.deepEqual(recovery.calls.clearRevisionPurge, [{ tid: 42 }]);
     assert.deepEqual(recovery.calls.invalidateNamespace, [{ cid: 7 }]);
+  });
+
+  const recoveryOriginalStarterDenied = createHarness({
+    state: {
+      page: { status: "not-found" },
+      permissions: { history: true, restore: true, hardPurge: false },
+      revisionPurgeMarker: {
+        tid: 42,
+        uid: 9,
+        cid: 7,
+        tombstoneRevisionId: "rev-tombstone",
+        topicPurged: true
+      }
+    }
+  });
+  await loadActions(recoveryOriginalStarterDenied, async (actions) => {
+    const res = {};
+    await actions.hardPurgePage({ uid: 9, body: { tid: "42" } }, res);
+
+    assert.equal(res.statusCode, 403);
+    assert.deepEqual(recoveryOriginalStarterDenied.calls.getRevisionPurge, [{ tid: 42 }]);
+    assert.deepEqual(recoveryOriginalStarterDenied.calls.canHardPurge, [{ cid: 7, uid: 9 }]);
+    assert.equal(recoveryOriginalStarterDenied.calls.purgeRevisions.length, 0);
+    assert.equal(recoveryOriginalStarterDenied.calls.clearRevisionPurge.length, 0);
   });
 
   const recoveryWithoutTopicPurgedFlag = createHarness({
@@ -1326,6 +1351,7 @@ test("hardPurgePage requires wiki:hard-purge, only purges complete tombstones, a
     assert.equal(res.statusCode, 200);
     assert.deepEqual(recoveryWithoutTopicPurgedFlag.calls.getRevisionPurge, [{ tid: 42 }]);
     assert.deepEqual(recoveryWithoutTopicPurgedFlag.calls.getWikiPage, [{ tid: 42, uid: 9, options: { includeTombstoned: true } }]);
+    assert.deepEqual(recoveryWithoutTopicPurgedFlag.calls.canHardPurge, [{ cid: 7, uid: 9 }]);
     assert.deepEqual(recoveryWithoutTopicPurgedFlag.calls.purgeRevisions, [{ tid: 42 }]);
     assert.deepEqual(recoveryWithoutTopicPurgedFlag.calls.clearRevisionPurge, [{ tid: 42 }]);
     assert.deepEqual(recoveryWithoutTopicPurgedFlag.calls.invalidateNamespace, [{ cid: 7 }]);
