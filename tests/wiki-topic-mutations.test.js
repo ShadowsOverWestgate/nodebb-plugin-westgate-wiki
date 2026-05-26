@@ -159,6 +159,62 @@ test("withTopicMutationGuard does not refresh a busy DB lock on rejected attempt
   }
 });
 
+test("withTopicMutationGuard clears the DB lock if owner setup fails during acquisition", async () => {
+  const originalMainRequire = require.main.require.bind(require.main);
+  const key = topicLockKey(42);
+  const { db, locks } = createOwnerLockDb();
+  db.setObjectField = async () => {
+    throw new Error("owner setup failed");
+  };
+
+  require.main.require = function requireNodebbStub(id) {
+    if (id === "./src/database") {
+      return db;
+    }
+    return originalMainRequire(id);
+  };
+
+  try {
+    const mutations = loadFreshMutations();
+    await assert.rejects(
+      () => mutations.withTopicMutationGuard(42, async () => "blocked"),
+      /owner setup failed/
+    );
+    assert.equal(locks.has(key), false);
+  } finally {
+    require.main.require = originalMainRequire;
+    clearMutationsModule();
+  }
+});
+
+test("withTopicMutationGuard clears the DB lock if TTL setup fails during acquisition", async () => {
+  const originalMainRequire = require.main.require.bind(require.main);
+  const key = topicLockKey(42);
+  const { db, locks } = createOwnerLockDb();
+  db.pexpire = async () => {
+    throw new Error("ttl setup failed");
+  };
+
+  require.main.require = function requireNodebbStub(id) {
+    if (id === "./src/database") {
+      return db;
+    }
+    return originalMainRequire(id);
+  };
+
+  try {
+    const mutations = loadFreshMutations();
+    await assert.rejects(
+      () => mutations.withTopicMutationGuard(42, async () => "blocked"),
+      /ttl setup failed/
+    );
+    assert.equal(locks.has(key), false);
+  } finally {
+    require.main.require = originalMainRequire;
+    clearMutationsModule();
+  }
+});
+
 test("withTopicMutationGuard release does not delete a newer owner lock", async () => {
   const originalMainRequire = require.main.require.bind(require.main);
   const key = topicLockKey(42);
