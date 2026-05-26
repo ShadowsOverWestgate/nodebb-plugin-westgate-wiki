@@ -91,6 +91,13 @@ test("renderReadOnlyWikiHtml does not convert unsafe inert editor links", functi
   assert.equal(rendered, '<p>A <span class="wiki-editor-link">bad link</span>.</p>');
 });
 
+test("renderReadOnlyWikiHtml does not convert encoded control-character javascript inert editor links", function () {
+  const html = '<p>A <span class="wiki-editor-link" data-wiki-link-href="java&#x0A;script:alert(1)">bad link</span>.</p>';
+  const rendered = wikiHtmlSanitizer.renderReadOnlyWikiHtml(html);
+
+  assert.equal(rendered, '<p>A <span class="wiki-editor-link">bad link</span>.</p>');
+});
+
 test("renderReadOnlyWikiHtml removes empty task checkbox spacer spans", function () {
   const html = '<ul data-type="taskList"><li data-checked="true"><label><input type="checkbox" checked><span></span></label><div><p>Task</p></div></li></ul>';
   const rendered = wikiHtmlSanitizer.renderReadOnlyWikiHtml(html);

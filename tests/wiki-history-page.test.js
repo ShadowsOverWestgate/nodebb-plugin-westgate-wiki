@@ -360,3 +360,15 @@ test("wiki history client is loaded and renders unsafe surfaces defensively", ()
   assert.doesNotMatch(client, /\beval\s*\(/);
   assert.doesNotMatch(client, /new Function\s*\(/);
 });
+
+test("wiki history client uses server preview html and restores through an acquired edit lock", () => {
+  const client = readProjectFile("public/wiki-history.js");
+
+  assert.match(client, /api\/v3\/plugins\/westgate-wiki\/edit-lock/);
+  assert.match(client, /method:\s*"PUT"[\s\S]*x-csrf-token/);
+  assert.match(client, /method:\s*"DELETE"[\s\S]*x-csrf-token/);
+  assert.match(client, /wikiEditLockToken:\s*lock\.token/);
+  assert.match(client, /renderPreview\(previewMount,\s*detail\.previewHtml\s*\|\|\s*""\)/);
+  assert.doesNotMatch(client, /renderPreview\(previewMount,\s*detail\.source/);
+  assert.doesNotMatch(client, /removeDangerousPreviewMarkup/);
+});

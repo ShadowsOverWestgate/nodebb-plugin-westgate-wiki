@@ -20,6 +20,10 @@
     return `${relativePath()}/api/v3/plugins/westgate-wiki/revisions`;
   }
 
+  function editLockApiUrl() {
+    return `${relativePath()}/api/v3/plugins/westgate-wiki/edit-lock`;
+  }
+
   function responsePayload(body) {
     return body && body.response ? body.response : (body || {});
   }
@@ -58,27 +62,8 @@
     };
   }
 
-  function removeDangerousPreviewMarkup(fragment) {
-    fragment.querySelectorAll("script, iframe, object, embed, base, link, meta").forEach(function (node) {
-      node.remove();
-    });
-    fragment.querySelectorAll("*").forEach(function (node) {
-      Array.from(node.attributes).forEach(function (attr) {
-        const name = attr.name.toLowerCase();
-        const value = String(attr.value || "").trim().toLowerCase();
-        if (name.startsWith("on") || name === "srcdoc" || value.startsWith("javascript:")) {
-          node.removeAttribute(attr.name);
-        }
-      });
-    });
-  }
-
-  function renderPreview(previewMount, source) {
-    const template = document.createElement("template");
-    template.innerHTML = String(source || "");
-    removeDangerousPreviewMarkup(template.content);
-    previewMount.textContent = "";
-    previewMount.appendChild(template.content.cloneNode(true));
+  function renderPreview(previewMount, previewHtml) {
+    previewMount.innerHTML = String(previewHtml || "");
   }
 
   function renderDiff(diffMount, diff) {
@@ -130,7 +115,7 @@
       if (requestId !== state.requestId) {
         return;
       }
-      renderPreview(previewMount, detail.source || "");
+      renderPreview(previewMount, detail.previewHtml || "");
 
       const baseRevision = getDiffBaseRevision(state, revision);
       if (baseRevision && baseRevision.revisionId) {
@@ -156,13 +141,43 @@
     }
   }
 
-  function getOptionalLockToken(root) {
-    const source = root.querySelector("[data-wiki-edit-lock-token]");
-    return String(
-      (source && source.getAttribute("data-wiki-edit-lock-token")) ||
-      root.getAttribute("data-wiki-edit-lock-token") ||
-      ""
-    );
+  async function acquireEditLock(tid) {
+    const lock = await fetchJson(editLockApiUrl(), {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+        "x-csrf-token": csrfToken()
+      },
+      body: JSON.stringify({ tid })
+    });
+    if (!lock || !lock.token) {
+      throw new Error("Wiki edit lock could not be acquired.");
+    }
+    return lock;
+  }
+
+  async function releaseEditLock(tid, lock) {
+    if (!lock || !lock.token) {
+      return;
+    }
+    try {
+      await fetchJson(editLockApiUrl(), {
+        method: "DELETE",
+        keepalive: true,
+        headers: {
+          "content-type": "application/json",
+          "x-csrf-token": csrfToken()
+        },
+        body: JSON.stringify({
+          tid,
+          token: lock.token
+        })
+      });
+    } catch (err) {
+      if (window.console && console.warn) {
+        console.warn("westgate-wiki: history restore edit lock release failed", err);
+      }
+    }
   }
 
   async function restoreSelectedRevision(root, state) {
@@ -175,11 +190,7 @@
     }
 
     const restoreButton = root.querySelector("[data-wiki-history-restore]");
-    const body = {};
-    const wikiEditLockToken = getOptionalLockToken(root);
-    if (wikiEditLockToken) {
-      body.wikiEditLockToken = wikiEditLockToken;
-    }
+    let lock = null;
 
     if (restoreButton) {
       restoreButton.disabled = true;
@@ -187,14 +198,19 @@
     setStatus(root, "Restoring revision...", "muted");
 
     try {
+      lock = await acquireEditLock(state.tid);
       const payload = await fetchJson(`${apiBase()}/${encodeURIComponent(state.tid)}/${encodeURIComponent(revision.revisionId)}/restore`, {
         method: "PUT",
         headers: {
           "content-type": "application/json",
           "x-csrf-token": csrfToken()
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({
+          wikiEditLockToken: lock.token
+        })
       });
+      await releaseEditLock(state.tid, lock);
+      lock = null;
       const wikiPath = payload && payload.wikiPath;
       if (wikiPath && typeof ajaxify !== "undefined" && ajaxify && typeof ajaxify.go === "function") {
         ajaxify.go(String(wikiPath).replace(/^\//, ""));
@@ -206,6 +222,9 @@
       }
       window.location.reload();
     } catch (err) {
+      if (lock) {
+        await releaseEditLock(state.tid, lock);
+      }
       setStatus(root, (err && err.message) || String(err), "error");
       if (restoreButton) {
         restoreButton.disabled = false;

@@ -85,6 +85,7 @@ function createHarness(overrides = {}) {
     markRevisionPurgeTopicPurged: [],
     purgeRevisions: [],
     reconstructRevision: [],
+    renderReadOnlyWikiHtml: [],
     sanitize: [],
     setTombstone: [],
     validateCanonicalPagePlacement: []
@@ -292,6 +293,12 @@ function createHarness(overrides = {}) {
           return `${state.sanitizedPrefix}${source}`;
         }
       },
+      "lib/wiki-html-sanitizer.js": {
+        renderReadOnlyWikiHtml: (source) => {
+          calls.renderReadOnlyWikiHtml.push(source);
+          return `readonly:${source}`;
+        }
+      },
       "lib/wiki-tombstones.js": {
         clearTombstone: async (tid) => {
           calls.clearTombstone.push({ tid });
@@ -423,7 +430,7 @@ test("listRevisions requires wiki:history and returns revision summaries", async
   });
 });
 
-test("getRevision requires wiki:history and returns reconstructed detail source without raw patch payloads", async () => {
+test("getRevision requires wiki:history and returns reconstructed detail source with read-only preview without raw patch payloads", async () => {
   const harness = createHarness();
 
   await loadActions(harness, async (actions) => {
@@ -434,12 +441,14 @@ test("getRevision requires wiki:history and returns reconstructed detail source 
     assert.deepEqual(res.payload, {
       tid: 42,
       revision: { revisionId: "rev-2", action: "edit" },
-      source: "<p>New source</p>"
+      source: "<p>New source</p>",
+      previewHtml: "readonly:<p>New source</p>"
     });
     assert.equal(Object.hasOwn(res.payload.revision, "patch"), false);
     assert.equal(Object.hasOwn(res.payload.revision, "checkpointSource"), false);
     assert.deepEqual(harness.calls.canViewHistory, [{ cid: 7, uid: 9 }]);
     assert.deepEqual(harness.calls.reconstructRevision, [{ tid: 42, revisionId: "rev-2" }]);
+    assert.deepEqual(harness.calls.renderReadOnlyWikiHtml, ["<p>New source</p>"]);
   });
 
   const denied = createHarness({ state: { permissions: { history: false, restore: true, hardPurge: true } } });
