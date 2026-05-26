@@ -190,6 +190,12 @@ function createServices(overrides = {}) {
         return { tid, pid: 7770, cid };
       }
     },
+    revisions: {
+      async ensureCreateRevision({ tid, pid, cid, uid, title, source, canonicalPath }) {
+        events.push(`revision.create:${tid}:${pid}:${cid}:${uid}:${title}:${canonicalPath}:${source}`);
+        return { tid, pid, cid, revisionId: `rev-${tid}` };
+      }
+    },
     topics: {
       async setTopicField(tid, field, value) {
         events.push(`topic.set:${tid}:${field}:${value}`);
@@ -420,6 +426,9 @@ async function applyWithMissingService(servicePath, expectedCode) {
     assert.match(pageCreate, /\/uploads\/imported\/asset_gond\.bin/);
     assert.match(pageCreate, /\/uploads\/existing\/map\.jpg/);
     assert.match(pageCreate, /https:\/\/example\.test\/remote\.png/);
+    const revisionCreate = events.find((event) => event.startsWith("revision.create:100:1000:11:42:Gond:Lore/Deities/Gond:"));
+    assert(revisionCreate, "page.create should record an initial wiki revision before later settings apply");
+    assert(events.indexOf(revisionCreate) > events.indexOf(pageCreate));
     assert(events.indexOf(events.find((event) => event.startsWith("uploads.sync:1000:100:"))) > events.indexOf(pageCreate));
     assert(events.some((event) => event === `topic.set:100:${archiveSchema.PORTABLE_TOPIC_FIELD}:${PAGE_ID}`));
     assert(events.some((event) => event === "css.set:100:.deity { color: gold; }"));
@@ -572,6 +581,10 @@ async function applyWithMissingService(servicePath, expectedCode) {
       "completed:page.adopt:",
       "skipped:settings.preview:archive-apply-settings-not-requested"
     ]);
+  }
+
+  {
+    await applyWithMissingService("revisions.ensureCreateRevision", "archive-apply-create-revision-service-unavailable");
   }
 
   {

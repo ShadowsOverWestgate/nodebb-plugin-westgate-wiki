@@ -166,6 +166,7 @@ test("runtime apply services provide page, asset, identity, and upload associati
     assert.equal(typeof services.assets.importAsset, "function");
     assert.equal(typeof services.assets.findBySha256, "function");
     assert.equal(typeof services.pages.createPage, "function");
+    assert.equal(typeof services.revisions.ensureCreateRevision, "function");
     assert.equal(typeof services.identity.setPageArchiveId, "function");
     assert.equal(typeof services.uploadAssociations.syncPostUploads, "function");
 
@@ -197,6 +198,61 @@ test("runtime apply services provide page, asset, identity, and upload associati
     assert(state.events.includes("topic.field:101:westgateWikiArchivePageId:wgap_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
     assert(state.events.includes("uploads.sync:1001"));
   });
+});
+
+test("runtime revision service records one create revision for archive-created pages", async () => {
+  const uploadPath = await fs.mkdtemp(path.join(os.tmpdir(), "wg-runtime-create-revision-"));
+  const state = { uploadPath, events: [] };
+  let hasExistingRevision = false;
+
+  const restoreRevisions = patchProjectModule("lib/wiki-revisions.js", {
+    hasRevisions: async (tid) => {
+      state.events.push(`revision.has:${tid}`);
+      return hasExistingRevision;
+    },
+    appendRevision: async (payload) => {
+      state.events.push(`revision.append:${payload.action}:${payload.tid}:${payload.pid}:${payload.cid}:${payload.uid}:${payload.title}:${payload.canonicalPath}:${payload.oldSource}:${payload.newSource}`);
+      return { revisionId: "rev-created" };
+    }
+  });
+
+  try {
+    await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
+      clearProjectModule("lib/wiki-archive-runtime.js");
+      const runtime = require("../lib/wiki-archive-runtime");
+      const services = runtime.createApplyServices();
+
+      assert.deepEqual(await services.revisions.ensureCreateRevision({
+        uid: 9,
+        tid: 77,
+        pid: 770,
+        cid: 11,
+        title: "Gond",
+        source: "<p>Article</p>",
+        canonicalPath: "Lore/Deities/Gond"
+      }), { revisionId: "rev-created" });
+      assert.deepEqual(state.events, [
+        "revision.has:77",
+        "revision.append:create:77:770:11:9:Gond:Lore/Deities/Gond::<p>Article</p>"
+      ]);
+
+      state.events.length = 0;
+      hasExistingRevision = true;
+      assert.equal(await services.revisions.ensureCreateRevision({
+        uid: 9,
+        tid: 77,
+        pid: 770,
+        cid: 11,
+        title: "Gond",
+        source: "<p>Article</p>",
+        canonicalPath: "Lore/Deities/Gond"
+      }), null);
+      assert.deepEqual(state.events, ["revision.has:77"]);
+    });
+  } finally {
+    restoreRevisions();
+    clearProjectModule("lib/wiki-archive-runtime.js");
+  }
 });
 
 test("runtime updatePage routes updates through wiki page actions and an internal edit lock", async () => {
