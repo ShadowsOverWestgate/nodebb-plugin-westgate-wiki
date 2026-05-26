@@ -238,6 +238,72 @@ test("withTopicMutationGuard repairs and rejects a setup-window lock with owner 
   }
 });
 
+test("withTopicMutationGuard rejects an ownerless setup-window lock with a future expiresAt without shortening its TTL", async () => {
+  const originalMainRequire = require.main.require.bind(require.main);
+  const key = topicLockKey(42);
+  const futureExpiresAt = Date.now() + 60_000;
+  const { calls, db, locks } = createOwnerLockDb({
+    initialLocks: [[key, {
+      count: 1,
+      expiresAt: futureExpiresAt
+    }]]
+  });
+
+  require.main.require = function requireNodebbStub(id) {
+    if (id === "./src/database") {
+      return db;
+    }
+    return originalMainRequire(id);
+  };
+
+  try {
+    const mutations = loadFreshMutations();
+    await assert.rejects(
+      () => mutations.withTopicMutationGuard(42, async () => "stolen"),
+      /wiki-topic-mutation-locked/
+    );
+    assert.equal(locks.get(key).owner, undefined);
+    assert.equal(locks.get(key).expiresAt, futureExpiresAt);
+    assert.equal(calls.includes(`delete:${key}`), false);
+    assert.deepEqual(getPexpireMs(calls, key), []);
+  } finally {
+    require.main.require = originalMainRequire;
+    clearMutationsModule();
+  }
+});
+
+test("withTopicMutationGuard writes the lease expiry before the owner marker when acquiring", async () => {
+  const originalMainRequire = require.main.require.bind(require.main);
+  const key = topicLockKey(42);
+  const { calls, db } = createOwnerLockDb();
+
+  require.main.require = function requireNodebbStub(id) {
+    if (id === "./src/database") {
+      return db;
+    }
+    return originalMainRequire(id);
+  };
+
+  try {
+    const mutations = loadFreshMutations();
+    assert.equal(
+      await mutations.withTopicMutationGuard(42, async () => "acquired"),
+      "acquired"
+    );
+    const ownerSetIndex = calls.findIndex((call) => call.startsWith(`set:${key}:owner:`));
+    const expiresAtSetIndex = calls.findIndex((call) => call.startsWith(`set:${key}:expiresAt:`));
+    const fullTtlIndex = calls.findIndex((call) => call === `pexpire:${key}:300000`);
+    assert(ownerSetIndex > -1);
+    assert(expiresAtSetIndex > -1);
+    assert(fullTtlIndex > -1);
+    assert(expiresAtSetIndex < ownerSetIndex);
+    assert(fullTtlIndex < ownerSetIndex);
+  } finally {
+    require.main.require = originalMainRequire;
+    clearMutationsModule();
+  }
+});
+
 test("withTopicMutationGuard repairs and rejects an expired owner lock before later backend expiry recovery", async () => {
   const originalMainRequire = require.main.require.bind(require.main);
   const key = topicLockKey(42);
