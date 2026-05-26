@@ -1497,6 +1497,24 @@ test("hardPurgePage requires wiki:hard-purge, only purges complete tombstones, a
   });
 });
 
+test("hardPurgePage rejects normal non-tombstoned wiki pages", async () => {
+  const harness = createHarness({ state: { tombstone: null } });
+
+  await loadActions(harness, async (actions) => {
+    const res = {};
+    await actions.hardPurgePage({ uid: 9, body: { tid: "42" } }, res);
+
+    assert.equal(res.statusCode, 409);
+    assert.match(res.payload.message, /wiki-page-not-tombstoned/);
+    assert.deepEqual(harness.calls.getWikiPage, [{ tid: 42, uid: 9, options: { includeTombstoned: true } }]);
+    assert.deepEqual(harness.calls.canHardPurge, [{ cid: 7, uid: 9 }]);
+    assert.deepEqual(harness.calls.getTombstone, [{ tid: 42 }]);
+    assert.equal(harness.calls.beginRevisionPurge.length, 0);
+    assert.equal(harness.calls.hardPurgeCheckedTombstone.length, 0);
+    assert.equal(harness.calls.purgeRevisions.length, 0);
+  });
+});
+
 test("registers revision API routes with ensureLoggedIn middleware", async () => {
   const routes = [];
   const ensureLoggedIn = function ensureLoggedIn() {};

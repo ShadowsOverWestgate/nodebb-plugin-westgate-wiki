@@ -2,6 +2,7 @@
 
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const { JSDOM } = require("jsdom");
 const path = require("node:path");
 const test = require("node:test");
 
@@ -140,8 +141,11 @@ test("wiki history page route is registered before the catch-all and requires lo
 function createControllerHarness(overrides = {}) {
   const calls = {
     canRestore: [],
+    canHardPurge: [],
     canViewHistory: [],
     getWikiPage: [],
+    getTombstone: [],
+    getTombstoneFromFields: [],
     listRevisionSummaries: [],
     listRevisions: [],
     next: [],
@@ -170,6 +174,9 @@ function createControllerHarness(overrides = {}) {
     },
     canViewHistory: true,
     canRestore: true,
+    canHardPurge: true,
+    tombstoneFromFields: null,
+    tombstone: null,
     revisions: [
       {
         revisionId: "rev-2",
@@ -212,6 +219,20 @@ function createControllerHarness(overrides = {}) {
         canRestore: async (cid, uid) => {
           calls.canRestore.push({ cid, uid });
           return state.canRestore;
+        },
+        canHardPurge: async (cid, uid) => {
+          calls.canHardPurge.push({ cid, uid });
+          return state.canHardPurge;
+        }
+      },
+      "lib/wiki-tombstones.js": {
+        getTombstoneFromFields: (fields) => {
+          calls.getTombstoneFromFields.push(fields);
+          return state.tombstoneFromFields;
+        },
+        getTombstone: async (tid) => {
+          calls.getTombstone.push({ tid });
+          return state.tombstone;
         }
       },
       "lib/wiki-revisions.js": {
@@ -266,6 +287,7 @@ test("renderHistory renders revision summaries for authorized viewers without ra
   ]);
   assert.deepEqual(harness.calls.canViewHistory, [{ cid: 7, uid: 9 }]);
   assert.deepEqual(harness.calls.canRestore, [{ cid: 7, uid: 9 }]);
+  assert.deepEqual(harness.calls.canHardPurge, []);
   assert.deepEqual(harness.calls.listRevisionSummaries, [{ tid: 42 }]);
   assert.equal(harness.calls.render.length, 1);
 
@@ -274,12 +296,40 @@ test("renderHistory renders revision summaries for authorized viewers without ra
   assert.equal(render.data.topic.tid, 42);
   assert.equal(render.data.category.cid, 7);
   assert.equal(render.data.canRestoreWikiRevision, true);
+  assert.equal(render.data.isWikiTombstoned, false);
+  assert.equal(render.data.canHardPurgeWikiTombstone, false);
   assert.equal(render.data.hasRevisions, true);
   assert.equal(render.data.wikiPath, "/wiki/Lore/Moonlit_Page");
   assert.equal(render.data.returnPath, "/wiki/Lore/Moonlit_Page");
   assert.equal(render.data.revisions[0].revisionId, "rev-2");
   assert.equal(Object.hasOwn(render.data.revisions[0], "patch"), false);
   assert.equal(Object.hasOwn(render.data.revisions[0], "checkpointSource"), false);
+});
+
+test("renderHistory exposes hard purge only for tombstoned pages with hard purge permission", async () => {
+  const tombstone = { tombstoned: true, at: 1234, uid: 8, revisionId: "rev-tombstone", reason: "stale" };
+  const allowed = createControllerHarness({ state: { tombstoneFromFields: tombstone, canHardPurge: true } });
+
+  await allowed.run();
+
+  assert.deepEqual(allowed.calls.getTombstoneFromFields, [allowed.state.page.topic]);
+  assert.deepEqual(allowed.calls.getTombstone, []);
+  assert.deepEqual(allowed.calls.canHardPurge, [{ cid: 7, uid: 9 }]);
+  assert.equal(allowed.calls.render[0].data.isWikiTombstoned, true);
+  assert.equal(allowed.calls.render[0].data.canHardPurgeWikiTombstone, true);
+
+  const denied = createControllerHarness({ state: { tombstoneFromFields: tombstone, canHardPurge: false } });
+  await denied.run();
+  assert.deepEqual(denied.calls.canHardPurge, [{ cid: 7, uid: 9 }]);
+  assert.equal(denied.calls.render[0].data.isWikiTombstoned, true);
+  assert.equal(denied.calls.render[0].data.canHardPurgeWikiTombstone, false);
+
+  const normalPage = createControllerHarness({ state: { tombstoneFromFields: null, tombstone: null, canHardPurge: true } });
+  await normalPage.run();
+  assert.deepEqual(normalPage.calls.getTombstone, [{ tid: 42 }]);
+  assert.deepEqual(normalPage.calls.canHardPurge, []);
+  assert.equal(normalPage.calls.render[0].data.isWikiTombstoned, false);
+  assert.equal(normalPage.calls.render[0].data.canHardPurgeWikiTombstone, false);
 });
 
 test("renderHistory rejects invalid tids, missing pages, and denied history permission", async () => {
@@ -326,6 +376,7 @@ test("wiki page template exposes history FAB only when history permission is pre
     /<!-- IF canViewWikiHistory -->[\s\S]*href="\{config\.relative_path\}\/wiki\/history\/\{topic\.tid\}"[\s\S]*<!-- ENDIF canViewWikiHistory -->/,
     "history FAB should link to the history page inside a canViewWikiHistory gate"
   );
+  assert.doesNotMatch(template, /hard-purge|data-wiki-history-hard-purge/i);
 });
 
 test("wiki history template exposes timeline, diff, preview, restore gate, and back link", () => {
@@ -339,6 +390,11 @@ test("wiki history template exposes timeline, diff, preview, restore gate, and b
     template,
     /<!-- IF canRestoreWikiRevision -->[\s\S]*data-wiki-history-restore[\s\S]*<!-- ENDIF canRestoreWikiRevision -->/,
     "restore control should be gated by canRestoreWikiRevision"
+  );
+  assert.match(
+    template,
+    /<!-- IF isWikiTombstoned -->[\s\S]*<!-- IF canHardPurgeWikiTombstone -->[\s\S]*data-wiki-history-hard-purge[\s\S]*<!-- ENDIF canHardPurgeWikiTombstone -->[\s\S]*<!-- ENDIF isWikiTombstoned -->/,
+    "hard purge control should be gated by both tombstone state and hard purge permission"
   );
   assert.match(template, /href="\{config\.relative_path\}\{returnPath\}"/);
 });
@@ -371,4 +427,58 @@ test("wiki history client uses server preview html and restores through an acqui
   assert.match(client, /renderPreview\(previewMount,\s*detail\.previewHtml\s*\|\|\s*""\)/);
   assert.doesNotMatch(client, /renderPreview\(previewMount,\s*detail\.source/);
   assert.doesNotMatch(client, /removeDangerousPreviewMarkup/);
+});
+
+test("wiki history client requires exact title confirmation before hard purge DELETE", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div
+      data-wiki-history
+      data-tid="42"
+      data-can-restore="0"
+      data-page-title="Moonlit Page"
+      data-hard-purge-redirect="/wiki/Lore"
+    >
+      <p data-wiki-history-status></p>
+      <pre data-wiki-history-diff></pre>
+      <div data-wiki-history-preview></div>
+      <button type="button" data-wiki-history-hard-purge></button>
+    </div>`, {
+    runScripts: "outside-only",
+    url: "https://forum.example/wiki/history/42"
+  });
+
+  const fetchCalls = [];
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.ajaxify = { go: (path) => { dom.window.__ajaxifyPath = path; } };
+  dom.window.fetch = async (url, options) => {
+    fetchCalls.push({ url: String(url), options });
+    return {
+      ok: true,
+      json: async () => ({ response: { ok: true } })
+    };
+  };
+  dom.window.prompt = () => "Moonlit";
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  const button = dom.window.document.querySelector("[data-wiki-history-hard-purge]");
+  button.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  assert.equal(fetchCalls.length, 0, "mismatched typed confirmation must not call DELETE");
+  assert.match(dom.window.document.querySelector("[data-wiki-history-status]").textContent, /did not match/i);
+
+  dom.window.prompt = () => "Moonlit Page";
+  button.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0].url, "/api/v3/plugins/westgate-wiki/page/hard-purge");
+  assert.equal(fetchCalls[0].options.method, "DELETE");
+  assert.equal(fetchCalls[0].options.credentials, "same-origin");
+  assert.equal(fetchCalls[0].options.headers["x-csrf-token"], "csrf");
+  assert.deepEqual(JSON.parse(fetchCalls[0].options.body), { tid: 42 });
+  assert.equal(dom.window.__ajaxifyPath, "wiki/Lore");
 });

@@ -24,6 +24,10 @@
     return `${relativePath()}/api/v3/plugins/westgate-wiki/edit-lock`;
   }
 
+  function hardPurgeApiUrl() {
+    return `${relativePath()}/api/v3/plugins/westgate-wiki/page/hard-purge`;
+  }
+
   function responsePayload(body) {
     return body && body.response ? body.response : (body || {});
   }
@@ -232,6 +236,50 @@
     }
   }
 
+  function goToWikiPath(path) {
+    const nextPath = String(path || "/wiki");
+    if (typeof ajaxify !== "undefined" && ajaxify && typeof ajaxify.go === "function") {
+      ajaxify.go(nextPath.replace(/^\//, ""));
+      return;
+    }
+    window.location.href = `${relativePath()}${nextPath}`;
+  }
+
+  async function hardPurgePage(root, state) {
+    const button = root.querySelector("[data-wiki-history-hard-purge]");
+    const title = state.pageTitle || "this page";
+    const typed = window.prompt(`Type "${title}" to permanently hard purge this tombstoned wiki page.`);
+    if (typed === null) {
+      return;
+    }
+    if (typed !== title) {
+      setStatus(root, "Hard purge confirmation did not match the page title.", "error");
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+    }
+    setStatus(root, "Hard purging tombstoned page...", "muted");
+
+    try {
+      await fetchJson(hardPurgeApiUrl(), {
+        method: "DELETE",
+        headers: {
+          "content-type": "application/json",
+          "x-csrf-token": csrfToken()
+        },
+        body: JSON.stringify({ tid: state.tid })
+      });
+      goToWikiPath(state.hardPurgeRedirect || "/wiki");
+    } catch (err) {
+      setStatus(root, (err && err.message) || String(err), "error");
+      if (button) {
+        button.disabled = false;
+      }
+    }
+  }
+
   function initHistory(root) {
     if (!root || initialized.has(root)) {
       return;
@@ -247,6 +295,8 @@
     const state = {
       tid,
       canRestore: root.getAttribute("data-can-restore") === "1",
+      pageTitle: String(root.getAttribute("data-page-title") || "").trim(),
+      hardPurgeRedirect: String(root.getAttribute("data-hard-purge-redirect") || "/wiki").trim() || "/wiki",
       loadingRevisionId: "",
       requestId: 0,
       selectedRevision: null,
@@ -265,6 +315,13 @@
     if (restoreButton) {
       restoreButton.addEventListener("click", function () {
         restoreSelectedRevision(root, state);
+      });
+    }
+
+    const hardPurgeButton = root.querySelector("[data-wiki-history-hard-purge]");
+    if (hardPurgeButton) {
+      hardPurgeButton.addEventListener("click", function () {
+        hardPurgePage(root, state);
       });
     }
 

@@ -1,4 +1,11 @@
-<div class="westgate-wiki wiki-history-page" data-wiki-history data-tid="{topic.tid}" data-can-restore="<!-- IF canRestoreWikiRevision -->1<!-- ELSE -->0<!-- ENDIF canRestoreWikiRevision -->">
+<div
+  class="westgate-wiki wiki-history-page"
+  data-wiki-history
+  data-tid="{topic.tid}"
+  data-can-restore="<!-- IF canRestoreWikiRevision -->1<!-- ELSE -->0<!-- ENDIF canRestoreWikiRevision -->"
+  data-page-title="{pageTitle}"
+  data-hard-purge-redirect="{categoryWikiPath}"
+>
   <header class="wiki-page-header wiki-history-header mb-4">
     <!-- IMPORT partials/wiki/breadcrumb-trail.tpl -->
     <!-- IMPORT partials/wiki/search-chrome.tpl -->
@@ -88,6 +95,21 @@
           </div>
         </section>
       </div>
+
+      <!-- IF isWikiTombstoned -->
+      <!-- IF canHardPurgeWikiTombstone -->
+      <section class="wiki-history-danger-zone" aria-label="Danger zone">
+        <div>
+          <h3>Hard Purge</h3>
+          <p>This tombstoned page can be permanently removed from the wiki revision store.</p>
+        </div>
+        <button type="button" class="btn btn-danger" data-wiki-history-hard-purge>
+          <i class="fa fa-fw fa-trash" aria-hidden="true"></i>
+          Hard Purge
+        </button>
+      </section>
+      <!-- ENDIF canHardPurgeWikiTombstone -->
+      <!-- ENDIF isWikiTombstoned -->
     </article>
   </section>
 </div>
