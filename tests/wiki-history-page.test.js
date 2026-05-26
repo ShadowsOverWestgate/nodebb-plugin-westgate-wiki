@@ -465,7 +465,7 @@ test("wiki history client is loaded and renders unsafe surfaces defensively", ()
     "history client should be loaded through plugin.json or the template"
   );
   assert.match(client, /api\/v3\/plugins\/westgate-wiki\/revisions/);
-  assert.match(client, /textContent\s*=\s*[^;]*diff/);
+  assert.doesNotMatch(client, /diffMount\.innerHTML/);
   assert.match(client, /querySelector\("\[data-wiki-history-before-preview\]"\)/);
   assert.match(client, /querySelector\("\[data-wiki-history-after-preview\]"\)/);
   assert.doesNotMatch(client, /\beval\s*\(/);
@@ -846,4 +846,267 @@ test("wiki history client ignores forged hard purge controls outside history rou
 
   assert.equal(fetchCalls.length, 0, "forged non-history controls must not call DELETE");
   assert.equal(dom.window.__ajaxifyPath, undefined);
+});
+
+test("wiki history client renders source diff rows as text with add remove and metadata classes", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="0">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-2" data-parent-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-fullscreen-open="rendered" disabled></button>
+      <button type="button" data-wiki-history-fullscreen-open="source" disabled></button>
+      <button type="button" data-wiki-history-tab="rendered" aria-selected="true" class="active"></button>
+      <button type="button" data-wiki-history-tab="source" aria-selected="false"></button>
+      <section data-wiki-history-tab-panel="rendered"></section>
+      <section data-wiki-history-tab-panel="source" hidden></section>
+      <span data-wiki-history-before-label></span><span data-wiki-history-after-label></span>
+      <div data-wiki-history-before-preview></div><div data-wiki-history-after-preview></div>
+      <pre data-wiki-history-diff></pre>
+      <div data-wiki-history-fullscreen hidden><p data-wiki-history-fullscreen-meta></p><article data-wiki-history-fullscreen-rendered></article><pre data-wiki-history-fullscreen-source hidden></pre></div>
+    </div>`, { runScripts: "outside-only", url: "https://forum.example/wiki/history/42" });
+
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    if (String(url).endsWith("/42/rev-2")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-2", action: "edit" }, source: "<script>after()</script>", previewHtml: "<p>After</p>" } }) };
+    }
+    if (String(url).endsWith("/42/rev-1")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-1", action: "create" }, source: "<p>Before</p>", previewHtml: "<p>Before</p>" } }) };
+    }
+    return {
+      ok: true,
+      json: async () => ({
+        response: {
+          diff: "Index: wiki-article.html\n--- wiki-article.html\n+++ wiki-article.html\n@@ -1 +1 @@\n-<p>Before</p>\n--- content\n+<script>after()</script>\n+++ content"
+        }
+      })
+    };
+  };
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  const diffMount = dom.window.document.querySelector("[data-wiki-history-diff]");
+  assert.equal(diffMount.querySelector("script"), null);
+  assert.match(diffMount.textContent, /<script>after\(\)<\/script>/);
+
+  const rows = Array.from(diffMount.querySelectorAll(".wiki-history-diff-line"));
+  const rowFor = (text) => rows.find((row) => row.querySelector(".wiki-history-diff-line__content").textContent === text);
+  assert.equal(rows.length, 8);
+  assert.ok(rows.every((row) => row.tagName === "SPAN"), "preformatted diff rows should use phrasing elements");
+  assert.ok(rowFor("Index: wiki-article.html").classList.contains("wiki-history-diff-line--meta"));
+  assert.ok(rowFor("--- wiki-article.html").classList.contains("wiki-history-diff-line--meta"));
+  assert.ok(rowFor("+++ wiki-article.html").classList.contains("wiki-history-diff-line--meta"));
+  assert.ok(rowFor("@@ -1 +1 @@").classList.contains("wiki-history-diff-line--meta"));
+  assert.equal(rowFor("--- wiki-article.html").querySelector(".wiki-history-diff-line__marker").textContent, "");
+  assert.equal(rowFor("+++ wiki-article.html").querySelector(".wiki-history-diff-line__marker").textContent, "");
+  assert.ok(rowFor("-<p>Before</p>").classList.contains("wiki-history-diff-line--remove"));
+  assert.ok(rowFor("--- content").classList.contains("wiki-history-diff-line--remove"));
+  assert.ok(rowFor("+<script>after()</script>").classList.contains("wiki-history-diff-line--add"));
+  assert.ok(rowFor("+++ content").classList.contains("wiki-history-diff-line--add"));
+  assert.equal(rowFor("-<p>Before</p>").querySelector(".wiki-history-diff-line__marker").textContent, "-");
+  assert.equal(rowFor("--- content").querySelector(".wiki-history-diff-line__marker").textContent, "-");
+  assert.equal(rowFor("+<script>after()</script>").querySelector(".wiki-history-diff-line__marker").textContent, "+");
+  assert.equal(rowFor("+++ content").querySelector(".wiki-history-diff-line__marker").textContent, "+");
+});
+
+test("wiki history client shows no source changes for successful empty diffs", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="0">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-2" data-parent-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-fullscreen-open="rendered" disabled></button>
+      <button type="button" data-wiki-history-fullscreen-open="source" disabled></button>
+      <button type="button" data-wiki-history-tab="rendered" aria-selected="true" class="active"></button>
+      <button type="button" data-wiki-history-tab="source" aria-selected="false"></button>
+      <section data-wiki-history-tab-panel="rendered"></section>
+      <section data-wiki-history-tab-panel="source" hidden></section>
+      <span data-wiki-history-before-label></span><span data-wiki-history-after-label></span>
+      <div data-wiki-history-before-preview></div><div data-wiki-history-after-preview></div>
+      <pre data-wiki-history-diff></pre>
+      <div data-wiki-history-fullscreen hidden><p data-wiki-history-fullscreen-meta></p><article data-wiki-history-fullscreen-rendered></article><pre data-wiki-history-fullscreen-source hidden></pre></div>
+    </div>`, { runScripts: "outside-only", url: "https://forum.example/wiki/history/42" });
+
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    if (String(url).endsWith("/42/rev-2")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-2", action: "edit" }, source: "<p>After</p>", previewHtml: "<p>After preview</p>" } }) };
+    }
+    if (String(url).endsWith("/42/rev-1")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-1", action: "create" }, source: "<p>Before</p>", previewHtml: "<p>Before preview</p>" } }) };
+    }
+    if (String(url).endsWith("/42/rev-1/rev-2/diff")) {
+      return { ok: true, json: async () => ({ response: { diff: " \n\t\n" } }) };
+    }
+    throw new Error(`unexpected fetch ${url}`);
+  };
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  const diffMount = dom.window.document.querySelector("[data-wiki-history-diff]");
+  assert.equal(diffMount.textContent, "No source changes.");
+  assert.equal(diffMount.querySelectorAll(".wiki-history-diff-line").length, 0);
+});
+
+test("wiki history client shows no source changes for header-only no-change patches", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="0">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-2" data-parent-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-fullscreen-open="rendered" disabled></button>
+      <button type="button" data-wiki-history-fullscreen-open="source" disabled></button>
+      <button type="button" data-wiki-history-tab="rendered" aria-selected="true" class="active"></button>
+      <button type="button" data-wiki-history-tab="source" aria-selected="false"></button>
+      <section data-wiki-history-tab-panel="rendered"></section>
+      <section data-wiki-history-tab-panel="source" hidden></section>
+      <span data-wiki-history-before-label></span><span data-wiki-history-after-label></span>
+      <div data-wiki-history-before-preview></div><div data-wiki-history-after-preview></div>
+      <pre data-wiki-history-diff></pre>
+      <div data-wiki-history-fullscreen hidden><p data-wiki-history-fullscreen-meta></p><article data-wiki-history-fullscreen-rendered></article><pre data-wiki-history-fullscreen-source hidden></pre></div>
+    </div>`, { runScripts: "outside-only", url: "https://forum.example/wiki/history/42" });
+
+  const headerOnlyPatch = "Index: wiki-article.html\n===================================================================\n--- wiki-article.html\n+++ wiki-article.html";
+
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    if (String(url).endsWith("/42/rev-2")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-2", action: "edit" }, source: "<p>Same</p>", previewHtml: "<p>Same preview</p>" } }) };
+    }
+    if (String(url).endsWith("/42/rev-1")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-1", action: "edit" }, source: "<p>Same</p>", previewHtml: "<p>Same preview</p>" } }) };
+    }
+    if (String(url).endsWith("/42/rev-1/rev-2/diff")) {
+      return { ok: true, json: async () => ({ response: { diff: headerOnlyPatch } }) };
+    }
+    throw new Error(`unexpected fetch ${url}`);
+  };
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  const diffMount = dom.window.document.querySelector("[data-wiki-history-diff]");
+  assert.match(diffMount.textContent, /No source changes\./);
+  assert.equal(diffMount.querySelectorAll(".wiki-history-diff-line").length, 0);
+});
+
+test("wiki history client clears the source diff when the diff endpoint fails", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="0">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-2" data-parent-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-fullscreen-open="rendered" disabled></button>
+      <button type="button" data-wiki-history-fullscreen-open="source" disabled></button>
+      <button type="button" data-wiki-history-tab="rendered" aria-selected="true" class="active"></button>
+      <button type="button" data-wiki-history-tab="source" aria-selected="false"></button>
+      <section data-wiki-history-tab-panel="rendered"></section>
+      <section data-wiki-history-tab-panel="source" hidden></section>
+      <span data-wiki-history-before-label></span><span data-wiki-history-after-label></span>
+      <div data-wiki-history-before-preview></div><div data-wiki-history-after-preview></div>
+      <pre data-wiki-history-diff></pre>
+      <div data-wiki-history-fullscreen hidden><p data-wiki-history-fullscreen-meta></p><article data-wiki-history-fullscreen-rendered></article><pre data-wiki-history-fullscreen-source hidden></pre></div>
+    </div>`, { runScripts: "outside-only", url: "https://forum.example/wiki/history/42" });
+
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    if (String(url).endsWith("/42/rev-2")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-2", action: "edit" }, source: "<p>After</p>", previewHtml: "<p>After preview</p>" } }) };
+    }
+    if (String(url).endsWith("/42/rev-1")) {
+      return { ok: true, json: async () => ({ response: { revision: { revisionId: "rev-1", action: "create" }, source: "<p>Before</p>", previewHtml: "<p>Before preview</p>" } }) };
+    }
+    if (String(url).endsWith("/42/rev-1/rev-2/diff")) {
+      return {
+        ok: false,
+        statusText: "diff failed",
+        json: async () => ({ status: { message: "diff failed" } })
+      };
+    }
+    throw new Error(`unexpected fetch ${url}`);
+  };
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  assert.match(dom.window.document.querySelector("[data-wiki-history-status]").textContent, /diff failed/);
+  const diffMount = dom.window.document.querySelector("[data-wiki-history-diff]");
+  assert.equal(diffMount.textContent, "");
+  assert.equal(diffMount.childNodes.length, 0);
+});
+
+test("wiki history client handles initial revision without base or diff request and shows selected source", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div class="wiki-history-page" data-wiki-history data-tid="42" data-can-restore="0">
+      <p data-wiki-history-status></p>
+      <button type="button" data-wiki-history-revision data-revision-id="rev-1"></button>
+      <button type="button" data-wiki-history-fullscreen-open="rendered" disabled></button>
+      <button type="button" data-wiki-history-fullscreen-open="source" disabled></button>
+      <button type="button" data-wiki-history-tab="rendered" aria-selected="true" class="active"></button>
+      <button type="button" data-wiki-history-tab="source" aria-selected="false"></button>
+      <section data-wiki-history-tab-panel="rendered"></section>
+      <section data-wiki-history-tab-panel="source" hidden></section>
+      <span data-wiki-history-before-label></span><span data-wiki-history-after-label></span>
+      <div data-wiki-history-before-preview></div><div data-wiki-history-after-preview></div>
+      <div data-wiki-history-diff></div>
+      <div data-wiki-history-fullscreen hidden><p data-wiki-history-fullscreen-meta></p><article data-wiki-history-fullscreen-rendered></article><pre data-wiki-history-fullscreen-source hidden></pre></div>
+    </div>`, { runScripts: "outside-only", url: "https://forum.example/wiki/history/42" });
+
+  const fetchCalls = [];
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.fetch = async (url) => {
+    fetchCalls.push(String(url));
+    return {
+      ok: true,
+      json: async () => ({
+        response: {
+          revision: { revisionId: "rev-1", action: "create" },
+          source: "<p>Initial</p>\n- bullet\n+ plus\n--- rule\n+++ heading\n@@ literal\nIndex: literal",
+          previewHtml: "<p>Initial preview</p>"
+        }
+      })
+    };
+  };
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  assert.deepEqual(fetchCalls, ["/api/v3/plugins/westgate-wiki/revisions/42/rev-1"]);
+  assert.match(dom.window.document.querySelector("[data-wiki-history-before-preview]").textContent, /Initial revision/);
+  assert.equal(dom.window.document.querySelector("[data-wiki-history-after-preview]").innerHTML, "<p>Initial preview</p>");
+  const diffMount = dom.window.document.querySelector("[data-wiki-history-diff]");
+  assert.match(diffMount.textContent, /<p>Initial<\/p>/);
+
+  const rows = Array.from(diffMount.querySelectorAll(".wiki-history-diff-line"));
+  const rowFor = (text) => rows.find((row) => row.querySelector(".wiki-history-diff-line__content").textContent === text);
+  ["- bullet", "+ plus", "--- rule", "+++ heading", "@@ literal", "Index: literal"].forEach((line) => {
+    const row = rowFor(line);
+    assert.ok(row, `expected initial source line ${line} to render`);
+    assert.equal(row.querySelector(".wiki-history-diff-line__marker").textContent, "");
+    assert.equal(row.classList.contains("wiki-history-diff-line--add"), false);
+    assert.equal(row.classList.contains("wiki-history-diff-line--remove"), false);
+    assert.equal(row.classList.contains("wiki-history-diff-line--meta"), false);
+  });
 });

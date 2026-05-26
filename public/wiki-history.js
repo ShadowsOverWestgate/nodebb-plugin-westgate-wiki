@@ -114,12 +114,95 @@
     return state.detailsByRevisionId[revisionId];
   }
 
+  function clearNode(node) {
+    while (node && node.firstChild) {
+      node.removeChild(node.firstChild);
+    }
+  }
+
+  function clearDiff(diffMount) {
+    clearNode(diffMount);
+  }
+
+  function diffLineClass(line, state) {
+    if (/^(Index:|={3,})/.test(line)) {
+      state.inHunk = false;
+      return "wiki-history-diff-line--meta";
+    }
+    if (/^@@ /.test(line)) {
+      state.inHunk = true;
+      return "wiki-history-diff-line--meta";
+    }
+    if (!state.inHunk && /^(--- |\+\+\+ )/.test(line)) {
+      return "wiki-history-diff-line--meta";
+    }
+    if (line.indexOf("-") === 0) {
+      return "wiki-history-diff-line--remove";
+    }
+    if (line.indexOf("+") === 0) {
+      return "wiki-history-diff-line--add";
+    }
+    return "";
+  }
+
+  function appendDiffLine(diffMount, line, lineNumber, klass) {
+    const row = document.createElement("span");
+    row.className = `wiki-history-diff-line${klass ? ` ${klass}` : ""}`;
+
+    const gutter = document.createElement("span");
+    gutter.className = "wiki-history-diff-line__gutter";
+    gutter.textContent = String(lineNumber);
+
+    const marker = document.createElement("span");
+    marker.className = "wiki-history-diff-line__marker";
+    marker.textContent = klass === "wiki-history-diff-line--remove" ? "-" : (klass === "wiki-history-diff-line--add" ? "+" : "");
+
+    const content = document.createElement("span");
+    content.className = "wiki-history-diff-line__content";
+    content.textContent = line;
+
+    row.appendChild(gutter);
+    row.appendChild(marker);
+    row.appendChild(content);
+    diffMount.appendChild(row);
+    diffMount.appendChild(document.createTextNode("\n"));
+  }
+
+  function renderSourceLines(diffMount, heading, source) {
+    if (!diffMount) {
+      return;
+    }
+    clearNode(diffMount);
+    const lines = [String(heading || "")].concat(String(source || "").split(/\r?\n/));
+    lines.forEach(function (line, index) {
+      appendDiffLine(diffMount, line, index + 1, "");
+    });
+  }
+
+  function isEmptyPatch(lines) {
+    return lines.every(function (line) {
+      return !line || /^(Index:|={3,}|--- |\+\+\+ )/.test(line);
+    });
+  }
+
   function renderDiff(diffMount, diff) {
-    diffMount.textContent = String(diff || "");
+    if (!diffMount) {
+      return;
+    }
+    clearNode(diffMount);
+    const lines = String(diff || "").split(/\r?\n/);
+    if (!String(diff || "").trim() || isEmptyPatch(lines)) {
+      diffMount.textContent = "No source changes.";
+      return;
+    }
+    const state = { inHunk: false };
+    lines.forEach(function (line, index) {
+      appendDiffLine(diffMount, line, index + 1, diffLineClass(line, state));
+    });
   }
 
   function renderInitialSource(diffMount, source) {
-    renderDiff(diffMount, String(source || ""));
+    renderSourceLines(diffMount, "Initial revision source", source);
   }
 
   function getDiffBaseRevision(state, revision) {
@@ -226,7 +309,7 @@
         return;
       }
       clearLoadedDetails(state);
-      renderDiff(diffMount, "");
+      clearDiff(diffMount);
       renderTextMessage(beforePreview, "");
       renderTextMessage(afterPreview, "");
       setStatus(root, (err && err.message) || String(err), "error");
