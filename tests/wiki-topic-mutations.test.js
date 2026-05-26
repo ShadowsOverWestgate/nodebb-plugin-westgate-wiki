@@ -84,3 +84,48 @@ test("withTopicMutationGuard rejects concurrent cross-process attempts with a DB
     clearMutationsModule();
   }
 });
+
+test("withTopicMutationGuard does not refresh a busy DB lock on rejected attempts", async () => {
+  const originalMainRequire = require.main.require.bind(require.main);
+  const calls = [];
+  const locks = new Map([["42", 1]]);
+  const db = {
+    incrObjectField: async (key, field) => {
+      const next = (locks.get(field) || 0) + 1;
+      locks.set(field, next);
+      calls.push(`incr:${key}:${field}:${next}`);
+      return next;
+    },
+    deleteObjectField: async (key, field) => {
+      calls.push(`delete:${key}:${field}`);
+      locks.delete(field);
+    },
+    pexpire: async (key, ms) => {
+      calls.push(`pexpire:${key}:${ms}`);
+    }
+  };
+
+  require.main.require = function requireNodebbStub(id) {
+    if (id === "./src/database") {
+      return db;
+    }
+    return originalMainRequire(id);
+  };
+
+  try {
+    const mutations = loadFreshMutations();
+    await assert.rejects(
+      () => mutations.withTopicMutationGuard(42, async () => "blocked"),
+      /wiki-topic-mutation-locked/
+    );
+    assert.equal(locks.get("42"), 2);
+    assert.equal(
+      calls.some((call) => call.startsWith("pexpire:")),
+      false,
+      "rejected attempts must not extend a stale lock's TTL"
+    );
+  } finally {
+    require.main.require = originalMainRequire;
+    clearMutationsModule();
+  }
+});
