@@ -65,6 +65,8 @@ function createHarness(overrides = {}) {
     compareSources: [],
     createRevisionId: [],
     edit: [],
+    ensureRevisionBaseline: [],
+    events: [],
     getPostFields: [],
     setPostFields: [],
     clearCachedPost: [],
@@ -219,6 +221,7 @@ function createHarness(overrides = {}) {
           return state.preparedRevisionId;
         },
         appendRevision: async (payload) => {
+          calls.events.push("appendRevision");
           calls.appendRevision.push(payload);
           if (state.onAppendRevision) {
             await state.onAppendRevision(payload);
@@ -233,6 +236,14 @@ function createHarness(overrides = {}) {
           if (state.preflightError) {
             throw state.preflightError;
           }
+        },
+        ensureRevisionBaseline: async (payload) => {
+          calls.events.push("ensureRevisionBaseline");
+          calls.ensureRevisionBaseline.push(payload);
+          if (state.ensureRevisionBaselineError) {
+            throw state.ensureRevisionBaselineError;
+          }
+          return { revisionId: "baseline-repair" };
         },
         getRevisionRecord: async (tid, revisionId) => {
           calls.getRevisionRecord.push({ tid, revisionId });
@@ -918,8 +929,12 @@ test("restoreRevision does not roll back when content changed after failed appen
   });
 });
 
-test("tombstonePage requires delete authority, appends tombstone revision, sets tombstone, and invalidates caches", async () => {
-  const harness = createHarness();
+test("tombstonePage requires delete authority, seeds a baseline, appends tombstone revision, sets tombstone, and invalidates caches", async () => {
+  const harness = createHarness({
+    state: {
+      tombstone: null
+    }
+  });
 
   await loadActions(harness, async (actions) => {
     const res = {};
@@ -930,8 +945,20 @@ test("tombstonePage requires delete authority, appends tombstone revision, sets 
 
     assert.equal(res.statusCode, 200);
     assert.equal(harness.calls.assertCanAppendRevision.length, 1);
+    assert.equal(harness.calls.ensureRevisionBaseline.length, 1);
     assert.equal(harness.calls.setTombstone.length, 1);
     assert.equal(harness.calls.appendRevision.length, 1);
+    assert.deepEqual(harness.calls.events, ["ensureRevisionBaseline", "appendRevision"]);
+    assert.deepEqual(harness.calls.ensureRevisionBaseline[0], {
+      tid: 42,
+      pid: 420,
+      cid: 7,
+      uid: 9,
+      title: "Moonlit Page",
+      source: "<p>Current source</p>",
+      canonicalPath: "Lore/Moonlit_Page",
+      wikiPath: "/wiki/Lore/Moonlit_Page"
+    });
     assert.deepEqual(
       { ...harness.calls.appendRevision[0], timestamp: undefined },
       {
@@ -945,7 +972,9 @@ test("tombstonePage requires delete authority, appends tombstone revision, sets 
         newSource: "<p>Current source</p>",
         tombstoneReason: "duplicate",
         revisionId: "rev-appended",
-        timestamp: undefined
+        timestamp: undefined,
+        canonicalPath: "Lore/Moonlit_Page",
+        wikiPath: "/wiki/Lore/Moonlit_Page"
       }
     );
     assert.equal(Number.isSafeInteger(harness.calls.appendRevision[0].timestamp), true);
@@ -993,6 +1022,7 @@ test("tombstonePage does not append a tombstone revision when setTombstone fails
 
     assert.equal(res.statusCode, 500);
     assert.equal(harness.calls.assertCanAppendRevision.length, 1);
+    assert.equal(harness.calls.ensureRevisionBaseline.length, 1);
     assert.equal(harness.calls.setTombstone.length, 1);
     assert.equal(harness.calls.appendRevision.length, 0);
     assert.equal(harness.calls.invalidateNamespace.length, 0);
@@ -1012,8 +1042,10 @@ test("tombstonePage clears tombstone when appendRevision fails after setTombston
     await actions.tombstonePage({ uid: 9, body: { tid: "42", reason: "duplicate" } }, res);
 
     assert.equal(res.statusCode, 500);
+    assert.equal(harness.calls.ensureRevisionBaseline.length, 1);
     assert.equal(harness.calls.setTombstone.length, 1);
     assert.equal(harness.calls.appendRevision.length, 1);
+    assert.deepEqual(harness.calls.events, ["ensureRevisionBaseline", "appendRevision"]);
     assert.deepEqual(harness.calls.clearTombstoneIfRevision, [{ tid: 42, revisionId: "rev-appended" }]);
     assert.deepEqual(harness.calls.clearTombstone, []);
     assert.equal(harness.state.tombstone, null);

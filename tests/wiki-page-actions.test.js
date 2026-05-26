@@ -211,6 +211,9 @@ assert.strictEqual(
   const movedPayloads = [];
   let appendError = null;
   let storageCannotBeRepaired = false;
+  let canonicalPathImpl = (topic, options) => (
+    options && parseInt(options.uid, 10) === 9 ? "" : "Hidden_Root/Readable_Child/Hidden_Page"
+  );
   let topicData = {
     tid: 70,
     cid: 71,
@@ -322,9 +325,7 @@ assert.strictEqual(
     sanitizeAndValidateWikiMainBody: (content) => content
   });
   patchModule("../lib/wiki-paths", {
-    getCanonicalPagePath: async (topic, options) => (
-      options && parseInt(options.uid, 10) === 9 ? "" : "Hidden_Root/Readable_Child/Hidden_Page"
-    ),
+    getCanonicalPagePath: async (topic, options) => canonicalPathImpl(topic, options),
     getNamespaceEntry: async () => ({ status: "ok" }),
     invalidateWikiTreeIndex: () => {},
     validateCanonicalPagePlacement: async () => ({ status: "ok" })
@@ -410,6 +411,68 @@ assert.strictEqual(
         wikiPath: ""
       },
       "successful wiki page saves should append an edit revision from previous source to sanitized source"
+    );
+
+    events.length = 0;
+    revisionCalls.length = 0;
+    baselineCalls.length = 0;
+    preflightCalls.length = 0;
+    storedPostFields = { content: "<p>Old Title Source</p>", sourceContent: "<p>Old Title Source</p>" };
+    postData = { content: "<p>Old Title Source</p>", sourceContent: "<p>Old Title Source</p>" };
+    wikiPageTopic = {
+      tid: 70,
+      cid: 71,
+      mainPid: 700,
+      title: "Old Title",
+      titleRaw: "Old Title"
+    };
+    topicData = {
+      tid: 70,
+      cid: 71,
+      mainPid: 700,
+      title: "Old Title",
+      titleRaw: "Old Title",
+      slug: "70/old-title"
+    };
+    canonicalPathImpl = (topic) => `Lore/${String(topic && (topic.titleRaw || topic.title) || "").replace(/\s+/g, "_")}`;
+
+    const titleChangeRes = {};
+    await actions.saveWikiPage({
+      uid: 5,
+      body: {
+        tid: 70,
+        pid: 700,
+        title: "New Title",
+        content: "<p>New Title Source</p>",
+        wikiEditLockToken: "token"
+      },
+      query: {}
+    }, titleChangeRes);
+
+    assert.strictEqual(titleChangeRes.statusCode, 200);
+    assert.strictEqual(
+      preflightCalls[0].canonicalPath,
+      "Lore/Old_Title",
+      "save preflight may use pre-save path metadata because it only validates source/hash lineage"
+    );
+    assert.deepStrictEqual(
+      {
+        canonicalPath: revisionCalls[0].canonicalPath,
+        wikiPath: revisionCalls[0].wikiPath
+      },
+      {
+        canonicalPath: "Lore/New_Title",
+        wikiPath: "/wiki/Lore/New_Title"
+      },
+      "save that changes title should append the edit revision with post-save path metadata"
+    );
+    assert.strictEqual(
+      titleChangeRes.payload.wikiPath,
+      "/wiki/Lore/New_Title",
+      "save response should match the path metadata recorded on the appended edit revision"
+    );
+    canonicalPathImpl = (topic, options) => (
+      options && parseInt(options.uid, 10) === 9 ? "" : "Hidden_Root/Readable_Child/Hidden_Page"
     );
 
     events.length = 0;
