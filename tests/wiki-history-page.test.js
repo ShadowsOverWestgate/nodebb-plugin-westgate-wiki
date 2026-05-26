@@ -379,12 +379,66 @@ test("wiki page template exposes history FAB only when history permission is pre
   assert.doesNotMatch(template, /hard-purge|data-wiki-history-hard-purge/i);
 });
 
-test("wiki history template exposes timeline, diff, preview, restore gate, and back link", () => {
+test("wiki history template exposes timeline, rendered compare, source diff, fullscreen controls, restore gate, and back link", () => {
   const template = readProjectFile("templates/wiki-history.tpl");
 
   assert.match(template, /data-wiki-history-timeline/);
-  assert.match(template, /data-wiki-history-diff/);
-  assert.match(template, /data-wiki-history-preview/);
+  assert.match(template, /role="tablist"[\s\S]*data-wiki-history-tab="rendered"[\s\S]*data-wiki-history-tab="source"/);
+  assert.match(template, /data-wiki-history-tab-panel="rendered"/);
+  assert.match(template, /data-wiki-history-tab-panel="source"/);
+  assert.match(template, /data-wiki-history-before-preview/);
+  assert.match(template, /data-wiki-history-after-preview/);
+  assert.match(
+    template,
+    /<div\b(?=[^>]*\bdata-wiki-history-after-preview(?:\s|>))(?=[^>]*\bdata-wiki-history-preview(?:\s|>))[^>]*>/,
+    "after preview mount should keep the legacy preview alias until the client switches to the after-preview selector"
+  );
+  assert.equal(
+    (template.match(/data-wiki-history-preview/g) || []).length,
+    1,
+    "legacy preview alias should appear exactly once"
+  );
+  assert.match(template, /data-wiki-history-before-label/);
+  assert.match(template, /data-wiki-history-after-label/);
+  assert.match(
+    template,
+    /<pre\b(?=[^>]*class="wiki-history-diff")(?=[^>]*\bdata-wiki-history-diff(?:\s|>))[^>]*>/,
+    "source diff mount should be a preformatted block"
+  );
+  assert.match(template, /data-wiki-history-fullscreen-open="rendered"/);
+  assert.match(template, /data-wiki-history-fullscreen-open="source"/);
+  assert.match(
+    template,
+    /<button\b(?=[^>]*data-wiki-history-fullscreen-open="rendered")(?=[^>]*aria-label="Open rendered comparison fullscreen")[^>]*>/,
+    "rendered fullscreen open button should have an explicit accessible label"
+  );
+  assert.match(
+    template,
+    /<button\b(?=[^>]*data-wiki-history-fullscreen-open="source")(?=[^>]*aria-label="Open source diff fullscreen")[^>]*>/,
+    "source fullscreen open button should have an explicit accessible label"
+  );
+  assert.match(
+    template,
+    /<div\b(?=[^>]*class="wiki-history-fullscreen")(?=[^>]*\bdata-wiki-history-fullscreen(?:\s|>))(?=[^>]*\bhidden(?:\s|>))[^>]*>/,
+    "fullscreen overlay mount should be the hidden wiki-history-fullscreen container"
+  );
+  assert.match(template, /data-wiki-history-fullscreen-rendered/);
+  assert.match(template, /data-wiki-history-fullscreen-source/);
+  assert.match(
+    template,
+    /<div\b(?=[^>]*class="wiki-history-compare")(?=[^>]*role="group")(?=[^>]*aria-label="Rendered revision comparison")[^>]*>/,
+    "rendered compare wrapper should be exposed as a labelled group"
+  );
+  assert.match(
+    template,
+    /<button\b(?=[^>]*data-wiki-history-fullscreen-mode="rendered")(?=[^>]*aria-pressed="true")[^>]*>/,
+    "rendered fullscreen mode button should start pressed"
+  );
+  assert.match(
+    template,
+    /<button\b(?=[^>]*data-wiki-history-fullscreen-mode="source")(?=[^>]*aria-pressed="false")[^>]*>/,
+    "source fullscreen mode button should start unpressed"
+  );
   assert.match(template, /wiki-article-prose/);
   assert.match(
     template,

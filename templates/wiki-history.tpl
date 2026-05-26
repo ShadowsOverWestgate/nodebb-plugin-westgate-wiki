@@ -78,20 +78,117 @@
         <!-- ENDIF canRestoreWikiRevision -->
       </div>
 
-      <div class="wiki-history-panels">
-        <section class="wiki-history-panel" aria-labelledby="wiki-history-diff-title">
-          <div class="wiki-history-panel-heading">
-            <h3 id="wiki-history-diff-title">Diff</h3>
+      <div class="wiki-history-inspector" data-wiki-history-inspector>
+        <div class="wiki-history-inspector__bar">
+          <div class="wiki-history-tabs" role="tablist" aria-label="Revision inspection views">
+            <button
+              type="button"
+              id="wiki-history-rendered-tab"
+              class="wiki-history-tab active"
+              role="tab"
+              aria-selected="true"
+              aria-controls="wiki-history-rendered-panel"
+              data-wiki-history-tab="rendered"
+            >
+              Rendered Compare
+            </button>
+            <button
+              type="button"
+              id="wiki-history-source-tab"
+              class="wiki-history-tab"
+              role="tab"
+              aria-selected="false"
+              aria-controls="wiki-history-source-panel"
+              data-wiki-history-tab="source"
+            >
+              Source Diff
+            </button>
           </div>
-          <pre class="wiki-history-diff" data-wiki-history-diff>Select a revision to load the patch.</pre>
+
+          <div class="wiki-history-inspector__actions">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-wiki-history-fullscreen-open="rendered" aria-label="Open rendered comparison fullscreen" disabled>
+              <i class="fa fa-fw fa-expand" aria-hidden="true"></i>
+              Rendered
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-wiki-history-fullscreen-open="source" aria-label="Open source diff fullscreen" disabled>
+              <i class="fa fa-fw fa-code" aria-hidden="true"></i>
+              Source
+            </button>
+          </div>
+        </div>
+
+        <section
+          id="wiki-history-rendered-panel"
+          class="wiki-history-tab-panel"
+          role="tabpanel"
+          tabindex="0"
+          aria-labelledby="wiki-history-rendered-tab"
+          data-wiki-history-tab-panel="rendered"
+        >
+          <div class="wiki-history-compare" role="group" aria-label="Rendered revision comparison">
+            <section class="wiki-history-compare-pane" aria-labelledby="wiki-history-before-title">
+              <div class="wiki-history-panel-heading">
+                <h3 id="wiki-history-before-title">Before</h3>
+                <span class="wiki-history-compare-label" data-wiki-history-before-label>Parent revision</span>
+              </div>
+              <div class="wiki-history-preview wiki-article-prose" data-wiki-history-before-preview>
+                <p>Select a revision to preview the previous page content.</p>
+              </div>
+            </section>
+
+            <section class="wiki-history-compare-pane" aria-labelledby="wiki-history-after-title">
+              <div class="wiki-history-panel-heading">
+                <h3 id="wiki-history-after-title">After</h3>
+                <span class="wiki-history-compare-label" data-wiki-history-after-label>Selected revision</span>
+              </div>
+              <div class="wiki-history-preview wiki-article-prose" data-wiki-history-after-preview data-wiki-history-preview>
+                <p>Select a revision to preview the selected page content.</p>
+              </div>
+            </section>
+          </div>
         </section>
 
-        <section class="wiki-history-panel" aria-labelledby="wiki-history-preview-title">
+        <section
+          id="wiki-history-source-panel"
+          class="wiki-history-tab-panel"
+          role="tabpanel"
+          tabindex="0"
+          aria-labelledby="wiki-history-source-tab"
+          data-wiki-history-tab-panel="source"
+          hidden
+        >
           <div class="wiki-history-panel-heading">
-            <h3 id="wiki-history-preview-title">Preview</h3>
+            <h3>Source Diff</h3>
           </div>
-          <div class="wiki-history-preview wiki-article-prose" data-wiki-history-preview>
-            <p>Select a revision to preview the page content.</p>
+          <pre class="wiki-history-diff" data-wiki-history-diff>Select a revision to load the source diff.</pre>
+        </section>
+      </div>
+
+      <div class="wiki-history-fullscreen" data-wiki-history-fullscreen hidden>
+        <div class="wiki-history-fullscreen__backdrop" data-wiki-history-fullscreen-close></div>
+        <section
+          class="wiki-history-fullscreen__dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="wiki-history-fullscreen-title"
+        >
+          <header class="wiki-history-fullscreen__header">
+            <div>
+              <h2 id="wiki-history-fullscreen-title">Revision Viewer</h2>
+              <p class="wiki-history-fullscreen__meta" data-wiki-history-fullscreen-meta>No revision selected.</p>
+            </div>
+            <div class="wiki-history-fullscreen__actions">
+              <button type="button" class="btn btn-sm btn-outline-secondary active" data-wiki-history-fullscreen-mode="rendered" aria-pressed="true">Rendered</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-wiki-history-fullscreen-mode="source" aria-pressed="false">Source</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-wiki-history-fullscreen-close>
+                <i class="fa fa-fw fa-times" aria-hidden="true"></i>
+                Close
+              </button>
+            </div>
+          </header>
+          <div class="wiki-history-fullscreen__body">
+            <article class="wiki-history-fullscreen__rendered wiki-article-prose" data-wiki-history-fullscreen-rendered></article>
+            <pre class="wiki-history-fullscreen__source" data-wiki-history-fullscreen-source hidden></pre>
           </div>
         </section>
       </div>
