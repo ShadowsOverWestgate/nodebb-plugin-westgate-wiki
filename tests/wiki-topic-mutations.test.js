@@ -229,7 +229,7 @@ test("withTopicMutationGuard repairs and rejects a setup-window lock with owner 
       /wiki-topic-mutation-locked/
     );
     assert.equal(locks.get(key).owner, "owner-setting-up");
-    assert.equal(locks.get(key).expiresAt, undefined);
+    assert(locks.get(key).expiresAt > Date.now());
     assert.equal(calls.includes(`delete:${key}`), false);
     assert(getPexpireMs(calls, key).includes(30_000));
   } finally {
@@ -324,11 +324,13 @@ test("withTopicMutationGuard repairs and rejects an expired owner lock before la
 
   try {
     const mutations = loadFreshMutations();
+    const beforeRepair = Date.now();
     await assert.rejects(
       () => mutations.withTopicMutationGuard(42, async () => "stolen"),
       /wiki-topic-mutation-locked/
     );
     assert.equal(locks.get(key).owner, "stale-owner");
+    assert(locks.get(key).expiresAt > beforeRepair);
     assert.equal(calls.includes(`delete:${key}`), false);
     assert(getPexpireMs(calls, key).includes(30_000));
 
@@ -337,6 +339,46 @@ test("withTopicMutationGuard repairs and rejects an expired owner lock before la
       await mutations.withTopicMutationGuard(42, async () => "recovered-after-expiry"),
       "recovered-after-expiry"
     );
+  } finally {
+    require.main.require = originalMainRequire;
+    clearMutationsModule();
+  }
+});
+
+test("withTopicMutationGuard does not refresh an already repaired stale lock on retries", async () => {
+  const originalMainRequire = require.main.require.bind(require.main);
+  const key = topicLockKey(42);
+  const { calls, db, locks } = createOwnerLockDb({
+    initialLocks: [[key, {
+      count: 1,
+      owner: "stale-owner",
+      expiresAt: Date.now() - 60_000
+    }]]
+  });
+
+  require.main.require = function requireNodebbStub(id) {
+    if (id === "./src/database") {
+      return db;
+    }
+    return originalMainRequire(id);
+  };
+
+  try {
+    const mutations = loadFreshMutations();
+    await assert.rejects(
+      () => mutations.withTopicMutationGuard(42, async () => "first-retry"),
+      /wiki-topic-mutation-locked/
+    );
+    const repairedExpiresAt = locks.get(key).expiresAt;
+    assert(repairedExpiresAt > Date.now());
+    assert.deepEqual(getPexpireMs(calls, key), [30_000]);
+
+    await assert.rejects(
+      () => mutations.withTopicMutationGuard(42, async () => "second-retry"),
+      /wiki-topic-mutation-locked/
+    );
+    assert.equal(locks.get(key).expiresAt, repairedExpiresAt);
+    assert.deepEqual(getPexpireMs(calls, key), [30_000]);
   } finally {
     require.main.require = originalMainRequire;
     clearMutationsModule();
