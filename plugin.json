@@ -9,7 +9,8 @@
     "public/wiki-search.js",
     "public/wiki-namespace-create.js",
     "public/wiki-article-toc.js",
-    "public/wiki-directory.js"
+    "public/wiki-directory.js",
+    "public/wiki-history.js"
   ],
   "css": [
     "public/wiki.css"

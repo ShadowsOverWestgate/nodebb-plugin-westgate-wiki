@@ -628,6 +628,144 @@
   color: var(--wiki-chrome-danger, var(--bs-danger, #dc3545));
 }
 
+.wiki-history-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(15rem, 22rem) minmax(0, 1fr);
+}
+
+.wiki-history-timeline,
+.wiki-history-workspace {
+  min-width: 0;
+}
+
+.wiki-history-panel-heading,
+.wiki-history-toolbar {
+  border-bottom: 1px solid var(--wiki-chrome-surface-border, var(--bs-border-color, #dee2e6));
+  padding: 0.85rem 1rem;
+}
+
+.wiki-history-panel-heading h2,
+.wiki-history-panel-heading h3,
+.wiki-history-toolbar h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.wiki-history-timeline__list {
+  list-style: none;
+  margin: 0;
+  max-height: min(42rem, 70vh);
+  overflow: auto;
+  padding: 0.5rem;
+}
+
+.wiki-history-timeline__item + .wiki-history-timeline__item {
+  margin-top: 0.35rem;
+}
+
+.wiki-history-revision {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--wiki-chrome-radius, var(--bs-border-radius, 0.375rem));
+  color: inherit;
+  display: block;
+  padding: 0.65rem 0.7rem;
+  text-align: left;
+  width: 100%;
+}
+
+.wiki-history-revision:hover,
+.wiki-history-revision:focus,
+.wiki-history-revision.active {
+  background: color-mix(in srgb, var(--wiki-chrome-link-color, var(--bs-link-color, #0d6efd)) 9%, transparent);
+  border-color: color-mix(in srgb, var(--wiki-chrome-link-color, var(--bs-link-color, #0d6efd)) 28%, transparent);
+  outline: none;
+}
+
+.wiki-history-revision__main,
+.wiki-history-revision__meta,
+.wiki-history-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.wiki-history-revision__main,
+.wiki-history-toolbar {
+  justify-content: space-between;
+}
+
+.wiki-history-revision__action {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.wiki-history-revision__badge {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+}
+
+.wiki-history-revision__meta,
+.wiki-history-status,
+.wiki-history-empty {
+  color: var(--wiki-chrome-muted-color, var(--bs-secondary-color, inherit));
+  font-size: 0.8125rem;
+}
+
+.wiki-history-empty {
+  padding: 1rem;
+}
+
+.wiki-history-status {
+  margin: 0.25rem 0 0;
+}
+
+.wiki-history-panels {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  padding: 1rem;
+}
+
+.wiki-history-panel {
+  border: 1px solid var(--wiki-chrome-surface-border, var(--bs-border-color, #dee2e6));
+  border-radius: var(--wiki-chrome-radius, var(--bs-border-radius, 0.375rem));
+  min-width: 0;
+  overflow: hidden;
+}
+
+.wiki-history-diff,
+.wiki-history-preview {
+  margin: 0;
+  max-height: min(48rem, 72vh);
+  min-height: 20rem;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.wiki-history-diff {
+  background: color-mix(in srgb, var(--wiki-chrome-surface-bg, var(--bs-card-bg, #fff)) 92%, var(--bs-body-color, #212529) 4%);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+}
+
+@media (max-width: 991px) {
+  .wiki-history-layout,
+  .wiki-history-panels {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wiki-history-timeline__list,
+  .wiki-history-diff,
+  .wiki-history-preview {
+    max-height: none;
+  }
+}
+
 .wiki-article-drawers {
   --wiki-article-drawer-side-gutter: 3.28rem;
   --wiki-article-drawer-peek: 2.75rem;

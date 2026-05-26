@@ -6,6 +6,7 @@ const routeHelpers = require.main.require("./src/routes/helpers");
 const composeAssets = require("../lib/compose-assets");
 const composeController = require("../lib/controllers/compose");
 const wikiNamespaceCreateController = require("../lib/controllers/wiki-namespace-create");
+const wikiRevisionController = require("../lib/controllers/wiki-revisions");
 const config = require("../lib/config");
 const wikiNamespaceCreators = require("../lib/wiki-namespace-creators");
 const wikiAlphabeticalIndex = require("../lib/wiki-alphabetical-index");
@@ -17,6 +18,7 @@ const wikiBreadcrumbTrail = require("../lib/wiki-breadcrumb-trail");
 const wikiMissingPageCreate = require("../lib/wiki-missing-page-create");
 const wikiPageActions = require("../lib/wiki-page-actions");
 const wikiPaths = require("../lib/wiki-paths");
+const wikiRevisionPermissions = require("../lib/wiki-revision-permissions");
 
 function getCreateIntentTitle(req) {
   return String((req.query && req.query.create) || "").trim();
@@ -58,7 +60,20 @@ function buildWikiNavRenderData(sectionNavigation, options = {}) {
   };
 }
 
-function buildWikiPageRenderData(wikiPage, { isWikiHome }) {
+function toPositiveInt(value) {
+  const parsed = parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
+}
+
+async function canViewWikiHistory(wikiPage, uid) {
+  const cid = toPositiveInt(wikiPage && wikiPage.topic && wikiPage.topic.cid);
+  if (!cid) {
+    return false;
+  }
+  return !!(await wikiRevisionPermissions.canViewHistory(cid, uid));
+}
+
+async function buildWikiPageRenderData(wikiPage, { isWikiHome, uid }) {
   const trail = wikiBreadcrumbTrail.forArticleView(wikiPage);
 
   const pageTitle = serializer.getTitleDisplay(wikiPage.pageTitlePath, wikiPage.topic.titleRaw || wikiPage.topic.title);
@@ -92,6 +107,7 @@ function buildWikiPageRenderData(wikiPage, { isWikiHome }) {
     canDeleteWikiPage: !!wikiPage.canDeleteWikiPage,
     canWatchWikiArticle: !!wikiPage.canWatchWikiArticle,
     wikiArticleWatched: !!wikiPage.wikiArticleWatched,
+    canViewWikiHistory: await canViewWikiHistory(wikiPage, uid),
     ...buildWikiNavRenderData(wikiPage.sectionNavigation, { currentTid: wikiPage.topic.tid }),
     /* Inline ToC mount: avoids Benchpress empty IF/ELSE in wiki-page.tpl */
     showWikiTocInline: !wikiPage.sectionNavigation,
@@ -201,7 +217,7 @@ async function buildCanonicalPageRenderData(req, nodeResult, wikiPage, wikiSecti
   const canCreateWikiNamespaces = await wikiNamespaceCreators.getCanCreateWikiNamespaces(req.uid);
 
   return {
-    ...buildWikiPageRenderData(wikiPage, { isWikiHome: false }),
+    ...(await buildWikiPageRenderData(wikiPage, { isWikiHome: false, uid: req.uid })),
     ...wikiBreadcrumbTrail.forCanonicalNodeView(nodeResult),
     canonicalNodeView: true,
     canonicalPath: nodeResult.canonicalPath || node.canonicalPath || "",
@@ -239,7 +255,7 @@ async function buildCanonicalPageRenderData(req, nodeResult, wikiPage, wikiSecti
 }
 
 async function buildCanonicalNodeRenderData(req, nodeResult, wikiPage, wikiSection) {
-  const article = wikiPage ? buildWikiPageRenderData(wikiPage, { isWikiHome: false }) : null;
+  const article = wikiPage ? await buildWikiPageRenderData(wikiPage, { isWikiHome: false, uid: req.uid }) : null;
   const namespace = wikiSection ? { section: wikiSection.section } : null;
   const listingData = buildCanonicalNodeListingRenderData(nodeResult.children);
   const node = nodeResult.node || {};
@@ -451,7 +467,7 @@ function register(params) {
         const canCreateWikiNamespaces = await wikiNamespaceCreators.getCanCreateWikiNamespaces(req.uid);
         const rootNamespaceActions = await getRouteRootNamespaceActions(req.uid, canCreateWikiNamespaces);
         const homePageData = {
-          ...buildWikiPageRenderData(wikiPage, { isWikiHome: true }),
+          ...(await buildWikiPageRenderData(wikiPage, { isWikiHome: true, uid: req.uid })),
           canCreateWikiNamespaces,
           ...rootNamespaceActions
         };
@@ -589,6 +605,8 @@ function register(params) {
   routeHelpers.setupPageRoute(router, "/wiki/compose/:cid", [middleware.ensureLoggedIn], composeController.renderCompose);
 
   routeHelpers.setupPageRoute(router, "/wiki/edit/:tid", [middleware.ensureLoggedIn], composeController.renderEdit);
+
+  routeHelpers.setupPageRoute(router, "/wiki/history/:tid", [middleware.ensureLoggedIn], wikiRevisionController.renderHistory);
 
   routeHelpers.setupPageRoute(router, "/wiki/:path(*)", async (req, res, next) => {
     const requestPath = String(req.params.path || "").trim();

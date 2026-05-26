@@ -181,6 +181,11 @@
           <i class="fa fa-fw fa-pencil" aria-hidden="true"></i>
         </a>
         <!-- ENDIF canEditWikiPage -->
+        <!-- IF canViewWikiHistory -->
+        <a class="wiki-fab-btn wiki-fab-btn--icon" href="{config.relative_path}/wiki/history/{topic.tid}" title="View page history" aria-label="View page history">
+          <i class="fa fa-fw fa-history" aria-hidden="true"></i>
+        </a>
+        <!-- ENDIF canViewWikiHistory -->
         <!-- IF namespaceIndexCanCreatePage -->
         <a class="wiki-fab-btn wiki-fab-btn--icon" href="#" data-wiki-create-page="1" data-cid="{namespaceIndexActionCid}" title="Create a new wiki page in this namespace" aria-label="Create a new wiki page in this namespace">
           <i class="fa fa-fw fa-file-text" aria-hidden="true"></i>
@@ -205,6 +210,11 @@
           <i class="fa fa-fw fa-pencil" aria-hidden="true"></i>
         </a>
         <!-- ENDIF canEditWikiPage -->
+        <!-- IF canViewWikiHistory -->
+        <a class="wiki-fab-btn wiki-fab-btn--icon" href="{config.relative_path}/wiki/history/{topic.tid}" title="View page history" aria-label="View page history">
+          <i class="fa fa-fw fa-history" aria-hidden="true"></i>
+        </a>
+        <!-- ENDIF canViewWikiHistory -->
         <!-- IF canMoveWikiPage -->
         <button type="button" class="wiki-fab-btn wiki-fab-btn--icon" data-wiki-move-page="1" data-tid="{topic.tid}" data-cid="{category.cid}" data-title="{pageTitle}" data-parent-title="{pageParentTitle}" data-namespace-name="{category.name}" title="Move this wiki page" aria-label="Move this wiki page">
           <i class="fa fa-fw fa-arrows" aria-hidden="true"></i>

@@ -31,7 +31,7 @@ require.main.require = function requireNodebbStub(id) {
     "./src/notifications": {},
     "./src/plugins": { hooks: { on: () => {} } },
     "./src/posts": { getPostSummaryByPids: async () => [], getUserInfoForPosts: async () => [] },
-    "./src/privileges": { categories: { get: async () => ({}) }, topics: { get: async () => ({}) }, posts: { canEdit: async () => ({ flag: false }) } },
+    "./src/privileges": { categories: { get: async () => ({}), can: async () => true }, topics: { get: async () => ({}) }, posts: { canEdit: async () => ({ flag: false }) } },
     "./src/routes/helpers": {
       setupPageRoute: (router, routePath, middlewareOrHandler, maybeHandler) => {
         capturedRoutes.set(routePath, typeof middlewareOrHandler === "function" ? middlewareOrHandler : maybeHandler);
