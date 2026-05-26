@@ -103,6 +103,14 @@ assert(
   "article FAB should expose a Make Subpage action"
 );
 assert(
+  template.includes("data-wiki-tombstone-page"),
+  "delete FAB actions should call the wiki tombstone flow"
+);
+assert(
+  !template.includes("data-wiki-delete-topic"),
+  "delete FAB actions should not call the old topic delete flow"
+);
+assert(
   /<!-- IF canMoveWikiPage -->[\s\S]*data-wiki-move-page[\s\S]*<!-- ENDIF canMoveWikiPage -->/.test(template),
   "Move Page action should be permission-gated"
 );
@@ -139,6 +147,14 @@ assert(
 assert(
   client.includes("/api/v3/plugins/westgate-wiki/page/owner"),
   "client should call the wiki page owner endpoint"
+);
+assert(
+  client.includes("/api/v3/plugins/westgate-wiki/page/tombstone"),
+  "client should call the wiki page tombstone endpoint"
+);
+assert(
+  !client.includes("/api/v3/topics/${tid}/state"),
+  "client should not call the old topic state delete endpoint"
 );
 assert(
   /icon\.classList\.toggle\("fa-eye", !watched\);[\s\S]*icon\.classList\.toggle\("fa-eye-slash", watched\);/.test(client),

@@ -13,7 +13,8 @@ const state = {
   topics: new Map([
     [100, { tid: 100, cid: 58, title: "Potion Bottle", titleRaw: "Potion Bottle", slug: "100/potion-bottle", deleted: 0, scheduled: 0 }]
   ]),
-  tidsByCid: new Map([[58, [100]]])
+  tidsByCid: new Map([[58, [100]]]),
+  purgePostsAndTopicCalls: []
 };
 
 const originalMainRequire = require.main.require.bind(require.main);
@@ -67,7 +68,10 @@ require.main.require = function requireNodebbStub(id) {
     "./src/slugify": slugify,
     "./src/topics": {
       getTopicData: async (tid) => state.topics.get(parseInt(tid, 10)) || null,
-      getTopicsFields: async (tids) => tids.map((tid) => state.topics.get(parseInt(tid, 10))).filter(Boolean)
+      getTopicsFields: async (tids) => tids.map((tid) => state.topics.get(parseInt(tid, 10))).filter(Boolean),
+      purgePostsAndTopic: async (tids, uid) => {
+        state.purgePostsAndTopicCalls.push({ tids, uid });
+      }
     },
     "./src/user": {
       isAdministrator: async () => false
@@ -102,12 +106,43 @@ require.main.require = function requireNodebbStub(id) {
   state.topics.delete(100);
   state.tidsByCid.set(58, []);
 
+  if (typeof wikiTopicPurge.onTopicDelete === "function") {
+    await wikiTopicPurge.onTopicDelete({ topic: { tid: 100, cid: 58 }, uid: 5 });
+  }
+
+  assert.deepEqual(
+    state.purgePostsAndTopicCalls,
+    [],
+    "normal topic delete should invalidate wiki caches without hard-purging the topic"
+  );
+  assert.equal(
+    (await wikiPaths.validateCanonicalPagePlacement({ cid: 58, title: "Potion Bottle" })).status,
+    "ok",
+    "deleting a topic should invalidate wiki slug collision caches before replacement creates"
+  );
+
+  config.invalidateSettingsCache();
+  wikiDirectory.invalidateAllWikiCaches();
+  wikiPaths.invalidateNamespaceIndexCache({ skipSettingsInvalidation: true });
+
+  state.topics.set(101, { tid: 101, cid: 58, title: "Silver Mirror", titleRaw: "Silver Mirror", slug: "101/silver-mirror", deleted: 0, scheduled: 0 });
+  state.tidsByCid.set(58, [101]);
+
+  assert.equal(
+    (await wikiPaths.validateCanonicalPagePlacement({ cid: 58, title: "Silver Mirror" })).status,
+    "page-collision",
+    "existing topic should seed the slug collision cache before purge invalidation"
+  );
+
+  state.topics.delete(101);
+  state.tidsByCid.set(58, []);
+
   if (typeof wikiTopicPurge.onTopicsPurge === "function") {
-    await wikiTopicPurge.onTopicsPurge({ topics: [{ tid: 100, cid: 58 }], uid: 5 });
+    await wikiTopicPurge.onTopicsPurge({ topics: [{ tid: 101, cid: 58 }], uid: 5 });
   }
 
   assert.equal(
-    (await wikiPaths.validateCanonicalPagePlacement({ cid: 58, title: "Potion Bottle" })).status,
+    (await wikiPaths.validateCanonicalPagePlacement({ cid: 58, title: "Silver Mirror" })).status,
     "ok",
     "purging a topic should invalidate wiki slug collision caches before replacement creates"
   );

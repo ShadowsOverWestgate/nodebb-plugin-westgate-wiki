@@ -192,7 +192,7 @@
         </a>
         <!-- ENDIF namespaceIndexCanCreateWikiNamespaces -->
         <!-- IF canDeleteWikiPage -->
-        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon wiki-fab-btn--danger wiki-delete-page" data-wiki-delete-topic="1" data-tid="{topic.tid}" data-redirect-href="{config.relative_path}{namespaceIndexDeleteRedirectPath}" title="Remove namespace index page" aria-label="Remove namespace index page">
+        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon wiki-fab-btn--danger wiki-delete-page" data-wiki-tombstone-page="1" data-tid="{topic.tid}" data-redirect-href="{config.relative_path}{namespaceIndexDeleteRedirectPath}" title="Hide namespace index page" aria-label="Hide namespace index page">
           <i class="fa fa-fw fa-trash-o" aria-hidden="true"></i>
         </button>
         <!-- ENDIF canDeleteWikiPage -->
@@ -241,7 +241,7 @@
         </a>
         <!-- ENDIF showWikiDiscussionLink -->
         <!-- IF canDeleteWikiPage -->
-        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon wiki-fab-btn--danger wiki-delete-page" data-wiki-delete-topic="1" data-tid="{topic.tid}" data-redirect-href="{config.relative_path}{category.wikiPath}" title="Permanently remove this wiki page" aria-label="Remove this wiki page">
+        <button type="button" class="wiki-fab-btn wiki-fab-btn--icon wiki-fab-btn--danger wiki-delete-page" data-wiki-tombstone-page="1" data-tid="{topic.tid}" data-redirect-href="{config.relative_path}{category.wikiPath}" title="Hide this wiki page" aria-label="Hide this wiki page">
           <i class="fa fa-fw fa-trash-o" aria-hidden="true"></i>
         </button>
         <!-- ENDIF canDeleteWikiPage -->

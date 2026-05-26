@@ -1234,7 +1234,7 @@ $(document).ready(function () {
     }
   });
 
-  $(document).on("click", "[data-wiki-delete-topic]", async function (event) {
+  $(document).on("click", "[data-wiki-tombstone-page]", async function (event) {
     const btn = event.currentTarget;
     const tid = parseInt(btn.getAttribute("data-tid"), 10);
     const redirectHref = btn.getAttribute("data-redirect-href") || "";
@@ -1245,24 +1245,26 @@ $(document).ready(function () {
 
     event.preventDefault();
 
-    if (!window.confirm("Remove this wiki page? The topic will be purged (hard delete) and CANNOT be restored.")) {
+    if (!window.confirm("Hide this wiki page? Staff can restore it later from revision history.")) {
       return;
     }
 
     const rel = getRelativePath();
     const base = rel.endsWith("/") ? rel.slice(0, -1) : rel;
-    const url = `${base}/api/v3/topics/${tid}/state`;
+    const url = `${base}/api/v3/plugins/westgate-wiki/page/tombstone`;
     const csrf = getCsrfToken();
 
     btn.disabled = true;
 
     try {
       const res = await fetch(url, {
-        method: "DELETE",
+        method: "PUT",
         credentials: "same-origin",
         headers: {
+          "content-type": "application/json",
           "x-csrf-token": csrf
-        }
+        },
+        body: JSON.stringify({ tid: tid })
       });
       let body = null;
       const ct = res.headers.get("content-type");
