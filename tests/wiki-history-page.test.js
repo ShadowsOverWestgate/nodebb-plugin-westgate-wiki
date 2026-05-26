@@ -433,6 +433,7 @@ test("wiki history client requires exact title confirmation before hard purge DE
   const client = readProjectFile("public/wiki-history.js");
   const dom = new JSDOM(`<!doctype html>
     <div
+      class="wiki-history-page"
       data-wiki-history
       data-tid="42"
       data-can-restore="0"
@@ -442,7 +443,9 @@ test("wiki history client requires exact title confirmation before hard purge DE
       <p data-wiki-history-status></p>
       <pre data-wiki-history-diff></pre>
       <div data-wiki-history-preview></div>
-      <button type="button" data-wiki-history-hard-purge></button>
+      <section class="wiki-history-danger-zone">
+        <button type="button" data-wiki-history-hard-purge></button>
+      </section>
     </div>`, {
     runScripts: "outside-only",
     url: "https://forum.example/wiki/history/42"
@@ -481,4 +484,97 @@ test("wiki history client requires exact title confirmation before hard purge DE
   assert.equal(fetchCalls[0].options.headers["x-csrf-token"], "csrf");
   assert.deepEqual(JSON.parse(fetchCalls[0].options.body), { tid: 42 });
   assert.equal(dom.window.__ajaxifyPath, "wiki/Lore");
+});
+
+test("wiki history client initializes on history route with relative_path", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <div
+      class="wiki-history-page"
+      data-wiki-history
+      data-tid="42"
+      data-can-restore="0"
+      data-page-title="Moonlit Page"
+      data-hard-purge-redirect="/wiki/Lore"
+    >
+      <p data-wiki-history-status></p>
+      <pre data-wiki-history-diff></pre>
+      <div data-wiki-history-preview></div>
+      <section class="wiki-history-danger-zone">
+        <button type="button" data-wiki-history-hard-purge></button>
+      </section>
+    </div>`, {
+    runScripts: "outside-only",
+    url: "https://forum.example/forum/wiki/history/42"
+  });
+
+  const fetchCalls = [];
+  dom.window.config = { relative_path: "/forum", csrf_token: "csrf" };
+  dom.window.ajaxify = { go: (path) => { dom.window.__ajaxifyPath = path; } };
+  dom.window.fetch = async (url, options) => {
+    fetchCalls.push({ url: String(url), options });
+    return {
+      ok: true,
+      json: async () => ({ response: { ok: true } })
+    };
+  };
+  dom.window.prompt = () => "Moonlit Page";
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  dom.window.document.querySelector("[data-wiki-history-hard-purge]").dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0].url, "/forum/api/v3/plugins/westgate-wiki/page/hard-purge");
+  assert.equal(fetchCalls[0].options.method, "DELETE");
+  assert.equal(dom.window.__ajaxifyPath, "wiki/Lore");
+});
+
+test("wiki history client ignores forged hard purge controls outside history route", async () => {
+  const client = readProjectFile("public/wiki-history.js");
+  const dom = new JSDOM(`<!doctype html>
+    <article class="wiki-article-prose">
+      <div
+        class="wiki-history-page"
+        data-wiki-history
+        data-tid="42"
+        data-can-restore="0"
+        data-page-title="Moonlit Page"
+        data-hard-purge-redirect="/wiki/Lore"
+      >
+        <p data-wiki-history-status></p>
+        <pre data-wiki-history-diff></pre>
+        <div data-wiki-history-preview></div>
+        <section class="wiki-history-danger-zone">
+          <button type="button" data-wiki-history-hard-purge></button>
+        </section>
+      </div>
+    </article>`, {
+    runScripts: "outside-only",
+    url: "https://forum.example/wiki/Lore/Moonlit_Page"
+  });
+
+  const fetchCalls = [];
+  dom.window.config = { relative_path: "", csrf_token: "csrf" };
+  dom.window.ajaxify = { go: (path) => { dom.window.__ajaxifyPath = path; } };
+  dom.window.fetch = async (url, options) => {
+    fetchCalls.push({ url: String(url), options });
+    return {
+      ok: true,
+      json: async () => ({ response: { ok: true } })
+    };
+  };
+  dom.window.prompt = () => "Moonlit Page";
+
+  dom.window.eval(client);
+  dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
+  const button = dom.window.document.querySelector("[data-wiki-history-hard-purge]");
+  button.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
+
+  assert.equal(fetchCalls.length, 0, "forged non-history controls must not call DELETE");
+  assert.equal(dom.window.__ajaxifyPath, undefined);
 });

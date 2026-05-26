@@ -12,6 +12,21 @@
     return String((window.config && window.config.relative_path) || "").replace(/\/$/, "");
   }
 
+  function currentPathWithoutRelativePath() {
+    const pathname = String((window.location && window.location.pathname) || "/") || "/";
+    const prefix = relativePath();
+
+    if (prefix && (pathname === prefix || pathname.indexOf(`${prefix}/`) === 0)) {
+      return pathname.slice(prefix.length) || "/";
+    }
+
+    return pathname;
+  }
+
+  function isWikiHistoryRoute() {
+    return /^\/wiki\/history\/[1-9]\d*\/?$/.test(currentPathWithoutRelativePath());
+  }
+
   function csrfToken() {
     return String((window.config && window.config.csrf_token) || "");
   }
@@ -246,7 +261,7 @@
   }
 
   async function hardPurgePage(root, state) {
-    const button = root.querySelector("[data-wiki-history-hard-purge]");
+    const button = findHardPurgeButton(root);
     const title = state.pageTitle || "this page";
     const typed = window.prompt(`Type "${title}" to permanently hard purge this tombstoned wiki page.`);
     if (typed === null) {
@@ -280,8 +295,18 @@
     }
   }
 
+  function findHardPurgeButton(root) {
+    if (!root || !root.classList || !root.classList.contains("wiki-history-page")) {
+      return null;
+    }
+
+    return Array.from(root.querySelectorAll(".wiki-history-danger-zone [data-wiki-history-hard-purge]")).find(function (button) {
+      return button.closest("[data-wiki-history]") === root;
+    }) || null;
+  }
+
   function initHistory(root) {
-    if (!root || initialized.has(root)) {
+    if (!isWikiHistoryRoute() || !root || initialized.has(root)) {
       return;
     }
     initialized.add(root);
@@ -318,7 +343,7 @@
       });
     }
 
-    const hardPurgeButton = root.querySelector("[data-wiki-history-hard-purge]");
+    const hardPurgeButton = findHardPurgeButton(root);
     if (hardPurgeButton) {
       hardPurgeButton.addEventListener("click", function () {
         hardPurgePage(root, state);
@@ -331,6 +356,10 @@
   }
 
   function scan(context) {
+    if (!isWikiHistoryRoute()) {
+      return;
+    }
+
     (context || document).querySelectorAll("[data-wiki-history]").forEach(initHistory);
   }
 
