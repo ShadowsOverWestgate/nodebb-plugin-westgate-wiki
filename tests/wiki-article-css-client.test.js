@@ -62,6 +62,16 @@ assert.match(
 );
 assert.match(
   articleBodyCss,
+  /font-family:\s*var\(\s*--wiki-prose-external-link-icon-font-family,\s*var\(--fa-family,\s*var\(--fa-style-family,\s*"Font Awesome 7 Free"\)\)\s*\);/,
+  "external-link icons should follow NodeBB's Font Awesome family variables with a Font Awesome 7 fallback"
+);
+assert.doesNotMatch(
+  articleBodyCss,
+  /Font Awesome 6 Free/,
+  "external-link icons must not hard-code the retired Font Awesome 6 family"
+);
+assert.match(
+  articleBodyCss,
   /\.wiki-article-prose hr\s*\{[\s\S]*background:\s*var\(\s*--wiki-prose-heading-rule,[\s\S]*var\(--wiki-prose-hr-color,[\s\S]*\);[\s\S]*\}/,
   "article and editor horizontal rules should use the same ornamental rule token as major headings"
 );

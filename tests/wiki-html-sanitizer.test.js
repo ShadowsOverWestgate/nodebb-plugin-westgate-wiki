@@ -57,6 +57,16 @@ test("renderReadOnlyWikiHtml marks raw external anchors but leaves wiki links pl
   assert.match(rendered, /<a class="wiki-internal-link" href="\/wiki\/player-guide" rel="noopener noreferrer">Guide<\/a>/);
 });
 
+test("renderReadOnlyWikiHtml repairs migrated double-encoded ampersands", function () {
+  const html = '<p><a class="wiki-internal-link" href="/wiki/Credits/Assets/Environments_Tilesets">→ View Environment &amp;amp; Tileset Credits</a></p>';
+  const rendered = wikiHtmlSanitizer.renderReadOnlyWikiHtml(html);
+
+  assert.equal(
+    rendered,
+    '<p><a class="wiki-internal-link" href="/wiki/Credits/Assets/Environments_Tilesets" rel="noopener noreferrer">→ View Environment &amp; Tileset Credits</a></p>'
+  );
+});
+
 test("sanitizeWikiHtml keeps stored inert editor links inert", function () {
   const html = '<p>A <span class="wiki-editor-link" data-wiki-link-href="https://google.com" data-wiki-link-target="_blank" data-wiki-link-rel="noopener noreferrer">regular link</span>.</p>';
   const sanitized = wikiHtmlSanitizer.sanitizeWikiHtml(html);

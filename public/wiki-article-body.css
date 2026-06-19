@@ -124,9 +124,13 @@
 }
 
 .wiki-article-prose :where(a.wiki-external-link, .wiki-editor-link.wiki-external-link)::after {
+  /* Font Awesome 7: fa-up-right-from-square */
   content: var(--wiki-prose-external-link-icon, "\f35d");
   display: inline-block;
-  font-family: var(--wiki-prose-external-link-icon-font-family, "Font Awesome 6 Free");
+  font-family: var(
+    --wiki-prose-external-link-icon-font-family,
+    var(--fa-family, var(--fa-style-family, "Font Awesome 7 Free"))
+  );
   font-size: var(--wiki-prose-external-link-icon-size, 0.78em);
   font-weight: var(--wiki-prose-external-link-icon-weight, 900);
   line-height: 1;
