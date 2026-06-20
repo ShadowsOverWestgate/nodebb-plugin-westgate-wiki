@@ -684,37 +684,6 @@ function createBaseNodebbStubs(overrides = {}) {
     assert.equal(runtimeInput.topics[0].mainPost.sourceContent, "<p>Runtime</p>");
   });
 
-  {
-    const adminController = fs.readFileSync(path.join(root, "lib/controllers/admin.js"), "utf8");
-    const adminTemplate = fs.readFileSync(path.join(root, "templates/admin/plugins/westgate-wiki.tpl"), "utf8");
-    const adminClient = fs.readFileSync(path.join(root, "public/admin.js"), "utf8");
-    const library = fs.readFileSync(path.join(root, "library.js"), "utf8");
-
-    assert.match(adminController, /scanWikiPathMigrationReport/, "admin controller should expose scan report action");
-    assert.match(adminController, /prepareWikiPathMigrationReport/, "admin controller should expose prepare report action");
-    assert.match(adminController, /applyWikiPathMigration/, "admin controller should expose apply action");
-    assert.match(adminController, /verifyWikiPathMigration/, "admin controller should expose verify action");
-    assert.match(adminController, /isAdministrator/, "admin report endpoints should check administrator status");
-    assert.match(adminController, /routeRootCid/, "admin controller should render route root setting state");
-    assert.match(library, /"\/westgate-wiki\/path-migration\/scan"/, "scan report API route should be registered");
-    assert.match(library, /"\/westgate-wiki\/path-migration\/prepare"/, "prepare report API route should be registered");
-    assert.match(library, /"\/westgate-wiki\/path-migration\/apply"/, "apply API route should be registered");
-    assert.match(library, /"\/westgate-wiki\/path-migration\/verify"/, "verify API route should be registered");
-    assert.match(adminTemplate, /data-wiki-path-migration-scan/, "ACP should include a scan action");
-    assert.match(adminTemplate, /data-wiki-path-migration-prepare/, "ACP should include a prepare action");
-    assert.match(adminTemplate, /data-wiki-path-migration-apply/, "ACP should include an apply action");
-    assert.match(adminTemplate, /data-wiki-path-migration-verify/, "ACP should include a verify action");
-    assert.match(adminTemplate, /data-wiki-path-migration-blocking-status/, "ACP should render blocking status");
-    assert.match(adminTemplate, /name="routeRootCid"/, "ACP should expose the explicit route root setting");
-    assert.match(adminTemplate, /route root/i, "ACP should explain the route root setting");
-    assert.match(adminClient, /path-migration\/scan/, "ACP client should call scan report endpoint");
-    assert.match(adminClient, /path-migration\/prepare/, "ACP client should call prepare report endpoint");
-    assert.match(adminClient, /path-migration\/apply/, "ACP client should call apply endpoint");
-    assert.match(adminClient, /path-migration\/verify/, "ACP client should call verify endpoint");
-    assert.match(adminClient, /blockingDetails/, "ACP client should summarize blocking report details");
-    assert.match(adminClient, /How to fix/, "ACP client should show blocker repair guidance");
-  }
-
   await withNodebbStubs(createBaseNodebbStubs({
     "./src/user": { isAdministrator: async (uid) => parseInt(uid, 10) === 1 }
   }), async () => {

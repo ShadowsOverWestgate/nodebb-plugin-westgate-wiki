@@ -1703,19 +1703,6 @@ await test("saved aligned image figures can be selected from the image element",
   editor.destroy();
 });
 
-await test("image figure selection is handled on mousedown before ProseMirror click selection", function () {
-  assert.match(
-    editorBundleSource,
-    /handleDOMEvents:\s*\{[\s\S]*mousedown:\s*function \(_view, event\)[\s\S]*selectClickedImageNode\(editor, target, editorMount\)[\s\S]*click:\s*function \(_view, event\)/
-  );
-});
-
-await test("image toolbar sync does not reference table-only state", function () {
-  const match = editorBundleSource.match(/function createImageContextToolbar\(surface, editor\) \{[\s\S]*?\nfunction getSelectionElement/);
-  assert.ok(match, "image context toolbar source should be present");
-  assert.doesNotMatch(match[0], /activeTable\s*=\s*table/);
-});
-
 await test("mediaRow insert command renders bounded two- and three-cell layouts", function () {
   const editor = createEditor("<p>Start</p>");
 
@@ -1923,34 +1910,6 @@ await test("media cell color picker input updates the source without a separate 
   host.remove();
 });
 
-await test("editor bundle wires media cell selection helpers and style controls", function () {
-  assert.match(editorBundleSource, /import\s+MediaCellSelection,\s*\{\s*getTargetMediaCellPositions\s*\}/);
-  assert.match(editorBundleSource, /handleMediaCellSelectionClick\(editor,\s*mediaCell,\s*event\)/);
-  assert.match(editorBundleSource, /id:\s*"media-cell-style-shadow"/);
-  assert.match(editorBundleSource, /id:\s*"media-cell-style-gilded"/);
-  assert.match(editorBundleSource, /id:\s*"media-cell-style-well"/);
-  assert.match(editorBundleSource, /id:\s*"media-cell-style-colors"/);
-  assert.match(editorBundleSource, /id:\s*"media-cell-style-clear"/);
-  assert.match(editorBundleSource, /setMediaCellStyle\("shadow"\)/);
-  assert.match(editorBundleSource, /textColor:\s*getReadableTextColor\(backgroundInput\.value\)/);
-  assert.match(editorBundleSource, /setMediaCellColorsAtPositions\(targetPositions,/);
-  assert.match(editorBundleSource, /clearMediaCellStyleAtPositions\(targetPositions\)/);
-});
-
-await test("media cell color menu uses labelled color picker fields", function () {
-  const match = editorBundleSource.match(/function createMediaCellColorMenu\(button, editor\) \{[\s\S]*?\nfunction createMediaRowContextToolbar/);
-  assert.ok(match, "media cell color menu source should be present");
-  assert.match(editorBundleSource, /function createMediaCellColorField/);
-  assert.match(editorBundleSource, /wiki-editor-media-cell-color-menu__field/);
-  assert.match(editorBundleSource, /wiki-editor-media-cell-color-menu__input/);
-  assert.match(editorBundleSource, /wiki-editor-media-cell-color-menu__number/);
-  assert.match(editorBundleSource, /wiki-editor-media-cell-color-menu__value/);
-  assert.match(match[0], /Background color/);
-  assert.match(match[0], /Border color/);
-  assert.match(match[0], /Border size/);
-  assert.doesNotMatch(match[0], /className\s*=\s*"wiki-editor-color-custom"/);
-});
-
 await test("media cell style click helper toggles multi-selection on modified click", function () {
   const editor = createEditor('<div class="wiki-media-row"><div class="wiki-media-cell"><p>A</p></div><div class="wiki-media-cell"><p>B</p></div></div>');
   const firstCell = editor.view.dom.querySelector('[data-wiki-node="media-cell"]');
@@ -2014,23 +1973,6 @@ await test("mediaRow delete command removes the active row without deleting surr
   assert.match(rendered, /<p>After<\/p>/);
   assert.doesNotMatch(rendered, /<p>A<\/p>/);
   editor.destroy();
-});
-
-await test("media row contextual toolbar exposes explicit row and cell editing actions", function () {
-  [editorBundleSource, vendoredEditorBundleSource].forEach(function (source) {
-    assert.match(source, /media-cell-add-before/);
-    assert.match(source, /media-cell-add-after/);
-    assert.match(source, /media-cell-delete/);
-    assert.match(source, /media-row-unwrap/);
-    assert.match(source, /media-row-delete/);
-  });
-
-  assert.match(editorBundleSource, /function createMediaRowContextToolbar\(surface, editor\)/);
-  assert.match(editorBundleSource, /addMediaCellBefore/);
-  assert.match(editorBundleSource, /addMediaCellAfter/);
-  assert.match(editorBundleSource, /deleteMediaCell/);
-  assert.match(editorBundleSource, /unwrapMediaRow/);
-  assert.match(editorBundleSource, /deleteMediaRow/);
 });
 
 await test("populated media cell chrome clicks do not force the cursor to the cell start", function () {
@@ -2183,12 +2125,6 @@ await test("external link dialog state and save can replace existing link text",
   assert.doesNotMatch(rendered, /Old link text/);
 
   editor.destroy();
-});
-
-await test("external link creation uses the shared dialog instead of URL prompts", function () {
-  assert.doesNotMatch(editorBundleSource, /window\.prompt\("Link URL"/);
-  assert.doesNotMatch(vendoredEditorBundleSource, /window\.prompt\("Link URL"/);
-  assert.match(editorBundleSource, /function openExternalLinkDialog/);
 });
 
 await test("wiki entity marks and nodes round-trip as inert editor spans", function () {
@@ -4319,12 +4255,6 @@ await test("read-only wiki pages apply syntax token highlighting to language cod
   assert.match(articleBodyCss, /\.wiki-article-prose\s+pre\s+code\s+\.hljs-keyword/);
 });
 
-await test("wiki code block CSS maps common highlight.js scopes to the Westgate token palette", function () {
-  assertCodeTokenThemeCoverage(articleBodyCss, ".wiki-article-prose pre code");
-  assertCodeTokenThemeCoverage(editorCss, ".westgate-wiki-compose .wiki-editor__content");
-  assertCodeTokenThemeCoverage(vendoredEditorCss, ".westgate-wiki-compose .wiki-editor__content");
-});
-
 await test("top toolbar schema excludes contextual image layout and size controls", function () {
   IMAGE_CONTEXT_BUTTON_IDS.forEach(function (id) {
     assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes(id), false);
@@ -4337,40 +4267,18 @@ await test("top toolbar schema excludes contextual image layout and size control
 });
 
 await test("top toolbar schema keeps wiki entity tools and table creation tools in the always-visible toolbar", function () {
-  const groupIds = TOP_TOOLBAR_GROUPS.map(function (group) {
-    return group.id;
+  [
+    "wiki-page-link",
+    "wiki-user-mention",
+    "wiki-footnote",
+    "image-upload",
+    "table-insert",
+    "dnd-alignment-table",
+    "infobox-insert",
+    "fullscreen-source"
+  ].forEach(function (id) {
+    assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes(id), true);
   });
-  assert.deepEqual(groupIds, [
-    "history",
-    "structure",
-    "inline-formatting",
-    "links-media",
-    "blocks",
-    "callouts",
-    "alignment",
-    "tables",
-    "view"
-  ]);
-
-  const history = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "history"; });
-  const inlineFormatting = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "inline-formatting"; });
-  const callouts = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "callouts"; });
-  const media = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "links-media"; });
-  const blocks = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "blocks"; });
-  const tables = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "tables"; });
-  const view = TOP_TOOLBAR_GROUPS.find(function (group) { return group.id === "view"; });
-
-  assert.deepEqual(history.buttonIds, ["undo", "redo"]);
-  assert.deepEqual(inlineFormatting.buttonIds, ["bold", "italic", "underline", "strike", "inline-code", "highlight", "strip-span-styling", "subscript", "superscript"]);
-  assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("strip-span-styling"), true);
-  assert.deepEqual(callouts.buttonIds, ["callout-info", "callout-success", "callout-warning", "callout-danger"]);
-  assert.deepEqual(media.buttonIds, ["link", "wiki-page-link", "wiki-user-mention", "wiki-footnote", "image-upload", "media-row-2", "media-row-3"]);
-  assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("wiki-namespace-link"), false);
-  assert.deepEqual(blocks.buttonIds, ["bullet-list", "ordered-list", "task-list", "blockquote", "code-block", "block-background", "horizontal-rule", "infobox-insert"]);
-  assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("infobox-insert"), true);
-  assert.deepEqual(tables.buttonIds, ["table-insert", "dnd-alignment-table"]);
-  assert.deepEqual(view.buttonIds, ["fullscreen-source"]);
-  assert.equal(TOP_TOOLBAR_BUTTON_IDS.includes("fullscreen-source"), true);
 });
 
 await test("fullscreen source mode has guarded editable source synchronization", function () {

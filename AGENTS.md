@@ -57,3 +57,7 @@ npm test
 Restart NodeBB after changing `plugin.json`, server hooks, route registration,
 or plugin initialization. Rebuild NodeBB assets after changing templates,
 client scripts, CSS, or vendored editor output.
+
+## Tests
+
+Tests must survive harmless changes to constants, defaults, wording, ordering, fixture data, and internal implementation details. A test that fails merely because a basic value changed is usually a bad test. Only assert exact values when the value is part of a documented public contract, external protocol, compatibility requirement, security rule, migration, or business rule.

@@ -1,11 +1,8 @@
 "use strict";
 
 const assert = require("assert");
-const fs = require("fs");
-const path = require("path");
 
 const wikiPageToc = require("../lib/wiki-page-toc");
-const root = path.join(__dirname, "..");
 
 function test(name, fn) {
   try {
@@ -78,14 +75,4 @@ test("extractHeadingToc ignores headings inside legacy infobox wrappers", functi
     { id: "overview", text: "Overview", level: 2 },
     { id: "history", text: "History", level: 2 }
   ]);
-});
-
-test("page ToC API is registered and passed to the editor payload", function () {
-  const libraryJs = fs.readFileSync(path.join(root, "library.js"), "utf8");
-  const composeController = fs.readFileSync(path.join(root, "lib/controllers/compose.js"), "utf8");
-
-  assert.match(libraryJs, /const wikiPageToc = require\("\.\/lib\/wiki-page-toc"\)/);
-  assert.match(libraryJs, /"\/westgate-wiki\/page-toc"/);
-  assert.match(libraryJs, /wikiPageToc\.apiGetPageToc/);
-  assert.match(composeController, /pageTocUrl: `\$\{relativePath\}\/api\/v3\/plugins\/westgate-wiki\/page-toc`/);
 });

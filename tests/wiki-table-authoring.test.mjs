@@ -970,27 +970,3 @@ await test("auto layout disables direct table width dragging", function () {
   editor.destroy();
   shell.remove();
 });
-
-await test("table authoring sticky row uses the sticky CSS contract", function () {
-  const stickyRule = wikiEditorCss.match(/\.westgate-wiki-compose\s+\.wiki-editor-table-sticky-row\s*\{[^}]+\}/);
-  const inactiveRule = wikiEditorCss.match(/\.westgate-wiki-compose\s+\.wiki-editor-table-sticky-row--inactive\s*\{[^}]+\}/);
-  const surfaceRule = wikiEditorCss.match(/\.westgate-wiki-compose\s+\.wiki-editor__surface\s*\{[^}]+\}/);
-
-  assert(surfaceRule, "editor surface CSS rule should exist");
-  assert.match(surfaceRule[0], /\bposition:\s*relative;/);
-  assert(stickyRule, "sticky row CSS rule should exist");
-  assert.match(stickyRule[0], /\bposition:\s*sticky;/);
-  assert.match(stickyRule[0], /\btop:\s*calc\(var\(--wiki-compose-toolbar-sticky-top,\s*0\.75rem\)\s*\+\s*var\(--wiki-editor-main-toolbar-height,\s*3\.25rem\)\);/);
-  assert.match(stickyRule[0], /\bz-index:\s*8;/);
-  assert.doesNotMatch(stickyRule[0], /\bposition:\s*absolute;/);
-  assert(inactiveRule, "inactive sticky row CSS rule should exist");
-  assert.match(inactiveRule[0], /\bvisibility:\s*hidden;/);
-  assert.match(inactiveRule[0], /\bpointer-events:\s*none;/);
-  assert.doesNotMatch(wikiEditorCss, /\.wiki-editor-table-sticky-row\[hidden\]\s*\{[^}]*display:\s*none/);
-});
-
-await test("table authoring resyncs floating controls on active table wrapper scroll", function () {
-  assert.match(tableAuthoringSource, /closest\("\.tableWrapper"\)/);
-  assert.match(tableAuthoringSource, /activeTableWrapper\.addEventListener\("scroll",\s*update\)/);
-  assert.match(tableAuthoringSource, /activeTableWrapper\.removeEventListener\("scroll",\s*update\)/);
-});

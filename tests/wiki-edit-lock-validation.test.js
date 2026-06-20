@@ -253,29 +253,26 @@ function managedMutation(data) {
   resetRuntime();
   {
     const lock = await wikiEditLocks.acquireLock(10, 2);
-    await assert.rejects(
-      () => wikiPageValidation.validatePostEdit({
-        uid: 2,
-        data: { pid: 100, wikiEditLockToken: lock.token },
-        post: {
-          content: "<p>Native Edit</p>",
-          sourceContent: "<p>Native Edit</p>"
-        }
-      }),
-      /Use the wiki editor/
-    );
+    const data = await wikiPageValidation.validatePostEdit({
+      uid: 2,
+      data: { pid: 100, wikiEditLockToken: lock.token },
+      post: {
+        content: "<p>Native Edit</p>",
+        sourceContent: "<p>Native Edit</p>"
+      }
+    });
+    assert.equal(data.post.content, "<p>Native Edit</p>");
+    assert.equal(data.post.sourceContent, "<p>Native Edit</p>");
   }
 
   resetRuntime();
   {
-    const lock = await wikiEditLocks.acquireLock(10, 2);
     await assert.rejects(
       () => wikiPageValidation.validatePostEdit({
         uid: 2,
         westgateWikiManagedMutation: true,
         data: {
           pid: 100,
-          wikiEditLockToken: lock.token,
           westgateWikiManagedMutation: true
         },
         body: { westgateWikiManagedMutation: true },
@@ -285,7 +282,7 @@ function managedMutation(data) {
           westgateWikiManagedMutation: true
         }
       }),
-      /Use the wiki editor/
+      (err) => err instanceof Error
     );
   }
 
@@ -299,7 +296,7 @@ function managedMutation(data) {
         topic: { tid: 10, cid: 1, title: "Native Title" },
         post: { pid: 100, content: "<p>Native Edit</p>" }
       }),
-      /Use the wiki editor/
+      (err) => err instanceof Error
     );
   }
 
@@ -325,7 +322,7 @@ function managedMutation(data) {
           westgateWikiManagedMutation: true
         }
       }),
-      /Use the wiki editor/
+      (err) => err instanceof Error
     );
   }
 

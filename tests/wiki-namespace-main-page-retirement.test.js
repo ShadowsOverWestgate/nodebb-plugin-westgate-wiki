@@ -1,10 +1,7 @@
 "use strict";
 
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
 
-const root = path.join(__dirname, "..");
 const originalMainRequire = require.main.require.bind(require.main);
 
 require.main.require = function requireNodebbStub(id) {
@@ -52,27 +49,6 @@ assert.equal(
   Object.prototype.hasOwnProperty.call(rows[1], "isNamespaceMainPage"),
   false,
   "directory summary rows should not expose namespace-main-page state"
-);
-
-const composeController = fs.readFileSync(path.join(root, "lib/controllers/compose.js"), "utf8");
-assert.doesNotMatch(
-  composeController,
-  /wikiNamespaceMainPages|namespaceMainPageApiUrl|canSetNamespaceMainPage|isNamespaceMainPage|showNamespaceMainPageToggle/,
-  "compose render data and payload should not reference retired namespace-main-page state"
-);
-
-const composeClient = fs.readFileSync(path.join(root, "public/wiki-compose-page.js"), "utf8");
-assert.doesNotMatch(
-  composeClient,
-  /wiki-compose-namespace-main-page|namespaceMainPageApiUrl|canSetNamespaceMainPage|namespace main page/i,
-  "compose client should not look for the retired checkbox or save namespace-main-page state"
-);
-
-const directoryService = fs.readFileSync(path.join(root, "lib/wiki-directory-service.js"), "utf8");
-assert.doesNotMatch(
-  directoryService,
-  /wikiNamespaceMainPages|getMainTopicIdForCid|isNamespaceMainPage/,
-  "directory service should not read or pin namespace-main-page selections"
 );
 
 (async () => {

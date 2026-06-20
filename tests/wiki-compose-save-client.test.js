@@ -7,7 +7,6 @@ const { JSDOM } = require("jsdom");
 
 const rootDir = path.join(__dirname, "..");
 const composePageJs = fs.readFileSync(path.join(rootDir, "public/wiki-compose-page.js"), "utf8");
-const wikiCss = fs.readFileSync(path.join(rootDir, "public/wiki.css"), "utf8");
 
 function encodePayloadB64(payload) {
   return Buffer.from(JSON.stringify(payload), "utf8").toString("base64");
@@ -119,8 +118,47 @@ async function createComposeDom(fetchImpl, overrides = {}) {
   assert.match(calls[0].url, /\/api\/v3\/plugins\/westgate-wiki\/page-title\?/);
   assert.equal(calls[0].options.cache, "no-store");
 
-  assert.match(wikiCss, /\.wiki-compose-error-dialog-shell\s*{/);
-  assert.match(wikiCss, /\.wiki-compose-error-dialog\s*{/);
+  const editCalls = [];
+  const editDom = await createComposeDom(async function (url, options) {
+    editCalls.push({ url: String(url), options: options || {} });
+    if (String(url).includes("/page-title")) {
+      return {
+        ok: true,
+        statusText: "OK",
+        json: async function () {
+          return {
+            status: { code: "ok", message: "OK" },
+            response: { ok: true, status: "ok" }
+          };
+        }
+      };
+    }
+    return {
+      ok: true,
+      statusText: "OK",
+      json: async function () {
+        return {
+          status: { code: "ok", message: "OK" },
+          response: { tid: 12, wikiPath: "/wiki/Edited_Page" }
+        };
+      }
+    };
+  }, {
+    title: "Edited Page"
+  });
+
+  editDom.window.document.getElementById("wiki-compose-submit").click();
+  await tick();
+  await tick();
+  await tick();
+
+  assert.equal(editCalls.length, 2);
+  assert.equal(editCalls[1].url, "/api/v3/plugins/westgate-wiki/page/save");
+  assert.equal(editCalls[1].options.method, "PUT");
+  assert.equal(editCalls[1].options.headers["Content-Type"], undefined);
+  assert.ok(editCalls[1].options.body instanceof editDom.window.FormData);
+  assert.equal(editCalls[1].options.body.get("content"), "<p>Existing body</p>");
+  assert.equal(editCalls[1].options.body.get("title"), "Edited Page");
 
   const publishCalls = [];
   const publishDom = await createComposeDom(async function (url, options) {

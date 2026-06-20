@@ -17,7 +17,6 @@ function test(name, fn) {
 
 const rootDir = path.join(__dirname, "..");
 const wikiJs = fs.readFileSync(path.join(rootDir, "public/wiki.js"), "utf8");
-const wikiCss = fs.readFileSync(path.join(rootDir, "public/wiki.css"), "utf8");
 
 function createDom(isMobile) {
   const dom = new JSDOM(`<!doctype html><html><body>
@@ -144,10 +143,4 @@ test("desktop page tools do not hide on downward scroll", function () {
 
   setScrollY(dom.window, 120);
   assert.equal(dock.classList.contains("wiki-fab-dock--mobile-hidden"), false);
-});
-
-test("mobile hidden page tools are translated below the viewport", function () {
-  assert.match(wikiCss, /\.wiki-fab-dock--floating\s*{[^}]*transition:[^}]*opacity 0\.3s ease[^}]*transform 0\.3s ease[^}]*visibility 0\.3s ease/s);
-  assert.match(wikiCss, /@media\s*\(max-width:\s*991px\)[\s\S]*?\.wiki-fab-dock--floating\.wiki-fab-dock--mobile-hidden\s*{[^}]*transform:\s*translateY\(calc\(100%\s*\+\s*5rem\)\)/);
-  assert.match(wikiJs, /function\s+initMobileFabDockVisibility\s*\(/);
 });
