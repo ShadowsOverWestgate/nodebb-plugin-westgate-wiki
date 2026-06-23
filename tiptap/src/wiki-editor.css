@@ -68,8 +68,25 @@
 
 .westgate-wiki-compose .wiki-editor--fullscreen-source .wiki-editor__toolbar-mount {
   margin: 0 0 0.65rem;
-  max-height: min(28vh, 10rem);
+  max-height: none;
+  overflow: visible;
+  scrollbar-gutter: auto;
   top: 0;
+}
+
+/* Fullscreen toolbar "jerk", root cause (measured via rAF probe): at the full
+   viewport width the 9 groups + separators total almost exactly the toolbar
+   width, parking flex-wrap on its decision boundary. Each layout pass the engine
+   flips the last group ("View") between row 1 and row 2 — toolbar height ping-
+   pongs 74<->132px (the grid's `auto` top row, so the body shoves with it). The
+   widths never change, so no width/scrollbar fix helps; only removing the wrap
+   decision does. Single row in fullscreen, scroll if it ever overflows — height
+   is then constant and every group (including the View/exit toggle) stays
+   reachable. overflow-y:hidden keeps it strictly one row (no phantom y-gutter). */
+.westgate-wiki-compose .wiki-editor--fullscreen-source .wiki-editor-toolbar {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .westgate-wiki-compose .wiki-editor--fullscreen-source .wiki-editor-toc {
@@ -276,6 +293,10 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: auto;
+  /* Reserve the scrollbar gutter so a transient vertical scrollbar (toggled by
+     floating table panels) can't change body width and reflow container-sized
+     tables horizontally — the fullscreen table-select "jerk". */
+  scrollbar-gutter: stable;
 }
 
 .westgate-wiki-compose .wiki-editor--fullscreen-source .wiki-editor__surface,

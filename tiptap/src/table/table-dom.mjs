@@ -102,6 +102,14 @@ export function positionContextPanel(panel, targetEl, surface, options) {
     : targetRect.top - surfaceRect.top - panelHeight - 8;
   const maxTop = Math.max(8, surfaceRect.height - panelHeight - 8);
   const top = Math.max(avoidTop, Math.min(preferredTop, maxTop));
-  panel.style.left = `${left}px`;
-  panel.style.top = `${top}px`;
+  const leftPx = `${left}px`;
+  const topPx = `${top}px`;
+  // Skip the write when unchanged: avoids needless invalidation that can
+  // re-trigger the fullscreen reposition/scroll loop. Inline-style reads don't
+  // force reflow.
+  if (panel.style.left === leftPx && panel.style.top === topPx) {
+    return;
+  }
+  panel.style.left = leftPx;
+  panel.style.top = topPx;
 }

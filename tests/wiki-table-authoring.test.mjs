@@ -107,6 +107,15 @@ function createEditorShell(editor) {
   return shell;
 }
 
+// update() is rAF-coalesced, so event-driven repositioning lands next frame.
+function nextFrame() {
+  return new Promise(function (resolve) {
+    requestAnimationFrame(function () {
+      resolve();
+    });
+  });
+}
+
 function findCellPositions(editor) {
   const positions = [];
   editor.state.doc.descendants(function (node, pos) {
@@ -898,7 +907,7 @@ await test("createTableAuthoring installs sticky table row and cell popover surf
   shell.remove();
 });
 
-await test("inactive sticky table row reserves layout space to avoid selection jumps", function () {
+await test("inactive sticky table row reserves layout space to avoid selection jumps", async function () {
   const editor = createTableEditor("<p>Before table</p><table><tbody><tr><td><p>A1</p></td></tr></tbody></table><p>After table</p>");
   const shell = createEditorShell(editor);
 
@@ -916,6 +925,7 @@ await test("inactive sticky table row reserves layout space to avoid selection j
 
   editor.commands.setTextSelection(findCellPositions(editor)[0] + 2);
   editor.view.dispatch(editor.state.tr);
+  await nextFrame();
   assert.equal(sticky.classList.contains("wiki-editor-table-sticky-row--inactive"), false);
   assert.equal(sticky.getAttribute("aria-hidden"), "false");
 
@@ -924,7 +934,7 @@ await test("inactive sticky table row reserves layout space to avoid selection j
   shell.remove();
 });
 
-await test("auto layout disables direct table width dragging", function () {
+await test("auto layout disables direct table width dragging", async function () {
   const editor = createTableEditor("<table class=\"wiki-table-layout-auto\" style=\"border-color: rgb(10, 20, 30);\"><tbody><tr><td><p>A1</p></td><td><p>B1</p></td></tr></tbody></table>");
   const shell = createEditorShell(editor);
   const authoring = createTableAuthoring(shell, editor);
@@ -943,6 +953,7 @@ await test("auto layout disables direct table width dragging", function () {
 
   editor.commands.setTextSelection(5);
   editor.view.dispatch(editor.state.tr.scrollIntoView());
+  await nextFrame();
 
   const widthHandle = shell.querySelector(".wiki-editor-table-resize-handle--width");
   const rowHandle = shell.querySelector(".wiki-editor-table-resize-handle--row");
@@ -969,4 +980,85 @@ await test("auto layout disables direct table width dragging", function () {
   authoring.destroy();
   editor.destroy();
   shell.remove();
+});
+
+await test("createTableAuthoring coalesces a burst of editor events into one geometry pass", function () {
+  const realRaf = globalThis.requestAnimationFrame;
+  const realCaf = globalThis.cancelAnimationFrame;
+  const queue = [];
+  Object.defineProperty(globalThis, "requestAnimationFrame", {
+    configurable: true,
+    value: function (cb) {
+      queue.push(cb);
+      return queue.length;
+    }
+  });
+  Object.defineProperty(globalThis, "cancelAnimationFrame", {
+    configurable: true,
+    value: function (id) {
+      if (id) {
+        queue[id - 1] = null;
+      }
+    }
+  });
+
+  try {
+    const editor = createTableEditor("<table><tbody><tr><td><p>A1</p></td><td><p>B1</p></td></tr></tbody></table>");
+    const shell = createEditorShell(editor);
+    let rectReads = 0;
+    shell.getBoundingClientRect = function () {
+      rectReads += 1;
+      return { left: 0, top: 0, width: 640, height: 320, right: 640, bottom: 320 };
+    };
+    const authoring = createTableAuthoring(shell, editor); // synchronous initial update()
+
+    // Activate the table and fire several editor events in one tick.
+    editor.commands.setTextSelection(5);
+    editor.view.dispatch(editor.state.tr);
+    editor.view.dispatch(editor.state.tr);
+
+    const pending = queue.filter(Boolean);
+    assert.equal(pending.length, 1, "a burst of synchronous events should schedule exactly one frame");
+
+    rectReads = 0;
+    pending[0]();
+    assert(rectReads >= 1, "the single coalesced frame should run one update() geometry pass");
+
+    authoring.destroy();
+    editor.destroy();
+    shell.remove();
+  } finally {
+    Object.defineProperty(globalThis, "requestAnimationFrame", { configurable: true, value: realRaf });
+    Object.defineProperty(globalThis, "cancelAnimationFrame", { configurable: true, value: realCaf });
+  }
+});
+
+await test("positionContextPanel skips the style write when geometry is unchanged", function () {
+  let writes = 0;
+  let left = "";
+  let top = "";
+  const panel = {
+    offsetWidth: 120,
+    offsetHeight: 40,
+    style: {
+      get left() { return left; },
+      set left(value) { left = value; writes += 1; },
+      get top() { return top; },
+      set top(value) { top = value; writes += 1; }
+    }
+  };
+  const surface = { getBoundingClientRect() { return { left: 0, top: 0, width: 600, height: 400 }; } };
+  const target = { getBoundingClientRect() { return { left: 40, top: 60, width: 100, height: 30, right: 140, bottom: 90 }; } };
+
+  positionContextPanel(panel, target, surface, { placement: "bottom" });
+  assert.equal(writes, 2, "first positioning writes left and top");
+
+  positionContextPanel(panel, target, surface, { placement: "bottom" });
+  assert.equal(writes, 2, "unchanged geometry should not write again");
+
+  target.getBoundingClientRect = function () {
+    return { left: 80, top: 60, width: 100, height: 30, right: 180, bottom: 90 };
+  };
+  positionContextPanel(panel, target, surface, { placement: "bottom" });
+  assert.equal(writes, 4, "a moved target writes again");
 });

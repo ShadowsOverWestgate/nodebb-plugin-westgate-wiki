@@ -153,12 +153,21 @@ function isAutoLayoutTable(context) {
 }
 
 function positionHandle(handle, targetRect, surfaceRect, options) {
-  const left = options.left(targetRect, surfaceRect);
-  const top = options.top(targetRect, surfaceRect);
-  handle.style.left = `${Math.round(left)}px`;
-  handle.style.top = `${Math.round(top)}px`;
-  handle.style.width = `${Math.round(options.width(targetRect))}px`;
-  handle.style.height = `${Math.round(options.height(targetRect))}px`;
+  const left = `${Math.round(options.left(targetRect, surfaceRect))}px`;
+  const top = `${Math.round(options.top(targetRect, surfaceRect))}px`;
+  const width = `${Math.round(options.width(targetRect))}px`;
+  const height = `${Math.round(options.height(targetRect))}px`;
+  // Skip the write when nothing moved — avoids needless style invalidation that
+  // can re-trigger the reposition/scroll loop. Reading inline style is cheap
+  // (no forced reflow).
+  if (handle.style.left === left && handle.style.top === top
+    && handle.style.width === width && handle.style.height === height) {
+    return;
+  }
+  handle.style.left = left;
+  handle.style.top = top;
+  handle.style.width = width;
+  handle.style.height = height;
 }
 
 function getWidthValue(startWidth, delta) {
@@ -263,6 +272,20 @@ export function createTableAuthoring(surface, editor) {
   let currentContext = deriveTableContext(editor, surface);
   let activeTableWrapper = null;
   let destroyed = false;
+  let pendingFrame = 0;
+
+  // Coalesce event-driven repositioning to one update() per animation frame so
+  // a burst of editor events (selectionUpdate + transaction + focus ...) can't
+  // thrash layout. Drags and command runs still call update() synchronously.
+  function scheduleUpdate() {
+    if (destroyed || pendingFrame) {
+      return;
+    }
+    pendingFrame = requestAnimationFrame(function () {
+      pendingFrame = 0;
+      update();
+    });
+  }
 
   function ensureInstalled() {
     if (stickyRow.parentNode !== surface || stickyRow !== surface.firstElementChild) {
@@ -396,12 +419,12 @@ export function createTableAuthoring(surface, editor) {
     }
 
     if (activeTableWrapper) {
-      activeTableWrapper.removeEventListener("scroll", update);
+      activeTableWrapper.removeEventListener("scroll", scheduleUpdate);
     }
 
     activeTableWrapper = wrapper;
     if (activeTableWrapper) {
-      activeTableWrapper.addEventListener("scroll", update);
+      activeTableWrapper.addEventListener("scroll", scheduleUpdate);
     }
   }
 
@@ -481,25 +504,29 @@ export function createTableAuthoring(surface, editor) {
   const updateEvents = ["create", "selectionUpdate", "transaction", "focus", "blur"];
   updateEvents.forEach(function (eventName) {
     if (editor && typeof editor.on === "function") {
-      editor.on(eventName, update);
+      editor.on(eventName, scheduleUpdate);
     }
   });
-  window.addEventListener("resize", update);
-  surface.addEventListener("scroll", update);
+  window.addEventListener("resize", scheduleUpdate);
+  surface.addEventListener("scroll", scheduleUpdate);
 
   update();
 
   return {
     destroy: function () {
       destroyed = true;
+      if (pendingFrame) {
+        cancelAnimationFrame(pendingFrame);
+        pendingFrame = 0;
+      }
       dragController.destroy();
       updateEvents.forEach(function (eventName) {
         if (editor && typeof editor.off === "function") {
-          editor.off(eventName, update);
+          editor.off(eventName, scheduleUpdate);
         }
       });
-      window.removeEventListener("resize", update);
-      surface.removeEventListener("scroll", update);
+      window.removeEventListener("resize", scheduleUpdate);
+      surface.removeEventListener("scroll", scheduleUpdate);
       syncActiveTableWrapper(null);
       stickyRow.remove();
       cellPopover.remove();
