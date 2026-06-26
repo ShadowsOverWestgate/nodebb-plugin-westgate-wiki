@@ -175,6 +175,14 @@
       "method": "filterTopicsGetUnreadTids"
     },
     {
+      "hook": "filter:topics.get",
+      "method": "filterTopicsGet"
+    },
+    {
+      "hook": "filter:post.getPostSummaryByPids",
+      "method": "filterPostGetPostSummaryByPids"
+    },
+    {
       "hook": "filter:search.inContent",
       "method": "filterSearchInContent"
     },
