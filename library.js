@@ -423,6 +423,7 @@ plugin.filterTopicsFilterSortedTids = filterForumFeeds.filterTopicsFilterSortedT
 plugin.filterTopicsGetUnreadTids = filterForumFeeds.filterTopicsGetUnreadTids;
 plugin.filterTopicsGet = filterForumFeeds.filterTopicsGet;
 plugin.filterPostGetPostSummaryByPids = filterForumFeeds.filterPostGetPostSummaryByPids;
+plugin.filterWidgetRenderRecentTopics = filterForumFeeds.filterWidgetRenderRecentTopics;
 plugin.filterSearchInContent = filterForumSearch.filterSearchInContent;
 plugin.filterSearchIndexTopics = filterForumSearch.filterSearchIndexTopics;
 plugin.filterSearchIndexPosts = filterForumSearch.filterSearchIndexPosts;

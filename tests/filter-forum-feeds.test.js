@@ -30,7 +30,8 @@ async function withForumFeedStubs(fn) {
   ]);
   const stubs = {
     "./src/categories": {
-      getChildrenCids: async () => []
+      getChildrenCids: async () => [],
+      getCidsByPrivilege: async () => [-1, 1, 2, 3]
     },
     "./src/database": {
       getSortedSetRange: async () => [],
@@ -100,5 +101,28 @@ test("post summary payloads exclude wiki category posts for recent post widgets"
     });
 
     assert.deepEqual(result.posts.map((post) => post.pid), [101, 303]);
+  });
+});
+
+test("recent topics widget pins cid list to non-wiki cids when unconfigured", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    const result = await feeds.filterWidgetRenderRecentTopics({
+      uid: 42,
+      data: {}
+    });
+
+    // wiki cid 2 and the -1 pseudo-category dropped; full readable window preserved
+    assert.equal(result.data.cid, "1,3");
+  });
+});
+
+test("recent topics widget strips wiki cids from an admin-configured list", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    const result = await feeds.filterWidgetRenderRecentTopics({
+      uid: 42,
+      data: { cid: "1,2,3" }
+    });
+
+    assert.equal(result.data.cid, "1,3");
   });
 });

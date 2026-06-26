@@ -183,6 +183,11 @@
       "method": "filterPostGetPostSummaryByPids"
     },
     {
+      "hook": "filter:widget.render:recenttopics",
+      "method": "filterWidgetRenderRecentTopics",
+      "priority": 9
+    },
+    {
       "hook": "filter:search.inContent",
       "method": "filterSearchInContent"
     },
