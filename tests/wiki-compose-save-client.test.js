@@ -199,7 +199,8 @@ async function createComposeDom(fetchImpl, overrides = {}) {
     }
   });
 
-  publishDom.window.document.getElementById("wiki-compose-submit").click();
+  const publishSubmit = publishDom.window.document.getElementById("wiki-compose-submit");
+  publishSubmit.click();
   await tick();
   await tick();
   await tick();
@@ -210,6 +211,75 @@ async function createComposeDom(fetchImpl, overrides = {}) {
     "standalone compose fallback redirects should use canonical title-path segments instead of flattened NodeBB slugs"
   );
   assert.equal(publishCalls.length, 2);
+  assert.equal(publishSubmit.disabled, true);
+  publishSubmit.click();
+  await tick();
+  assert.equal(publishCalls.length, 2);
+
+  const cssFailureCalls = [];
+  const cssFailureDom = await createComposeDom(async function (url, options) {
+    cssFailureCalls.push({ url: String(url), options: options || {} });
+    if (String(url).includes("/page-title/check")) {
+      return {
+        ok: true,
+        statusText: "OK",
+        json: async function () {
+          return {
+            status: { code: "ok", message: "OK" },
+            response: { ok: true, status: "ok" }
+          };
+        }
+      };
+    }
+    if (String(url).includes("/article-css")) {
+      return {
+        ok: false,
+        statusText: "Bad Request",
+        json: async function () {
+          return { status: { message: "CSS rejected" } };
+        }
+      };
+    }
+    return {
+      ok: true,
+      statusText: "OK",
+      json: async function () {
+        return {
+          status: { code: "ok", message: "OK" },
+          response: {
+            tid: 100,
+            slug: "100/css-failure"
+          }
+        };
+      }
+    };
+  }, {
+    title: "CSS Failure",
+    payload: {
+      mode: "create",
+      tid: undefined,
+      mainPid: undefined,
+      postEditUrl: undefined,
+      sectionWikiPath: "/wiki/Guides",
+      articleCssApiUrl: "/api/v3/plugins/westgate-wiki/article-css"
+    }
+  });
+
+  const cssFailureSubmit = cssFailureDom.window.document.getElementById("wiki-compose-submit");
+  cssFailureSubmit.click();
+  await tick();
+  await tick();
+  await tick();
+
+  assert.match(
+    cssFailureDom.window.document.getElementById("wiki-compose-status").textContent,
+    /Page saved, but article CSS was not updated/
+  );
+  assert.equal(cssFailureCalls.length, 3);
+  assert.equal(cssFailureSubmit.disabled, true);
+  cssFailureSubmit.click();
+  await tick();
+  assert.equal(cssFailureCalls.length, 3);
 
   process.stdout.write("wiki-compose save client tests passed\n");
 })().catch(function (err) {

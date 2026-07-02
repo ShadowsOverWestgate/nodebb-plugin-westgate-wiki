@@ -183,6 +183,18 @@
       "method": "filterPostGetPostSummaryByPids"
     },
     {
+      "hook": "filter:topic.create",
+      "method": "filterTopicCreateGrantHydration"
+    },
+    {
+      "hook": "filter:post.create",
+      "method": "filterPostCreateGrantHydration"
+    },
+    {
+      "hook": "filter:post.edit",
+      "method": "filterPostEditGrantHydration"
+    },
+    {
       "hook": "filter:widget.render:recenttopics",
       "method": "filterWidgetRenderRecentTopics",
       "priority": 9

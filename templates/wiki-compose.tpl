@@ -76,8 +76,8 @@
     <div class="wiki-compose-actions wiki-compose-actions--floating d-flex gap-2 flex-wrap">
       <button type="button" class="btn btn-primary" id="wiki-compose-submit">{submitLabel}</button>
       <a class="btn btn-outline-secondary" id="wiki-compose-return" href="{config.relative_path}{composeCancelHref}">Return</a>
+      <p class="small text-muted mt-2 mb-0 w-100" id="wiki-compose-status" aria-live="polite"></p>
     </div>
-    <p class="small text-muted mt-2 mb-0" id="wiki-compose-status" aria-live="polite"></p>
   </div>
   <!-- ENDIF editLockBlocked -->
 </div>
