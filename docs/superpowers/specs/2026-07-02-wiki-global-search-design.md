@@ -64,6 +64,30 @@ second search backend for no benefit — dbsearch already does the work.
 - No new "wiki-only" search UI. (dbsearch already supports category-scoped
   queries if such a surface is ever wanted; not built here.)
 
+## Cross-check against `wiki-forum-link-privilege-bug-spec.md`
+
+Same-day incident, different plugin path — confirmed **no collision**:
+
+- dbsearch indexes the **raw stored** `content` field
+  (`posts.getPostsFields(pids, ['content', ...])` in
+  `nodebb-plugin-dbsearch/lib/dbsearch.js`), never routed through
+  `filter:parse.post` / `wiki-links.js`. Bug A there (viewer-uid always
+  resolves to guest, poisoning core's `pid|type` parse cache) only affects
+  rendered/display content, not indexed content.
+- Core's search privilege filter (`src/search.js:120`,
+  `privileges.posts.filter('topics:read', allPids, data.uid)`) uses the real
+  searcher's uid from the search request — unlike `wiki-links.js`'s
+  `getParseViewerUid`, which never receives real data from core. Search
+  privilege enforcement is unaffected by Bug A.
+- Search result links come from wiki data directly (`wikiPath`), not through
+  `wiki-links.js`'s link-resolution path, so Bug B (guest lost `topics:read`
+  on cid 41) doesn't affect search result rendering either.
+
+One incidental tie-in: cid 41's current broken guest privilege state (Bug B,
+not yet fixed as of this writing) is a ready-made live fixture for Testing
+item 5 below (privilege-restricted article shouldn't surface for an
+unauthorized searcher) — no need to manufacture a test category.
+
 ## Design
 
 ### 1. Indexing — selective allow instead of blanket block
