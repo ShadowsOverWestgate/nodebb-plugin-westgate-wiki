@@ -684,6 +684,7 @@ async function initWikiComposePage() {
 
       submitBtn.disabled = true;
       const isEdit = payload.mode === "edit" && payload.postEditUrl;
+      let createSucceeded = false;
       setStatus(statusEl, isEdit ? "Saving…" : "Publishing…");
 
       try {
@@ -788,6 +789,7 @@ async function initWikiComposePage() {
         if (responsePayload && responsePayload.ok === false) {
           throw new Error(getApiResponseMessage(body, "This page cannot be saved."));
         }
+        createSucceeded = !isEdit;
         let wikiSlug = null;
         const savedTid = (
           responsePayload &&
@@ -911,7 +913,9 @@ async function initWikiComposePage() {
             ? "Page published and set as /wiki. Use Return to article when you are ready to leave."
             : "Page saved. Use Return to article when you are ready to leave."
         );
-        submitBtn.disabled = false;
+        if (isEdit) {
+          submitBtn.disabled = false;
+        }
       } catch (err) {
         const message = (err && err.message) || String(err);
         if (err && err.wikiComposeBlockingResponse) {
@@ -923,7 +927,9 @@ async function initWikiComposePage() {
           });
         }
         setStatus(statusEl, message, "error");
-        submitBtn.disabled = false;
+        if (isEdit || !createSucceeded) {
+          submitBtn.disabled = false;
+        }
       }
     });
   }

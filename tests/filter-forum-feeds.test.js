@@ -46,6 +46,7 @@ async function withForumFeedStubs(fn) {
       }
     },
     "./src/posts": {
+      getPostField: async (pid) => postTidByPid.get(String(pid)),
       getPostsFields: async (pids) => pids.map((pid) => ({
         pid,
         tid: postTidByPid.get(String(pid))
@@ -74,7 +75,18 @@ async function withForumFeedStubs(fn) {
   }
 }
 
-test("generic topic payloads exclude wiki category topics for forum and widget consumers", async () => {
+test("topic sorted tid feed payloads exclude wiki category topics", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    const result = await feeds.filterTopicsFilterSortedTids({
+      uid: 42,
+      tids: [10, 20, 30]
+    });
+
+    assert.deepEqual(result.tids, [10, 30]);
+  });
+});
+
+test("direct topic object lookups exclude wiki topics from forum consumers", async () => {
   await withForumFeedStubs(async (feeds) => {
     const result = await feeds.filterTopicsGet({
       uid: 42,
@@ -89,7 +101,50 @@ test("generic topic payloads exclude wiki category topics for forum and widget c
   });
 });
 
-test("post summary payloads exclude wiki category posts for recent post widgets", async () => {
+test("single wiki topic lookups without a create grant are stripped (feed leak regression)", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    const result = await feeds.filterTopicsGet({
+      uid: 42,
+      topics: [
+        { tid: 20, cid: 2, title: "wiki topic" }
+      ]
+    });
+
+    assert.deepEqual(result.topics, []);
+  });
+});
+
+test("topic create grants let core create-path hydration keep the wiki topic", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    await feeds.filterTopicCreate({ topic: { tid: 20, cid: 2 } });
+
+    const result = await feeds.filterTopicsGet({
+      uid: 42,
+      topics: [
+        { tid: 20, cid: 2, title: "wiki topic" }
+      ]
+    });
+
+    assert.deepEqual(result.topics.map((topic) => topic.tid), [20]);
+  });
+});
+
+test("topic create grants ignore non-wiki topics", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    await feeds.filterTopicCreate({ topic: { tid: 10, cid: 1 } });
+
+    const result = await feeds.filterTopicsGet({
+      uid: 42,
+      topics: [
+        { tid: 20, cid: 2, title: "wiki topic" }
+      ]
+    });
+
+    assert.deepEqual(result.topics, []);
+  });
+});
+
+test("direct post summary lookups exclude wiki posts from forum consumers", async () => {
   await withForumFeedStubs(async (feeds) => {
     const result = await feeds.filterPostGetPostSummaryByPids({
       uid: 42,
@@ -101,6 +156,64 @@ test("post summary payloads exclude wiki category posts for recent post widgets"
     });
 
     assert.deepEqual(result.posts.map((post) => post.pid), [101, 303]);
+  });
+});
+
+test("single wiki post summary lookups without a grant are stripped (feed leak regression)", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    const result = await feeds.filterPostGetPostSummaryByPids({
+      uid: 42,
+      posts: [
+        { pid: 202, topic: { tid: 20, cid: 2 }, category: { cid: 2 } }
+      ]
+    });
+
+    assert.deepEqual(result.posts, []);
+  });
+});
+
+test("post create grants let core create-path hydration keep the wiki post", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    await feeds.filterPostCreate({ post: { pid: 202, tid: 20 } });
+
+    const result = await feeds.filterPostGetPostSummaryByPids({
+      uid: 42,
+      posts: [
+        { pid: 202, topic: { tid: 20, cid: 2 }, category: { cid: 2 } }
+      ]
+    });
+
+    assert.deepEqual(result.posts.map((post) => post.pid), [202]);
+  });
+});
+
+test("post create grants ignore posts in non-wiki topics", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    await feeds.filterPostCreate({ post: { pid: 101, tid: 10 } });
+
+    const result = await feeds.filterPostGetPostSummaryByPids({
+      uid: 42,
+      posts: [
+        { pid: 202, topic: { tid: 20, cid: 2 }, category: { cid: 2 } }
+      ]
+    });
+
+    assert.deepEqual(result.posts, []);
+  });
+});
+
+test("post edit grants let core edit-path hydration keep the wiki post", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    await feeds.filterPostEdit({ data: { pid: 202 } });
+
+    const result = await feeds.filterPostGetPostSummaryByPids({
+      uid: 42,
+      posts: [
+        { pid: 202, topic: { tid: 20, cid: 2 }, category: { cid: 2 } }
+      ]
+    });
+
+    assert.deepEqual(result.posts.map((post) => post.pid), [202]);
   });
 });
 
