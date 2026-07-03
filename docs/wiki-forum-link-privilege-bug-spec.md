@@ -116,18 +116,19 @@ the future:
    privilege decision into **viewer-independent** cached HTML. Passing a real uid into
    `getParseViewerUid` would not fully fix this even if core supported it — whichever viewer
    triggers the first parse still poisons the cache for everyone else. The fix needs to stop
-   depending on per-request viewer identity for what gets embedded in cached post content. Two
-   candidate approaches, not yet chosen:
-   - Resolve visibility against a fixed reference privilege (e.g., "is this topic readable by the
-     lowest configured read group for the wiki category," decided once from config rather than a
-     specific uid) — link rendering becomes deterministic per-topic instead of per-viewer, and
-     actual per-viewer enforcement stays where it already lives: the `/wiki/*` route.
-   - Or: always render the link (don't gate on privilege at parse time), and let the existing
-     `/wiki/*` route-level privilege check on click-through decide access, same as how the redlink
-     path already works for missing pages.
-   Either way, `getParseViewerUid` and the `data.uid`/`data.req.uid` reads it depends on should be
-   removed — they've never received real data from core and give a false impression that this is
-   viewer-aware today.
+   depending on per-request viewer identity for what gets embedded in cached post content.
+
+   **Chosen approach:** resolve visibility against a fixed reference privilege —
+   guest (uid 0) — made explicit rather than accidental. `getParseViewerUid` and
+   the dead `data.uid`/`data.req.uid` reads it depended on are removed. Every
+   other privilege-gating call site in `wiki-links.js` (`canReadTopic`,
+   disambiguation matching, `getArticlePathForTopic`) is untouched — they
+   already resolve `viewerUid` from `buildResolverContext`, not from parse-time
+   context. Real per-viewer enforcement continues to live at the `/wiki/*`
+   route (`routes/wiki.js` → `wikiPaths.resolveWikiNode` with the real
+   `req.uid`), confirmed independent of this code path. See
+   `docs/superpowers/plans/2026-07-02-wiki-search-and-link-privilege-fix.md`
+   Part B, Task 5.
 
 ## Confirmed evidence log (2026-07-02)
 
@@ -149,6 +150,7 @@ the future:
 ## Next steps
 
 1. Restore guest (or intended group) `topics:read` on the wiki category tree in ACP — unblocks the
-   reported symptom immediately, no deploy needed.
+   reported symptom immediately, no deploy needed. — **not done as of this plan**; this remains a
+   manual ACP action for vicky, tracked separately from the code fix in Task 5 above.
 2. Design and implement one of the two code fix shapes above so this can't silently regress again
    the next time category privileges change.

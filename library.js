@@ -430,6 +430,7 @@ plugin.filterWidgetRenderRecentTopics = filterForumFeeds.filterWidgetRenderRecen
 plugin.filterSearchInContent = filterForumSearch.filterSearchInContent;
 plugin.filterSearchIndexTopics = filterForumSearch.filterSearchIndexTopics;
 plugin.filterSearchIndexPosts = filterForumSearch.filterSearchIndexPosts;
+plugin.filterSearchContentGetResult = filterForumSearch.filterSearchContentGetResult;
 plugin.onWikiTopicMoved = async function (data) {
   const wikiDirectory = require("./lib/wiki-directory-service");
   const fromCid = parseInt(data && data.fromCid, 10);

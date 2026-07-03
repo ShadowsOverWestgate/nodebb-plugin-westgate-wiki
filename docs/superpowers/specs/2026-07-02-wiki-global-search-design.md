@@ -180,8 +180,16 @@ Manual/flagged verification:
 - Theme: note the search-result wiki badge if the theme documents result
   rendering.
 
-## Open decision for planning
+## Planning decision (resolved)
 
-- Section 2: search-scoped hook (preferred) vs shared-filter change (fallback).
-  Resolve against pinned NodeBB/dbsearch source before writing implementation
-  tasks.
+Section 2 uses the **preferred, search-scoped approach**: core's `src/search.js`
+fires `filter:search.contentGetResult` (confirmed at `src/search.js:152` in the
+pinned NodeBB source) *after* `posts.getPostSummaryByPids` but within the same
+request. The plugin's own `filter:search.inContent` hook (fired earlier, at
+`src/search.js:123`, before `getPostSummaryByPids`) grants a short-lived pid
+hydration (reusing `forumExclusion.grantPidHydration`, the existing write-path
+mechanism) for surviving wiki article main-posts, so the untouched shared
+`filterPostGetPostSummaryByPids` lets them through. `filter:search.contentGetResult`
+then tags those same pids with `isWikiArticle`/`wikiPath`. Zero changes to
+`filterPostGetPostSummaryByPids` or any feed path. See
+`docs/superpowers/plans/2026-07-02-wiki-search-and-link-privilege-fix.md` Part A.

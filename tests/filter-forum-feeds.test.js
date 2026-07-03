@@ -217,6 +217,19 @@ test("post edit grants let core edit-path hydration keep the wiki post", async (
   });
 });
 
+test("post summary feed hook still strips a wiki post that was never granted hydration", async () => {
+  await withForumFeedStubs(async (feeds) => {
+    const result = await feeds.filterPostGetPostSummaryByPids({
+      uid: 42,
+      posts: [
+        { pid: 202, topic: { tid: 20, cid: 2 }, category: { cid: 2 } }, // wiki category post, no grant
+        { pid: 101, topic: { tid: 10, cid: 1 }, category: { cid: 1 } } // forum post
+      ]
+    });
+    assert.deepEqual(result.posts.map((p) => p.pid), [101]);
+  });
+});
+
 test("recent topics widget pins cid list to non-wiki cids when unconfigured", async () => {
   await withForumFeedStubs(async (feeds) => {
     const result = await feeds.filterWidgetRenderRecentTopics({
