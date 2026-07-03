@@ -248,7 +248,12 @@ function createControllerHarness(overrides = {}) {
         }
       },
       "lib/serializer.js": {
-        getTitleDisplay: (titlePath, fallback) => (Array.isArray(titlePath) && titlePath.length ? titlePath.join(" / ") : fallback)
+        getTitleDisplay: (titlePath, fallback) => (Array.isArray(titlePath) && titlePath.length ? titlePath.join(" / ") : fallback),
+        escapeTitleHTML: (value) => String(value || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
       },
       "lib/wiki-breadcrumb-trail.js": {
         forArticleView: () => ({ breadcrumbs: [{ text: "Wiki", url: "/wiki" }] })
@@ -304,6 +309,35 @@ test("renderHistory renders revision summaries for authorized viewers without ra
   assert.equal(render.data.revisions[0].revisionId, "rev-2");
   assert.equal(Object.hasOwn(render.data.revisions[0], "patch"), false);
   assert.equal(Object.hasOwn(render.data.revisions[0], "checkpointSource"), false);
+});
+
+test("renderHistory escapes titleRaw-derived page titles before rendering", async () => {
+  const harness = createControllerHarness({
+    state: {
+      page: {
+        status: "ok",
+        topic: {
+          tid: 42,
+          cid: 7,
+          mainPid: 420,
+          title: "&lt;img src=x&gt;",
+          titleRaw: "<img src=x onerror=alert(1)>",
+          slug: "42/img",
+          wikiPath: "/wiki/Lore/img"
+        },
+        category: { cid: 7, name: "Lore", wikiPath: "/wiki/Lore" },
+        pageTitlePath: ["<img src=x onerror=alert(1)>"],
+        parentPages: []
+      }
+    }
+  });
+
+  await harness.run();
+
+  const render = harness.calls.render[0];
+  assert.equal(render.data.pageTitle, "&lt;img src=x onerror=alert(1)&gt;");
+  assert.ok(!render.data.pageTitle.includes("<"), "pageTitle must never carry raw HTML");
+  assert.ok(!render.data.title.includes("<"), "browser title must never carry raw HTML");
 });
 
 test("renderHistory exposes hard purge only for tombstoned pages with hard purge permission", async () => {

@@ -5,6 +5,7 @@ const middleware = require.main.require("./src/middleware");
 const routeHelpers = require.main.require("./src/routes/helpers");
 const composeAssets = require("../lib/compose-assets");
 const composeController = require("../lib/controllers/compose");
+const wikiManageController = require("../lib/controllers/wiki-manage");
 const wikiNamespaceCreateController = require("../lib/controllers/wiki-namespace-create");
 const wikiRevisionController = require("../lib/controllers/wiki-revisions");
 const config = require("../lib/config");
@@ -35,7 +36,7 @@ function buildPageTitleSegments(pageTitlePath) {
     return [];
   }
   return path.map((segment, index) => ({
-    text: segment,
+    text: serializer.escapeTitleHTML(segment),
     hasSeparatorBefore: index > 0,
     isParent: index < path.length - 1,
     isLeaf: index === path.length - 1
@@ -76,10 +77,15 @@ async function canViewWikiHistory(wikiPage, uid) {
 async function buildWikiPageRenderData(wikiPage, { isWikiHome, uid }) {
   const trail = wikiBreadcrumbTrail.forArticleView(wikiPage);
 
-  const pageTitle = serializer.getTitleDisplay(wikiPage.pageTitlePath, wikiPage.topic.titleRaw || wikiPage.topic.title);
+  // titlePath segments derive from titleRaw and Benchpress does not escape
+  // interpolation, so escape every title string that reaches the template
+  // escape the raw-derived display; when it falls back to the core-escaped
+  // topic.title use it as-is to avoid double-encoding (e.g. `<b>` -> `&lt;b&gt;`)
+  const rawPageTitle = serializer.getTitleDisplay(wikiPage.pageTitlePath, wikiPage.topic.titleRaw);
+  const pageTitle = rawPageTitle ? serializer.escapeTitleHTML(rawPageTitle) : wikiPage.topic.title;
   const pageTitleSegments = buildPageTitleSegments(wikiPage.pageTitlePath);
   const pageParentTitle = wikiPage.pageTitlePath.length > 1 ?
-    serializer.getTitleDisplay(wikiPage.pageTitlePath.slice(0, -1)) :
+    serializer.escapeTitleHTML(serializer.getTitleDisplay(wikiPage.pageTitlePath.slice(0, -1))) :
     "";
   const canManageWikiPage = !!wikiPage.canEditWikiPage && !isWikiHome;
 
@@ -92,7 +98,7 @@ async function buildWikiPageRenderData(wikiPage, { isWikiHome, uid }) {
     showWikiDiscussionLink: !isWikiHome && !wikiPage.discussionDisabled,
     pageTitle,
     pageParentTitle,
-    subpageDraftTitle: wikiPageActions.buildSubpageDraftTitle(wikiPage.pageTitlePath, pageTitle),
+    subpageDraftTitle: serializer.escapeTitleHTML(wikiPageActions.buildSubpageDraftTitle(wikiPage.pageTitlePath, rawPageTitle)),
     pageTitlePath: wikiPage.pageTitlePath,
     pageTitleSegments,
     hasPageTitleSegments: pageTitleSegments.length > 0,
@@ -125,7 +131,7 @@ function canonicalWikiPath(canonicalPath) {
 function getNodeLeafTitle(node) {
   const pageTitlePath = node && node.page && Array.isArray(node.page.titlePath) ? node.page.titlePath : [];
   if (pageTitlePath.length) {
-    return pageTitlePath[pageTitlePath.length - 1];
+    return serializer.escapeTitleHTML(pageTitlePath[pageTitlePath.length - 1]);
   }
   if (node && node.namespace && node.namespace.category && node.namespace.category.name) {
     return node.namespace.category.name;
@@ -607,6 +613,8 @@ function register(params) {
   routeHelpers.setupPageRoute(router, "/wiki/edit/:tid", [middleware.ensureLoggedIn], composeController.renderEdit);
 
   routeHelpers.setupPageRoute(router, "/wiki/history/:tid", [middleware.ensureLoggedIn], wikiRevisionController.renderHistory);
+
+  routeHelpers.setupPageRoute(router, "/wiki/manage", [middleware.ensureLoggedIn], wikiManageController.renderManage);
 
   routeHelpers.setupPageRoute(router, "/wiki/:path(*)", async (req, res, next) => {
     const requestPath = String(req.params.path || "").trim();

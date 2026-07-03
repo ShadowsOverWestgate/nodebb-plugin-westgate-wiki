@@ -148,9 +148,9 @@ function installNodebbStubs() {
         }
       },
       "./src/database": {
-        getSortedSetRange: async (key) => state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || [],
-        getSortedSetRevRange: async (key) => state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || [],
-        sortedSetCard: async (key) => (state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || []).length,
+        getSortedSetRange: async (key) => state.tidsByCid.get(parseInt((key.match(/^cid:(\d+):tids$/) || [])[1], 10)) || [],
+        getSortedSetRevRange: async (key) => state.tidsByCid.get(parseInt((key.match(/^cid:(\d+):tids$/) || [])[1], 10)) || [],
+        sortedSetCard: async (key) => (state.tidsByCid.get(parseInt((key.match(/^cid:(\d+):tids$/) || [])[1], 10)) || []).length,
         getObjectField: async () => null,
         getObject: async () => ({}),
         isSetMember: async () => false

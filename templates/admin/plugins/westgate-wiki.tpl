@@ -270,10 +270,12 @@
         </div>
 
         <div class="mb-4">
-          <label class="form-label mb-2" for="wikiNamespaceCreateGroups">Groups allowed to create wiki namespaces</label>
+          <label class="form-label mb-2" for="wikiNamespaceCreateGroups">Wiki manager groups</label>
           <p class="form-text">
-            <strong>Administrators</strong> can always create child namespaces from the wiki. Members of the groups selected below
-            may also use <strong>Create child namespace</strong>. Leave all unchecked for administrators only.
+            <strong>Administrators</strong> always have wiki manager rights. Members of the groups selected below can also
+            use <strong>Create child namespace</strong> and the raw wiki management view at <code>/wiki/manage</code>.
+            Leave all unchecked for administrators only. Destructive actions in the management view still require the
+            usual topic privileges.
           </p>
           <div class="list-group mb-2" style="max-height: 16rem; overflow: auto;">
             <!-- BEGIN groupOptions -->

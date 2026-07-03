@@ -55,13 +55,16 @@ require.main.require = function requireNodebbStub(id) {
     },
     "./src/database": {
       getSortedSetRange: async (key) => {
+        const m = key.match(/^cid:(\d+):tids$/);
+        if (!m) {
+          return [];
+        }
         state.sortedSetRangeCalls += 1;
-        const cid = parseInt(key.match(/^cid:(\d+):tids$/)[1], 10);
-        return state.tidsByCid.get(cid) || [];
+        return state.tidsByCid.get(parseInt(m[1], 10)) || [];
       },
       getSortedSetRevRange: async (key, start, stop) => {
-        const cid = parseInt(key.match(/^cid:(\d+):tids$/)[1], 10);
-        return (state.tidsByCid.get(cid) || []).slice(start, stop + 1);
+        const m = key.match(/^cid:(\d+):tids$/);
+        return m ? (state.tidsByCid.get(parseInt(m[1], 10)) || []).slice(start, stop + 1) : [];
       },
       getObjectField: async () => null,
       getObject: async () => ({})

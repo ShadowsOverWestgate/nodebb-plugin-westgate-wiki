@@ -45,8 +45,8 @@ require.main.require = function requireNodebbStub(id) {
       getChildrenCids: async () => []
     },
     "./src/database": {
-      getSortedSetRange: async (key) => state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || [],
-      getSortedSetRevRange: async (key) => state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || [],
+      getSortedSetRange: async (key) => state.tidsByCid.get(parseInt((key.match(/^cid:(\d+):tids$/) || [])[1], 10)) || [],
+      getSortedSetRevRange: async (key) => state.tidsByCid.get(parseInt((key.match(/^cid:(\d+):tids$/) || [])[1], 10)) || [],
       getObjectField: async () => null,
       getObject: async () => ({})
     },
