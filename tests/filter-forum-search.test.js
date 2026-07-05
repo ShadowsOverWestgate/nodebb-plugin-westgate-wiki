@@ -139,6 +139,7 @@ test("content search resolves wiki paths only for paginated result posts", async
     assert.deepEqual(state.pageInfoCalls, []);
 
     const result = await forumSearch.filterSearchContentGetResult({
+      data: { uid: 42 },
       result: {
         posts: [
           { pid: 400 },
@@ -154,5 +155,46 @@ test("content search resolves wiki paths only for paginated result posts", async
     assert.equal(result.result.posts[0].wikiPath, "/wiki/Category_1/Topic_40");
     assert.equal(result.result.posts[1].isWikiArticle, undefined);
     assert.equal(result.result.posts[1].wikiPath, undefined);
+  });
+});
+
+test("title-only search results get tagged without a prior inContent call", async () => {
+  await withForumSearchStubs(async (forumSearch, state) => {
+    const data = {
+      data: { uid: 7 },
+      result: {
+        posts: [
+          { pid: 100 }, // wiki article main post (cid 1)
+          { pid: 200 } // forum post (cid 5)
+        ]
+      }
+    };
+
+    await forumSearch.filterSearchContentGetResult(data);
+
+    assert.equal(data.result.posts[0].isWikiArticle, true);
+    assert.ok(String(data.result.posts[0].wikiPath).startsWith("/wiki/"));
+    assert.equal(data.result.posts[1].isWikiArticle, undefined);
+    assert.equal(data.result.posts[1].wikiPath, undefined);
+    assert.deepEqual(state.pageInfoUids, [7], "resolution uses the search payload uid");
+  });
+});
+
+test("tombstoned wiki topics stay untagged in title-only search results", async () => {
+  await withForumSearchStubs(async (forumSearch, state) => {
+    const data = {
+      data: { uid: 7 },
+      result: {
+        posts: [
+          { pid: 300 } // tombstoned wiki article main post (cid 1)
+        ]
+      }
+    };
+
+    await forumSearch.filterSearchContentGetResult(data);
+
+    assert.equal(data.result.posts[0].isWikiArticle, undefined);
+    assert.equal(data.result.posts[0].wikiPath, undefined);
+    assert.deepEqual(state.pageInfoCalls, []);
   });
 });
