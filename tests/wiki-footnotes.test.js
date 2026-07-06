@@ -2,7 +2,7 @@
 
 const assert = require("assert");
 
-const footnotes = require("../lib/wiki-footnotes");
+const footnotes = require("../lib/content/wiki-footnotes");
 
 function countMatches(value, pattern) {
   return (String(value || "").match(pattern) || []).length;
@@ -92,6 +92,19 @@ function countMatches(value, pattern) {
 {
   const html = footnotes.transformDokuWikiFootnotes('<p id="fn__1">Existing</p><p>((Note))</p>');
   assert(html.includes('id="fn__1-2"'), "generated ids should avoid existing id collisions");
+}
+
+{
+  // Literal ((...)) path must be sanitized like the entity path: this transform
+  // runs at filter:parse.post AFTER core sanitize, so its output is not re-cleaned.
+  const html = footnotes.transformDokuWikiFootnotes('<p>Boom ((<img src=x onerror=alert(1)> note))</p>');
+  assert(!/onerror/i.test(html), "literal footnote body must have inline event handlers stripped");
+
+  const scriptHtml = footnotes.transformDokuWikiFootnotes('<p>X ((<script>alert(1)</script>note))</p>');
+  assert(!/<script/i.test(scriptHtml), "literal footnote body must have script tags stripped");
+
+  const jsHref = footnotes.transformDokuWikiFootnotes('<p>Y ((<a href="javascript:alert(1)">click</a>))</p>');
+  assert(!/javascript:/i.test(jsHref), "footnote anchor with unsafe href must be dropped");
 }
 
 console.log("wiki-footnotes tests passed");

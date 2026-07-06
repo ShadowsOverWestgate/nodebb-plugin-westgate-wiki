@@ -3,9 +3,9 @@
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
 
-const archiveSchema = require("../lib/wiki-archive-schema");
+const archiveSchema = require("../lib/archive/wiki-archive-schema");
 
-const importPreview = require("../lib/wiki-archive-import");
+const importPreview = require("../lib/archive/wiki-archive-import");
 
 function sha256(value) {
   return crypto.createHash("sha256").update(Buffer.isBuffer(value) ? value : Buffer.from(String(value))).digest("hex");

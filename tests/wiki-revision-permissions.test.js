@@ -16,7 +16,7 @@ function loadPermissionsWithPrivilegesStub(can) {
     return originalMainRequire(id);
   };
 
-  const modulePath = require.resolve("../lib/wiki-revision-permissions");
+  const modulePath = require.resolve("../lib/pages/wiki-revision-permissions");
   delete require.cache[modulePath];
   const permissions = require(modulePath);
 

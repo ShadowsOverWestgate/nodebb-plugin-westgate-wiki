@@ -11,7 +11,7 @@ const state = {
   lists: new Map()
 };
 
-const originalMainRequire = require.main.require.bind(require.main);
+const { installNodebbStubs, restoreNodebbStubs } = require("./helpers/nodebb-stub");
 
 function list(key) {
   if (!state.lists.has(key)) {
@@ -20,9 +20,8 @@ function list(key) {
   return state.lists.get(key);
 }
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "./src/database": {
+installNodebbStubs({
+  "./src/database": {
       getObject: async (key) => {
         const value = state.objects.get(key);
         return value ? { ...value } : null;
@@ -59,10 +58,8 @@ require.main.require = function requireNodebbStub(id) {
         return rows.slice(from, to);
       },
       listLength: async (key) => list(key).length
-    }
-  };
-  return stubs[id] || originalMainRequire(id);
-};
+  }
+});
 
 function reset() {
   state.now = 1000;
@@ -75,7 +72,7 @@ function reset() {
 
 (async () => {
   try {
-    const revisions = require("../lib/wiki-revisions");
+    const revisions = require("../lib/pages/wiki-revisions");
 
     revisions.setNowProvider(() => state.now);
     revisions.setRevisionIdProvider((input) => `rev-${input.tid}-${input.timestamp}-${input.action}`);
@@ -369,7 +366,7 @@ function reset() {
 
     console.log("wiki revisions tests passed");
   } finally {
-    require.main.require = originalMainRequire;
+    restoreNodebbStubs();
   }
 })().catch((err) => {
   console.error(err);

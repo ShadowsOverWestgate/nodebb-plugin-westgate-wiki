@@ -24,101 +24,73 @@ const state = {
   hiddenTopicTidsByUid: new Map()
 };
 
-const originalMainRequire = require.main.require.bind(require.main);
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
 
-function slugify(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "nconf": {
-      get: (key) => (key === "relative_path" ? "" : undefined)
+installNodebbStubs({
+  "./src/categories": {
+    getCategoryData: async (cid) => {
+      state.categoryDataCalls += 1;
+      return state.categories.get(parseInt(cid, 10)) || null;
     },
-    "./src/categories": {
-      getCategoryData: async (cid) => {
-        state.categoryDataCalls += 1;
-        return state.categories.get(parseInt(cid, 10)) || null;
-      },
-      getChildrenCids: async () => []
-    },
-    "./src/controllers/helpers": {
-      formatApiResponse: (status, res, payload) => {
-        res.statusCode = status;
-        res.payload = payload;
-        return payload;
+    getChildrenCids: async () => []
+  },
+  "./src/database": {
+    getSortedSetRange: async (key) => {
+      const m = key.match(/^cid:(\d+):tids$/);
+      if (!m) {
+        return [];
       }
+      state.sortedSetRangeCalls += 1;
+      return state.tidsByCid.get(parseInt(m[1], 10)) || [];
     },
-    "./src/database": {
-      getSortedSetRange: async (key) => {
-        const m = key.match(/^cid:(\d+):tids$/);
-        if (!m) {
-          return [];
-        }
-        state.sortedSetRangeCalls += 1;
-        return state.tidsByCid.get(parseInt(m[1], 10)) || [];
-      },
-      getSortedSetRevRange: async (key, start, stop) => {
-        const m = key.match(/^cid:(\d+):tids$/);
-        return m ? (state.tidsByCid.get(parseInt(m[1], 10)) || []).slice(start, stop + 1) : [];
-      },
-      getObjectField: async () => null,
-      getObject: async () => ({})
-    },
-    "./src/meta": {
-      settings: {
-        get: async () => state.settings,
-        setOnEmpty: async () => {},
-        set: async () => {}
-      }
-    },
-    "./src/slugify": slugify,
-    "./src/privileges": {
-      categories: {
-        get: async (cid, uid) => {
-          const hidden = state.hiddenCategoryCidsByUid.get(parseInt(uid, 10)) || new Set();
-          const canRead = !hidden.has(parseInt(cid, 10));
-          return { read: canRead, "topics:read": canRead };
-        },
-        can: async () => true,
-        isAdminOrMod: async () => false
-      },
-      topics: {
-        filterTids: async (privilege, tids, uid) => {
-          const hidden = state.hiddenTopicTidsByUid.get(parseInt(uid, 10)) || new Set();
-          return (Array.isArray(tids) ? tids : []).filter((tid) => !hidden.has(parseInt(tid, 10)));
-        },
-        get: async () => ({ "topics:read": true, view_deleted: false, view_scheduled: false })
-      }
-    },
-    "./src/topics": {
-      getTopicData: async (tid) => state.topics.get(parseInt(tid, 10)) || null,
-      getTopicsFields: async (tids) => {
-        state.topicFieldCalls += 1;
-        return (Array.isArray(tids) ? tids : [])
-          .map((tid) => state.topics.get(parseInt(tid, 10)))
-          .filter(Boolean);
-      }
-    },
-    "./src/user": {
-      isAdministrator: async () => false,
-      isGlobalModerator: async () => false
-    },
-    "./src/utils": {
-      isNumber: (value) => String(value || "").trim() !== "" && !Number.isNaN(parseFloat(value))
+    getSortedSetRevRange: async (key, start, stop) => {
+      const m = key.match(/^cid:(\d+):tids$/);
+      return m ? (state.tidsByCid.get(parseInt(m[1], 10)) || []).slice(start, stop + 1) : [];
     }
-  };
+  },
+  "./src/meta": {
+    settings: {
+      get: async () => state.settings,
+      setOnEmpty: async () => {},
+      set: async () => {}
+    }
+  },
+  "./src/privileges": {
+    categories: {
+      get: async (cid, uid) => {
+        const hidden = state.hiddenCategoryCidsByUid.get(parseInt(uid, 10)) || new Set();
+        const canRead = !hidden.has(parseInt(cid, 10));
+        return { read: canRead, "topics:read": canRead };
+      },
+      can: async () => true,
+      isAdminOrMod: async () => false
+    },
+    topics: {
+      filterTids: async (privilege, tids, uid) => {
+        const hidden = state.hiddenTopicTidsByUid.get(parseInt(uid, 10)) || new Set();
+        return (Array.isArray(tids) ? tids : []).filter((tid) => !hidden.has(parseInt(tid, 10)));
+      },
+      get: async () => ({ "topics:read": true, view_deleted: false, view_scheduled: false })
+    }
+  },
+  "./src/topics": {
+    getTopicData: async (tid) => state.topics.get(parseInt(tid, 10)) || null,
+    getTopicsFields: async (tids) => {
+      state.topicFieldCalls += 1;
+      return (Array.isArray(tids) ? tids : [])
+        .map((tid) => state.topics.get(parseInt(tid, 10)))
+        .filter(Boolean);
+    }
+  },
+  "./src/user": {
+    isAdministrator: async () => false,
+    isGlobalModerator: async () => false
+  }
+});
 
-  return stubs[id] || originalMainRequire(id);
-};
-
-const wikiDirectory = require("../lib/wiki-directory-service");
-const wikiLinks = require("../lib/wiki-links");
-const config = require("../lib/config");
+const wikiDirectory = require("../lib/tree/wiki-directory-service");
+const wikiLinks = require("../lib/content/wiki-links");
+const config = require("../lib/core/config");
 
 (async () => {
   wikiDirectory.invalidateAllWikiCaches();
@@ -160,8 +132,11 @@ const config = require("../lib/config");
   assert.match(html, /Guide entity<\/a>/);
   assert.match(html, /href="\/wiki\/Wiki\/Development\/Map_Creation_Guide#using-dcs">Guide section entity<\/a>/);
   assert.match(html, /class="wiki-redlink" href="\/wiki\/Wiki\/Development\?create=New%20Redlink&amp;redlink=1&amp;cid=2"/);
-  assert.strictEqual(state.sortedSetRangeCalls, 1, "per-post resolver should scan each target namespace once");
-  assert.strictEqual(state.topicFieldCalls, 1, "per-post resolver should hydrate each target namespace once");
+  // Unresolved bare links additionally scan the other wiki namespaces (the
+  // cross-namespace unique-title fallback), still at most once per namespace
+  // per parse thanks to the per-context row cache.
+  assert(state.sortedSetRangeCalls <= 3, `each namespace should be scanned at most once per parse (got ${state.sortedSetRangeCalls})`);
+  assert(state.topicFieldCalls <= 3, `each namespace should be hydrated at most once per parse (got ${state.topicFieldCalls})`);
   assert(state.categoryDataCalls <= 20, "per-post resolver should reuse effective category rows and namespace paths");
 
   state.topics.set(13, {
@@ -184,7 +159,7 @@ const config = require("../lib/config");
     scheduled: 0
   });
   state.tidsByCid.set(2, [10, 11, 13, 14]);
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const punctuatedTitleHtml = await wikiLinks.replaceWikiLinks(
     '<p><span class="wiki-entity wiki-entity--page" data-wiki-entity="page" data-wiki-target="CKEditor Page................." data-wiki-label="CKEditor Page.................">CKEditor Page.................</span></p>',
     2,
@@ -208,7 +183,7 @@ const config = require("../lib/config");
     scheduled: 0
   });
   state.tidsByCid.set(2, [10, 11, 12]);
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const subpageHtml = await wikiLinks.replaceWikiLinks(
     "[[Asdf :: A sub page :: Baby page|Baby page]]",
     2,
@@ -243,9 +218,9 @@ const config = require("../lib/config");
     [50, { tid: 50, cid: 5, title: "Brew Potion", titleRaw: "Brew Potion", slug: "50/brew-potion", deleted: 0, scheduled: 0 }]
   ]);
   state.tidsByCid = new Map([[4, [40]], [5, [50]]]);
-  require("../lib/config").invalidateSettingsCache();
-  require("../lib/wiki-paths").invalidateNamespaceIndexCache({ skipSettingsInvalidation: true });
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/core/config").invalidateSettingsCache();
+  require("../lib/tree/wiki-paths").invalidateNamespaceIndexCache({ skipSettingsInvalidation: true });
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const generatedLinkHtml = await wikiLinks.replaceWikiLinks(
     [
       "[[feat:brew:potion]]",
@@ -291,8 +266,8 @@ const config = require("../lib/config");
   ]);
   state.tidsByCid = new Map([[11, [110]]]);
   state.hiddenCategoryCidsByUid.set(9, new Set([10]));
-  require("../lib/config").invalidateSettingsCache();
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/core/config").invalidateSettingsCache();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const hiddenPathHtml = await wikiLinks.replaceWikiLinks(
     [
       "[[readable child:Hidden Page]]",
@@ -310,7 +285,7 @@ const config = require("../lib/config");
 
   state.hiddenCategoryCidsByUid = new Map();
   state.hiddenTopicTidsByUid.set(9, new Set([110]));
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const hiddenTopicHtml = await wikiLinks.replaceWikiLinks(
     "[[readable child:Hidden Page]]",
     11,
@@ -371,7 +346,7 @@ const config = require("../lib/config");
   ]);
   state.tidsByCid = new Map([[11, [110, 111]]]);
   state.hiddenTopicTidsByUid = new Map([[0, new Set([111])]]);
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const guestVisibleDuplicateHtml = await wikiLinks.replaceWikiLinks(
     "[[readable child:Collision Page]]",
     11,
@@ -385,7 +360,7 @@ const config = require("../lib/config");
   );
 
   state.hiddenTopicTidsByUid = new Map();
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const guestVisibleAmbiguousHtml = await wikiLinks.replaceWikiLinks(
     "[[readable child:Collision Page]]",
     11,
@@ -399,7 +374,7 @@ const config = require("../lib/config");
   );
 
   state.hiddenTopicTidsByUid = new Map([[0, new Set([110, 111])]]);
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const guestHiddenAmbiguousHtml = await wikiLinks.replaceWikiLinks(
     "[[readable child:Collision Page]]",
     11,
@@ -418,7 +393,7 @@ const config = require("../lib/config");
   ]);
   state.tidsByCid = new Map([[11, [120, 121]]]);
   state.hiddenTopicTidsByUid = new Map([[0, new Set([120])]]);
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const hiddenExactVisibleSlugHtml = await wikiLinks.replaceWikiLinks(
     "[[readable child:Hidden Exact]]",
     11,
@@ -437,7 +412,7 @@ const config = require("../lib/config");
   ]);
   state.tidsByCid = new Map([[11, [130, 131]]]);
   state.hiddenTopicTidsByUid = new Map([[0, new Set([130])]]);
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const hiddenExactVisibleLeafHtml = await wikiLinks.replaceWikiLinks(
     "[[readable child:Leaf Target]]",
     11,
@@ -456,7 +431,7 @@ const config = require("../lib/config");
   state.tidsByCid = new Map([[11, [140]]]);
   state.hiddenTopicTidsByUid = new Map();
   state.hiddenCategoryCidsByUid = new Map();
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const parseHookData = {
     postData: {
       uid: 1,
@@ -504,7 +479,7 @@ const config = require("../lib/config");
     westgateWikiTombstoned: "1"
   });
   state.tidsByCid.set(11, [140, 141]);
-  require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   const tombstoneStableMarkerHtml = await wikiLinks.replaceWikiLinks(
     "[[tid:141]] [[tid:141|explicit label]]",
     null,

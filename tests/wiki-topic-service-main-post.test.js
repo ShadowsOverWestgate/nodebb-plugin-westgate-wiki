@@ -8,16 +8,15 @@ const originalMainRequire = require.main.require.bind(require.main);
 
 function clearModules() {
   [
-    "lib/topic-service.js",
-    "lib/config.js",
-    "lib/wiki-service.js",
-    "lib/wiki-canonical-path-adapter.js",
-    "lib/wiki-discussion-settings.js",
-    "lib/wiki-article-css.js",
-    "lib/wiki-article-watch.js",
-    "lib/wiki-html-sanitizer.js",
-    "lib/wiki-tombstones.js",
-    "lib/serializer.js"
+    "lib/read/topic-service.js",
+    "lib/core/config.js",
+    "lib/read/wiki-service.js",
+    "lib/read/wiki-discussion-settings.js",
+    "lib/content/wiki-article-css.js",
+    "lib/features/wiki-article-watch.js",
+    "lib/content/wiki-html-sanitizer.js",
+    "lib/pages/wiki-tombstones.js",
+    "lib/core/serializer.js"
   ].forEach((relativePath) => {
     const filename = require.resolve(`${root}/${relativePath}`);
     delete require.cache[filename];
@@ -126,7 +125,7 @@ async function withTopicServiceStubs(fn) {
 
   try {
     clearModules();
-    const topicService = require("../lib/topic-service");
+    const topicService = require("../lib/read/topic-service");
     await fn(topicService);
   } finally {
     require.main.require = originalMainRequire;

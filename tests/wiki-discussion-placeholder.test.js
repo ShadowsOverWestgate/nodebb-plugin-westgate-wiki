@@ -2,107 +2,40 @@
 
 const assert = require("assert");
 
-const state = {
-  settings: {
-    categoryIds: "1",
-    includeChildCategories: "0"
+const { state, setCategories, setTopics, installNodebbStubs } = require("./helpers/nodebb-stub");
+
+state.hiddenCategoryCidsByUid = new Map();
+
+installNodebbStubs({
+  nconf: {
+    get: (key) => (key === "relative_path" ? "/forum" : "")
   },
-  categories: new Map(),
-  topics: new Map(),
-  hiddenCategoryCidsByUid: new Map()
-};
-const originalMainRequire = require.main.require.bind(require.main);
-
-function slugify(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function setCategories(rows) {
-  state.categories = new Map(rows.map((row) => [parseInt(row.cid, 10), row]));
-}
-
-function setTopics(rows) {
-  state.topics = new Map(rows.map((row) => [parseInt(row.tid, 10), row]));
-}
-
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    nconf: {
-      get: (key) => (key === "relative_path" ? "/forum" : "")
-    },
-    "./src/categories": {
-      getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
-      getChildrenCids: async () => []
-    },
-    "./src/database": {
-      getSortedSetRange: async () => [],
-      getSortedSetRevRange: async () => [],
-      getObjectField: async () => null,
-      getObject: async () => ({})
-    },
-    "./src/controllers/helpers": {
-      formatApiResponse: (status, res, payload) => {
-        res.statusCode = status;
-        res.payload = payload;
-        return payload;
+  "./src/privileges": {
+    categories: {
+      get: async (cid, uid) => {
+        const hidden = state.hiddenCategoryCidsByUid.get(parseInt(uid, 10)) || new Set();
+        const canRead = !hidden.has(parseInt(cid, 10));
+        return { read: canRead, "topics:read": canRead };
       }
     },
-    "./src/meta": {
-      settings: {
-        get: async () => state.settings,
-        setOnEmpty: async () => {},
-        set: async () => {}
-      }
-    },
-    "./src/privileges": {
-      categories: {
-        get: async (cid, uid) => {
-          const hidden = state.hiddenCategoryCidsByUid.get(parseInt(uid, 10)) || new Set();
-          const canRead = !hidden.has(parseInt(cid, 10));
-          return { read: canRead, "topics:read": canRead };
-        }
-      },
-      topics: {
-        filterTids: async (priv, tids) => (Array.isArray(tids) ? tids : [])
-      }
-    },
-    "./src/slugify": slugify,
-    "./src/topics": {
-      getTopicData: async (tid) => state.topics.get(parseInt(tid, 10)) || null,
-      getTopicsFields: async () => [],
-      getTopicsFromSet: async () => [],
-      getTopicField: async (tid, field) => {
-        const topic = state.topics.get(parseInt(tid, 10));
-        return topic && Object.prototype.hasOwnProperty.call(topic, field) ? topic[field] : null;
-      },
-      setTopicField: async (tid, field, value) => {
-        const parsedTid = parseInt(tid, 10);
-        const topic = state.topics.get(parsedTid) || { tid: parsedTid };
-        topic[field] = value;
-        state.topics.set(parsedTid, topic);
-      }
-    },
-    "./src/user": {
-      isAdministrator: async () => false
-    },
-    "./src/utils": {
-      isNumber: (value) => !Number.isNaN(parseFloat(value))
+    topics: {
+      filterTids: async (priv, tids) => (Array.isArray(tids) ? tids : [])
     }
-  };
-
-  if (!stubs[id]) {
-    return originalMainRequire(id);
+  },
+  "./src/topics": {
+    getTopicsFields: async () => [],
+    getTopicsFromSet: async () => [],
+    setTopicField: async (tid, field, value) => {
+      const parsedTid = parseInt(tid, 10);
+      const topic = state.topics.get(parsedTid) || { tid: parsedTid };
+      topic[field] = value;
+      state.topics.set(parsedTid, topic);
+    }
   }
-  return stubs[id];
-};
+});
 
-const wikiDiscussionPlaceholder = require("../lib/wiki-discussion-placeholder");
-const wikiDiscussionSettings = require("../lib/wiki-discussion-settings");
+const wikiDiscussionPlaceholder = require("../lib/read/wiki-discussion-placeholder");
+const wikiDiscussionSettings = require("../lib/read/wiki-discussion-settings");
 
 function reset(settings, categories, topics) {
   state.settings = {
@@ -113,7 +46,7 @@ function reset(settings, categories, topics) {
   setTopics(topics || []);
   state.hiddenCategoryCidsByUid = new Map();
   try {
-    require("../lib/config").invalidateSettingsCache();
+    require("../lib/core/config").invalidateSettingsCache();
   } catch (e) {
     // Module may not be loaded during early test setup.
   }

@@ -2,7 +2,7 @@
 
 const assert = require("assert");
 
-const actions = require("../lib/wiki-page-actions");
+const actions = require("../lib/pages/wiki-page-actions");
 
 assert.strictEqual(
   actions.buildSubpageDraftTitle(["Mechanics", "Feats"], "Fallback"),
@@ -187,32 +187,32 @@ assert.strictEqual(
     };
   }
 
-  patchModule("../lib/topic-service", {
+  patchModule("../lib/read/topic-service", {
     getWikiPage: async () => ({
       status: "ok",
       canEditWikiPage: true,
       topic: wikiPageTopic
     })
   });
-  patchModule("../lib/wiki-directory-service", {
+  patchModule("../lib/tree/wiki-directory-service", {
     invalidateNamespace: () => {}
   });
-  patchModule("../lib/wiki-edit-locks", {
+  patchModule("../lib/pages/wiki-edit-locks", {
     assertSaveLock: async () => ({ status: "ok" }),
     getStatusMessage: () => "locked"
   });
-  patchModule("../lib/wiki-page-validation", {
+  patchModule("../lib/pages/wiki-page-validation", {
     getValidationMessage: () => "",
     isBlockingResult: () => false,
     sanitizeAndValidateWikiMainBody: (content) => content
   });
-  patchModule("../lib/wiki-paths", {
+  patchModule("../lib/tree/wiki-paths", {
     getCanonicalPagePath: async (topic, options) => canonicalPathImpl(topic, options),
     getNamespaceEntry: async () => ({ status: "ok" }),
     invalidateWikiTreeIndex: () => {},
     validateCanonicalPagePlacement: async () => ({ status: "ok" })
   });
-  patchModule("../lib/wiki-revisions", {
+  patchModule("../lib/pages/wiki-revisions", {
     assertCanAppendRevision: async (payload) => {
       events.push(`revision.preflight:${payload.action}:${payload.title}`);
       preflightCalls.push(payload);

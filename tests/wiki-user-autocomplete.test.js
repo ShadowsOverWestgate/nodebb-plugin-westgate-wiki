@@ -8,14 +8,13 @@ const state = {
   searchCalls: [],
   usersBySlug: new Map()
 };
-const originalMainRequire = require.main.require.bind(require.main);
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
 
 function setUsers(rows) {
   state.usersBySlug = new Map(rows.map((row) => [row.userslug, row]));
 }
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
+installNodebbStubs({
     "./src/controllers/helpers": {
       formatApiResponse: (status, res, payload) => ({ status, payload, res })
     },
@@ -40,15 +39,9 @@ require.main.require = function requireNodebbStub(id) {
         return null;
       }
     }
-  };
+});
 
-  if (!stubs[id]) {
-    return originalMainRequire(id);
-  }
-  return stubs[id];
-};
-
-const autocomplete = require("../lib/wiki-user-autocomplete");
+const autocomplete = require("../lib/features/wiki-user-autocomplete");
 
 (async () => {
   setUsers([

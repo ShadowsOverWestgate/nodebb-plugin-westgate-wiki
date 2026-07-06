@@ -2,85 +2,45 @@
 
 const assert = require("node:assert/strict");
 
-const state = {
-  settings: {
-    categoryIds: "1, 2, 3, 4",
-    includeChildCategories: "0"
-  },
-  categories: new Map([
-    [1, { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 0 }],
-    [2, { cid: 2, name: "Mechanics", slug: "2/mechanics", parentCid: 1, topic_count: 0 }],
-    [3, { cid: 3, name: "Feats", slug: "3/feats", parentCid: 2, topic_count: 0 }],
-    [4, { cid: 4, name: "Item Types", slug: "4/item-types", parentCid: 1, topic_count: 0 }]
-  ]),
-  topics: new Map(),
-  tidsByCid: new Map()
-};
+const { state, setCategories, setTopics, setSettings, installNodebbStubs } = require("./helpers/nodebb-stub");
 
-const originalMainRequire = require.main.require.bind(require.main);
+setSettings({
+  categoryIds: "1, 2, 3, 4",
+  includeChildCategories: "0"
+});
+setCategories([
+  { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 0 },
+  { cid: 2, name: "Mechanics", slug: "2/mechanics", parentCid: 1, topic_count: 0 },
+  { cid: 3, name: "Feats", slug: "3/feats", parentCid: 2, topic_count: 0 },
+  { cid: 4, name: "Item Types", slug: "4/item-types", parentCid: 1, topic_count: 0 }
+]);
+setTopics([]);
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "./src/categories": {
-      getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
-      getChildrenCids: async () => []
+installNodebbStubs({
+  "./src/privileges": {
+    categories: {
+      can: async () => true,
+      get: async () => ({ read: true, "topics:read": true })
     },
-    "./src/controllers/helpers": {
-      formatApiResponse: (status, res, payload) => {
-        res.statusCode = status;
-        res.payload = payload;
-        return payload;
-      }
-    },
-    "./src/database": {
-      getSortedSetRange: async (key) => state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || [],
-      getSortedSetRevRange: async (key) => state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || [],
-      sortedSetCard: async (key) => (state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || []).length,
-      getObjectField: async () => null,
-      getObject: async () => ({})
-    },
-    "./src/meta": {
-      settings: {
-        get: async () => state.settings,
-        setOnEmpty: async () => {},
-        set: async () => {}
-      }
-    },
-    "./src/privileges": {
-      categories: {
-        can: async () => true,
-        get: async () => ({ read: true, "topics:read": true })
-      },
-      topics: {
-        filterTids: async (privilege, tids) => tids,
-        get: async () => ({ "topics:read": true, view_deleted: false, view_scheduled: false })
-      }
-    },
-    "./src/slugify": (value) => String(value || "")
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, ""),
-    "./src/topics": {
-      getTopicData: async () => null,
-      getTopicsFields: async (tids) => (Array.isArray(tids) ? tids : [])
-        .map((tid) => state.topics.get(parseInt(tid, 10)))
-        .filter(Boolean)
-    },
-    "./src/user": {
-      isAdministrator: async () => false,
-      isGlobalModerator: async () => false
-    },
-    "./src/utils": {
-      isNumber: (value) => String(value || "").trim() !== "" && !Number.isNaN(parseFloat(value))
+    topics: {
+      filterTids: async (privilege, tids) => tids,
+      get: async () => ({ "topics:read": true, view_deleted: false, view_scheduled: false })
     }
-  };
+  },
+  "./src/topics": {
+    getTopicData: async () => null,
+    getTopicsFields: async (tids) => (Array.isArray(tids) ? tids : [])
+      .map((tid) => state.topics.get(parseInt(tid, 10)))
+      .filter(Boolean)
+  },
+  "./src/user": {
+    isAdministrator: async () => false,
+    isGlobalModerator: async () => false
+  }
+});
 
-  return stubs[id] || originalMainRequire(id);
-};
-
-const config = require("../lib/config");
-const wikiLinkAutocomplete = require("../lib/wiki-link-autocomplete");
+const config = require("../lib/core/config");
+const wikiLinkAutocomplete = require("../lib/content/wiki-link-autocomplete");
 
 (async () => {
   await config.getSettings({ bustCache: true });

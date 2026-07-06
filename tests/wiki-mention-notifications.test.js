@@ -19,16 +19,7 @@ const state = {
   deniedUids: new Set(),
   hiddenCategoryCidsByUid: new Map()
 };
-const originalMainRequire = require.main.require.bind(require.main);
-
-function slugify(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
 
 function setUsers(rows) {
   state.usersBySlug = new Map(rows.map((row) => [row.userslug, row]));
@@ -42,17 +33,14 @@ function getObject(key) {
   return state.objectFields.get(key);
 }
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    nconf: {
-      get: (key) => (key === "relative_path" ? "/forum" : "")
-    },
-    "./src/categories": {
-      getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
-      getChildrenCids: async () => []
-    },
-    "./src/controllers/helpers": {},
-    "./src/database": {
+installNodebbStubs({
+  nconf: {
+    get: (key) => (key === "relative_path" ? "/forum" : "")
+  },
+  "./src/categories": {
+    getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null
+  },
+  "./src/database": {
       getObject: async () => ({}),
       getObjectField: async (key, field) => getObject(key)[field],
       getSortedSetRange: async () => [],
@@ -103,7 +91,6 @@ require.main.require = function requireNodebbStub(id) {
         })
       }
     },
-    "./src/slugify": slugify,
     "./src/topics": {
       getTopicData: async (tid) => state.topics.get(parseInt(tid, 10)) || null,
       getTopicFields: async (tid) => state.topics.get(parseInt(tid, 10)) || null
@@ -120,15 +107,9 @@ require.main.require = function requireNodebbStub(id) {
     "./src/utils": {
       isNumber: (value) => value !== null && value !== "" && !Number.isNaN(Number(value))
     }
-  };
+});
 
-  if (!stubs[id]) {
-    return originalMainRequire(id);
-  }
-  return stubs[id];
-};
-
-const wikiMentionNotifications = require("../lib/wiki-mention-notifications");
+const wikiMentionNotifications = require("../lib/features/wiki-mention-notifications");
 
 function resetRuntime() {
   state.objectFields = new Map();
@@ -147,7 +128,7 @@ function resetWikiFixture() {
   state.categories = new Map([[1, { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0 }]]);
   state.topics = new Map([[10, { tid: 10, cid: 1, mainPid: 100, title: "Mentioned Page", slug: "10/mentioned-page" }]]);
   try {
-    require("../lib/config").invalidateSettingsCache();
+    require("../lib/core/config").invalidateSettingsCache();
   } catch (e) {
     // Module may not be loaded during early test setup.
   }
@@ -209,7 +190,7 @@ function resetWikiFixture() {
     slug: "10/hidden-mentioned-page"
   });
   state.hiddenCategoryCidsByUid.set(3, new Set([1]));
-  require("../lib/config").invalidateSettingsCache();
+  require("../lib/core/config").invalidateSettingsCache();
   await wikiMentionNotifications.handlePostSaveOrEdit({
     post: { pid: 100, tid: 10, uid: 2, content: "<p>Hidden @target</p>" }
   });

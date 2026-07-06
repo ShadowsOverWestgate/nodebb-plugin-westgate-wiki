@@ -3,6 +3,8 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
+
 const state = {
   isAdmin: true,
   groupMembership: [],
@@ -30,8 +32,6 @@ const state = {
   render: null
 };
 
-const originalMainRequire = require.main.require.bind(require.main);
-
 function rangeForCid(key) {
   const m = String(key || "").match(/^cid:(\d+):tids(:pinned)?$/);
   if (!m) {
@@ -58,9 +58,8 @@ function slugify(value) {
     .replace(/^-+|-+$/g, "");
 }
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "./src/categories": {
+installNodebbStubs({
+  "./src/categories": {
       getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
       getChildren: async (cids) => (Array.isArray(cids) ? cids : []).map((cid) => {
         const parsedCid = parseInt(cid, 10);
@@ -122,20 +121,17 @@ require.main.require = function requireNodebbStub(id) {
     "nconf": {
       get: (key) => (key === "relative_path" ? "" : undefined)
     }
-  };
+});
 
-  return stubs[id] || originalMainRequire(id);
-};
-
-const config = require("../lib/config");
-const wikiDirectory = require("../lib/wiki-directory-service");
+const config = require("../lib/core/config");
+const wikiDirectory = require("../lib/tree/wiki-directory-service");
 
 test("wiki manage raw browse", async (t) => {
   config.invalidateSettingsCache();
   wikiDirectory.invalidateAllWikiCaches();
 
   await t.test("the manage route segment is reserved", async () => {
-    const wikiPaths = require("../lib/wiki-paths");
+    const wikiPaths = require("../lib/tree/wiki-paths");
     assert.ok(
       wikiPaths.RESERVED_FIRST_SEGMENTS.has("manage"),
       "no wiki namespace may claim the /wiki/manage path"

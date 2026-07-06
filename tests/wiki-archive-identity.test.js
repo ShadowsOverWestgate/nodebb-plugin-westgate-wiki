@@ -3,28 +3,23 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 
+const { installNodebbStubs, restoreNodebbStubs } = require("./helpers/nodebb-stub");
+
 const root = path.resolve(__dirname, "..");
-const originalMainRequire = require.main.require.bind(require.main);
 
 function clearProjectModule(relativePath) {
   delete require.cache[require.resolve(path.join(root, relativePath))];
 }
 
 async function withTopicStub(topicApi, fn) {
-  const previousMainRequire = require.main.require;
-  require.main.require = function requireNodebbStub(id) {
-    if (id === "./src/topics") {
-      return topicApi;
-    }
-    return originalMainRequire(id);
-  };
-  clearProjectModule("lib/wiki-archive-identity.js");
+  installNodebbStubs({ "./src/topics": topicApi });
+  clearProjectModule("lib/archive/wiki-archive-identity.js");
 
   try {
-    return await fn(require("../lib/wiki-archive-identity"));
+    return await fn(require("../lib/archive/wiki-archive-identity"));
   } finally {
-    require.main.require = previousMainRequire;
-    clearProjectModule("lib/wiki-archive-identity.js");
+    restoreNodebbStubs();
+    clearProjectModule("lib/archive/wiki-archive-identity.js");
   }
 }
 

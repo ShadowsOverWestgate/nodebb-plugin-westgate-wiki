@@ -2,7 +2,7 @@
 
 const assert = require("assert");
 
-const wikiPageToc = require("../lib/wiki-page-toc");
+const wikiPageToc = require("../lib/content/wiki-page-toc");
 
 function test(name, fn) {
   try {

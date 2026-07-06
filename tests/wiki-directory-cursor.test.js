@@ -1,7 +1,7 @@
 "use strict";
 
 const assert = require("assert");
-const { decodeCursor, encodeCursor } = require("../lib/wiki-directory-cursor");
+const { decodeCursor, encodeCursor } = require("../lib/tree/wiki-directory-cursor");
 
 assert.deepStrictEqual(decodeCursor(null), null);
 assert.deepStrictEqual(decodeCursor(""), null);

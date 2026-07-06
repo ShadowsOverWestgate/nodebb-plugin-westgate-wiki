@@ -5,10 +5,10 @@ const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const archiveConfig = require("../lib/wiki-archive-config");
-const archiveManifest = require("../lib/wiki-archive-manifest");
-const archiveSchema = require("../lib/wiki-archive-schema");
-const migration = require("../lib/wiki-path-migration");
+const archiveConfig = require("../lib/archive/wiki-archive-config");
+const archiveManifest = require("../lib/archive/wiki-archive-manifest");
+const archiveSchema = require("../lib/archive/wiki-archive-schema");
+const migration = require("../lib/tree/wiki-canonical-diagnostics");
 
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");

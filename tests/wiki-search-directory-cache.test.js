@@ -2,6 +2,8 @@
 
 const assert = require("node:assert/strict");
 
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
+
 const state = {
   settings: {
     categoryIds: "1, 2",
@@ -15,8 +17,6 @@ const state = {
   dbRevRangeCalls: 0,
   topicFieldCalls: 0
 };
-
-const originalMainRequire = require.main.require.bind(require.main);
 
 function slugify(value) {
   return String(value || "")
@@ -50,9 +50,8 @@ setTopics([
   { tid: 11, cid: 2, title: "Map Creation Tools", titleRaw: "Map Creation Tools", slug: "11/map-creation-tools", deleted: 0, scheduled: 0, lastposttime: 7000 }
 ]);
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "./src/categories": {
+installNodebbStubs({
+  "./src/categories": {
       getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
       getChildrenCids: async () => []
     },
@@ -72,6 +71,10 @@ require.main.require = function requireNodebbStub(id) {
       getSortedSetRange: async (key) => {
         const cid = parseInt(key.match(/^cid:(\d+):tids$/)[1], 10);
         return state.tidsByCid.get(cid) || [];
+      },
+      sortedSetCard: async (key) => {
+        const cid = parseInt(key.match(/^cid:(\d+):tids$/)[1], 10);
+        return (state.tidsByCid.get(cid) || []).length;
       },
       getObjectField: async () => null,
       getObject: async () => ({})
@@ -114,15 +117,12 @@ require.main.require = function requireNodebbStub(id) {
     "./src/utils": {
       isNumber: (value) => String(value || "").trim() !== "" && !Number.isNaN(parseFloat(value))
     }
-  };
+});
 
-  return stubs[id] || originalMainRequire(id);
-};
-
-const wikiDirectory = require("../lib/wiki-directory-service");
-const wikiSearch = require("../lib/wiki-search-service");
-const wikiLinkAutocomplete = require("../lib/wiki-link-autocomplete");
-const config = require("../lib/config");
+const wikiDirectory = require("../lib/tree/wiki-directory-service");
+const wikiSearch = require("../lib/read/wiki-search-service");
+const wikiLinkAutocomplete = require("../lib/content/wiki-link-autocomplete");
+const config = require("../lib/core/config");
 
 (async () => {
   wikiDirectory.invalidateAllWikiCaches();
@@ -176,7 +176,7 @@ const config = require("../lib/config");
     includeChildCategories: "0"
   };
   config.invalidateSettingsCache();
-  require("../lib/wiki-paths").invalidateNamespaceIndexCache({ skipSettingsInvalidation: true });
+  require("../lib/tree/wiki-paths").invalidateNamespaceIndexCache({ skipSettingsInvalidation: true });
   setCategories([
     { cid: 1, name: "Wiki", slug: "1/wiki", parentCid: 0, topic_count: 0 },
     { cid: 2, name: "General", slug: "2/general", parentCid: 1, topic_count: 30 },

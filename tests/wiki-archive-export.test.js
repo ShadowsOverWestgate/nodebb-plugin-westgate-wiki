@@ -3,9 +3,9 @@
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
 
-const archiveExport = require("../lib/wiki-archive-export");
-const importPreview = require("../lib/wiki-archive-import");
-const archiveManifest = require("../lib/wiki-archive-manifest");
+const archiveExport = require("../lib/archive/wiki-archive-export");
+const importPreview = require("../lib/archive/wiki-archive-import");
+const archiveManifest = require("../lib/archive/wiki-archive-manifest");
 
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");

@@ -17,16 +17,7 @@ const state = {
   pushes: [],
   deniedUids: new Set()
 };
-const originalMainRequire = require.main.require.bind(require.main);
-
-function slugify(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
 
 function setUsers(rows) {
   state.usersByUid = new Map(rows.map((row) => [parseInt(row.uid, 10), row]));
@@ -46,23 +37,14 @@ function getObject(key) {
   return state.objectFields.get(key);
 }
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    nconf: {
-      get: (key) => (key === "relative_path" ? "/forum" : "")
-    },
-    "./src/categories": {
-      getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
-      getChildrenCids: async () => []
-    },
-    "./src/controllers/helpers": {
-      formatApiResponse: (status, res, payload) => {
-        res.statusCode = status;
-        res.payload = payload;
-        return payload;
-      }
-    },
-    "./src/database": {
+installNodebbStubs({
+  nconf: {
+    get: (key) => (key === "relative_path" ? "/forum" : "")
+  },
+  "./src/categories": {
+    getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null
+  },
+  "./src/database": {
       getObject: async () => ({}),
       getObjectField: async (key, field) => getObject(key)[field],
       getSetMembers: async (key) => [...getSet(key)],
@@ -111,7 +93,6 @@ require.main.require = function requireNodebbStub(id) {
         })
       }
     },
-    "./src/slugify": slugify,
     "./src/topics": {
       getTopicData: async (tid) => state.topics.get(parseInt(tid, 10)) || null,
       getTopicFields: async (tid) => state.topics.get(parseInt(tid, 10)) || null
@@ -123,15 +104,9 @@ require.main.require = function requireNodebbStub(id) {
     "./src/utils": {
       isNumber: (value) => value !== null && value !== "" && !Number.isNaN(Number(value))
     }
-  };
+});
 
-  if (!stubs[id]) {
-    return originalMainRequire(id);
-  }
-  return stubs[id];
-};
-
-const wikiArticleWatch = require("../lib/wiki-article-watch");
+const wikiArticleWatch = require("../lib/features/wiki-article-watch");
 
 function resetRuntime() {
   state.sets = new Map();

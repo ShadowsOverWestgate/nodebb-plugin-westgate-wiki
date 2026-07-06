@@ -100,21 +100,21 @@ function makeRouteStubs(routeCalls, ensureLoggedIn) {
       "./src/utils": { isNumber: () => true, toISOString: (value) => new Date(value).toISOString() }
     },
     project: {
-      "lib/compose-assets.js": { register: () => {} },
+      "lib/core/compose-assets.js": { register: () => {} },
       "lib/controllers/compose.js": { renderCompose: () => {}, renderEdit: () => {} },
       "lib/controllers/wiki-namespace-create.js": { renderChild: () => {} },
-      "lib/config.js": {},
-      "lib/wiki-namespace-creators.js": {},
-      "lib/wiki-alphabetical-index.js": {},
-      "lib/serializer.js": {},
-      "lib/wiki-service.js": {},
-      "lib/topic-service.js": {},
-      "lib/wiki-search-service.js": {},
-      "lib/wiki-breadcrumb-trail.js": {},
-      "lib/wiki-missing-page-create.js": {},
-      "lib/wiki-page-actions.js": {},
-      "lib/wiki-paths.js": {},
-      "lib/wiki-revision-permissions.js": {}
+      "lib/core/config.js": {},
+      "lib/features/wiki-namespace-creators.js": {},
+      "lib/tree/wiki-alphabetical-index.js": {},
+      "lib/core/serializer.js": {},
+      "lib/read/wiki-service.js": {},
+      "lib/read/topic-service.js": {},
+      "lib/read/wiki-search-service.js": {},
+      "lib/tree/wiki-breadcrumb-trail.js": {},
+      "lib/features/wiki-missing-page-create.js": {},
+      "lib/pages/wiki-page-actions.js": {},
+      "lib/tree/wiki-paths.js": {},
+      "lib/pages/wiki-revision-permissions.js": {}
     }
   };
 }
@@ -205,13 +205,13 @@ function createControllerHarness(overrides = {}) {
       }
     },
     project: {
-      "lib/topic-service.js": {
+      "lib/read/topic-service.js": {
         getWikiPage: async (tid, uid, options) => {
           calls.getWikiPage.push({ tid, uid, options });
           return state.page;
         }
       },
-      "lib/wiki-revision-permissions.js": {
+      "lib/pages/wiki-revision-permissions.js": {
         canViewHistory: async (cid, uid) => {
           calls.canViewHistory.push({ cid, uid });
           return state.canViewHistory;
@@ -225,7 +225,7 @@ function createControllerHarness(overrides = {}) {
           return state.canHardPurge;
         }
       },
-      "lib/wiki-tombstones.js": {
+      "lib/pages/wiki-tombstones.js": {
         getTombstoneFromFields: (fields) => {
           calls.getTombstoneFromFields.push(fields);
           return state.tombstoneFromFields;
@@ -235,7 +235,7 @@ function createControllerHarness(overrides = {}) {
           return state.tombstone;
         }
       },
-      "lib/wiki-revisions.js": {
+      "lib/pages/wiki-revisions.js": {
         ...(state.useSummaries ? {
           listRevisionSummaries: async (tid) => {
             calls.listRevisionSummaries.push({ tid });
@@ -247,7 +247,7 @@ function createControllerHarness(overrides = {}) {
           return state.revisions;
         }
       },
-      "lib/serializer.js": {
+      "lib/core/serializer.js": {
         getTitleDisplay: (titlePath, fallback) => (Array.isArray(titlePath) && titlePath.length ? titlePath.join(" / ") : fallback),
         escapeTitleHTML: (value) => String(value || "")
           .replace(/&/g, "&amp;")
@@ -255,7 +255,7 @@ function createControllerHarness(overrides = {}) {
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;")
       },
-      "lib/wiki-breadcrumb-trail.js": {
+      "lib/tree/wiki-breadcrumb-trail.js": {
         forArticleView: () => ({ breadcrumbs: [{ text: "Wiki", url: "/wiki" }] })
       }
     }

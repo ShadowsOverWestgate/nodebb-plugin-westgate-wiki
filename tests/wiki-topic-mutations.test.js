@@ -16,13 +16,13 @@ function getPexpireMs(calls, key) {
 }
 
 function clearMutationsModule() {
-  const filename = require.resolve(`${root}/lib/wiki-topic-mutations.js`);
+  const filename = require.resolve(`${root}/lib/pages/wiki-topic-mutations.js`);
   delete require.cache[filename];
 }
 
 function loadFreshMutations() {
   clearMutationsModule();
-  return require("../lib/wiki-topic-mutations");
+  return require("../lib/pages/wiki-topic-mutations");
 }
 
 function createOwnerLockDb({ initialLocks } = {}) {

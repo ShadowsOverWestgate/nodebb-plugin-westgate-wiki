@@ -12,15 +12,10 @@ const state = {
   topics: new Map([[10, { tid: 10, cid: 1, mainPid: 100, title: "Locked Page", slug: "10/locked-page" }]])
 };
 
-const originalMainRequire = require.main.require.bind(require.main);
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
 
-function slugify(value) {
-  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-}
-
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "./src/categories": {
+installNodebbStubs({
+  "./src/categories": {
       getCategoryData: async (cid) => ({ cid: parseInt(cid, 10), name: "Wiki", slug: `${cid}/wiki`, parentCid: 0 }),
       getChildrenCids: async () => []
     },
@@ -78,7 +73,6 @@ require.main.require = function requireNodebbStub(id) {
         return null;
       }
     },
-    "./src/slugify": slugify,
     "./src/topics": {
       getTopicField: async (tid, field) => {
         const topic = state.topics.get(parseInt(tid, 10));
@@ -102,14 +96,11 @@ require.main.require = function requireNodebbStub(id) {
         displayname: uid === 2 ? "Editor" : "Other"
       })
     }
-  };
+});
 
-  return stubs[id] || originalMainRequire(id);
-};
-
-const wikiEditLocks = require("../lib/wiki-edit-locks");
-const wikiPageValidation = require("../lib/wiki-page-validation");
-const wikiTopicMutations = require("../lib/wiki-topic-mutations");
+const wikiEditLocks = require("../lib/pages/wiki-edit-locks");
+const wikiPageValidation = require("../lib/pages/wiki-page-validation");
+const wikiTopicMutations = require("../lib/pages/wiki-topic-mutations");
 
 wikiEditLocks.setNowProvider(() => state.now);
 wikiEditLocks.setTokenProvider(() => `token-${state.now}`);

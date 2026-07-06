@@ -2,7 +2,7 @@
 
 const assert = require("assert");
 
-const topdataBotPrivileges = require("../lib/wiki-topdata-bot-privileges");
+const topdataBotPrivileges = require("../lib/forum/wiki-topdata-bot-privileges");
 
 (async () => {
   const originalMainRequire = require.main.require.bind(require.main);
@@ -33,7 +33,7 @@ const topdataBotPrivileges = require("../lib/wiki-topdata-bot-privileges");
     return stubs[id] || originalMainRequire(id);
   };
 
-  const configPath = require.resolve("../lib/config");
+  const configPath = require.resolve("../lib/core/config");
   const previousConfig = require.cache[configPath];
   require.cache[configPath] = {
     id: configPath,

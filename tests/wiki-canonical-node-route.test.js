@@ -4,54 +4,46 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
+
 const capturedRoutes = new Map();
 const redirects = [];
-const originalMainRequire = require.main.require.bind(require.main);
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "nconf": { get: () => "" },
-    "./src/controllers/api": { loadConfig: async () => ({ relative_path: "", csrf_token: "", "cache-buster": "" }) },
-    "./src/controllers/helpers": {
-      notAllowed: () => {
-        throw new Error("notAllowed should not be called");
-      },
-      redirect: (res, path, permanent) => {
-        redirects.push({ path, permanent });
-        if (res && typeof res.redirect === "function") {
-          res.redirect(path);
-        }
-      }
+installNodebbStubs({
+  "nconf": { get: () => "" },
+  "./src/controllers/api": { loadConfig: async () => ({ relative_path: "", csrf_token: "", "cache-buster": "" }) },
+  "./src/controllers/helpers": {
+    notAllowed: () => {
+      throw new Error("notAllowed should not be called");
     },
-    "./src/categories": { getCategoryData: async () => null, getChildren: async () => [[]], getChildrenCids: async () => [] },
-    "./src/database": { getSortedSetRange: async () => [], getSortedSetRevRange: async () => [], getObjectField: async () => null, getObject: async () => ({}) },
-    "./src/groups": { getNonPrivilegeGroups: async () => [] },
-    "./src/meta": { settings: { get: async () => ({}), setOnEmpty: async () => {}, set: async () => {} } },
-    "./src/middleware": { ensureLoggedIn: () => {} },
-    "./src/notifications": {},
-    "./src/plugins": { hooks: { on: () => {} } },
-    "./src/posts": { getPostSummaryByPids: async () => [], getUserInfoForPosts: async () => [] },
-    "./src/privileges": { categories: { get: async () => ({}), can: async () => true }, topics: { get: async () => ({}) }, posts: { canEdit: async () => ({ flag: false }) } },
-    "./src/routes/helpers": {
-      setupPageRoute: (router, routePath, middlewareOrHandler, maybeHandler) => {
-        capturedRoutes.set(routePath, typeof middlewareOrHandler === "function" ? middlewareOrHandler : maybeHandler);
+    redirect: (res, path, permanent) => {
+      redirects.push({ path, permanent });
+      if (res && typeof res.redirect === "function") {
+        res.redirect(path);
       }
-    },
-    "./src/slugify": (value) => String(value || "").toLowerCase(),
-    "./src/topics": { getTopicData: async () => null },
-    "./src/user": {},
-    "./src/utils": { isNumber: (value) => /^\d+$/.test(String(value || "")), toISOString: (value) => new Date(value).toISOString() }
-  };
-
-  return stubs[id] || originalMainRequire(id);
-};
+    }
+  },
+  "./src/meta": { settings: { get: async () => ({}), setOnEmpty: async () => {}, set: async () => {} } },
+  "./src/middleware": { ensureLoggedIn: () => {} },
+  "./src/plugins": { hooks: { on: () => {} } },
+  "./src/posts": { getPostSummaryByPids: async () => [], getUserInfoForPosts: async () => [] },
+  "./src/privileges": { categories: { get: async () => ({}), can: async () => true }, topics: { get: async () => ({}) }, posts: { canEdit: async () => ({ flag: false }) } },
+  "./src/routes/helpers": {
+    setupPageRoute: (router, routePath, middlewareOrHandler, maybeHandler) => {
+      capturedRoutes.set(routePath, typeof middlewareOrHandler === "function" ? middlewareOrHandler : maybeHandler);
+    }
+  },
+  "./src/slugify": (value) => String(value || "").toLowerCase(),
+  "./src/user": {},
+  "./src/utils": { isNumber: (value) => /^\d+$/.test(String(value || "")), toISOString: (value) => new Date(value).toISOString() }
+});
 
 const routes = require("../routes/wiki");
-const config = require("../lib/config");
-const wikiPaths = require("../lib/wiki-paths");
-const wikiService = require("../lib/wiki-service");
-const topicService = require("../lib/topic-service");
-const wikiNamespaceCreators = require("../lib/wiki-namespace-creators");
+const config = require("../lib/core/config");
+const wikiPaths = require("../lib/tree/wiki-paths");
+const wikiService = require("../lib/read/wiki-service");
+const topicService = require("../lib/read/topic-service");
+const wikiNamespaceCreators = require("../lib/features/wiki-namespace-creators");
 
 let resolveWikiNodeResult = null;
 let resolveWikiNodeImpl = null;
@@ -313,6 +305,10 @@ async function runHub() {
   assert.equal(composite.renderCalls[0].data.namespaceIndexCanCreatePage, true);
   assert.equal(composite.renderCalls[0].data.namespaceIndexCanCreateWikiNamespaces, true);
   assert.equal(composite.renderCalls[0].data.namespaceIndexDeleteRedirectPath, "/wiki/Lore/Deities/Gond");
+  // Nav drawer must show the namespace's own children, not the parent
+  // category the index topic physically lives in.
+  assert.equal(composite.renderCalls[0].data.sectionNavigation.cid, 42);
+  assert.equal(composite.renderCalls[0].data.wikiNavFilterId, "section-42");
   assert.equal(composite.renderCalls[0].data.nodeListing.rows[0].wikiPath, "/wiki/Lore/Deities/Gond/Clerics");
   assert.equal(composite.renderCalls[0].data.hasNodeListingNamespaceRows, true);
   assert.equal(composite.renderCalls[0].data.nodeListingNamespaceRows[0].displayTitle, "Clerics");

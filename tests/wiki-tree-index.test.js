@@ -3,7 +3,7 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 
-const wikiTreeIndex = require("../lib/wiki-tree-index");
+const wikiTreeIndex = require("../lib/tree/wiki-tree-index");
 const root = path.resolve(__dirname, "..");
 const originalMainRequire = require.main.require.bind(require.main);
 
@@ -36,14 +36,14 @@ async function withRuntimeStubs(stubs, fn) {
     return Object.prototype.hasOwnProperty.call(stubs, id) ? stubs[id] : originalMainRequire(id);
   };
   wikiTreeIndex.invalidateWikiTreeIndex();
-  clearProjectModule("lib/config.js");
+  clearProjectModule("lib/core/config.js");
 
   try {
     return await fn();
   } finally {
     require.main.require = previousMainRequire;
     wikiTreeIndex.invalidateWikiTreeIndex();
-    clearProjectModule("lib/config.js");
+    clearProjectModule("lib/core/config.js");
   }
 }
 

@@ -8,7 +8,7 @@ import { installJsdomGlobals } from "./helpers/jsdom-setup.mjs";
 import WikiCodeBlock from "../tiptap/src/extensions/wiki-code-block.mjs";
 
 const require = createRequire(import.meta.url);
-const wikiHtmlSanitizer = require("../lib/wiki-html-sanitizer");
+const wikiHtmlSanitizer = require("../lib/content/wiki-html-sanitizer");
 
 installJsdomGlobals();
 

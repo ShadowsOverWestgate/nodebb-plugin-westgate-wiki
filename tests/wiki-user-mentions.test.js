@@ -2,93 +2,48 @@
 
 const assert = require("assert");
 
+const { setSettings, setTopics, installNodebbStubs } = require("./helpers/nodebb-stub");
+
 const state = {
-  settings: {
-    categoryIds: "1",
-    includeChildCategories: "0"
-  },
-  topics: new Map([[10, { tid: 10, cid: 1 }]]),
   usersBySlug: new Map()
 };
-const originalMainRequire = require.main.require.bind(require.main);
 
-function slugify(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+setSettings({
+  categoryIds: "1",
+  includeChildCategories: "0"
+});
+setTopics([{ tid: 10, cid: 1 }]);
 
 function setUsers(rows) {
   state.usersBySlug = new Map(rows.map((row) => [row.userslug, row]));
 }
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    nconf: {
-      get: (key) => (key === "relative_path" ? "/forum" : "")
+installNodebbStubs({
+  nconf: {
+    get: (key) => (key === "relative_path" ? "/forum" : "")
+  },
+  "./src/topics": {
+    getTopicsFields: async () => [],
+    getTopicsFromSet: async () => []
+  },
+  "./src/user": {
+    getUidByUserslug: async (userslug) => {
+      const row = state.usersBySlug.get(userslug);
+      return row ? row.uid : null;
     },
-    "./src/categories": {
-      getCategoryData: async () => null,
-      getChildrenCids: async () => []
-    },
-    "./src/database": {
-      getSortedSetRange: async () => [],
-      getSortedSetRevRange: async () => [],
-      getObjectField: async () => null,
-      getObject: async () => ({})
-    },
-    "./src/meta": {
-      settings: {
-        get: async () => state.settings,
-        setOnEmpty: async () => {},
-        set: async () => {}
-      }
-    },
-    "./src/privileges": {
-      categories: {
-        get: async () => ({ read: true, "topics:read": true })
-      },
-      topics: {
-        filterTids: async (priv, tids) => (Array.isArray(tids) ? tids : [])
-      }
-    },
-    "./src/slugify": slugify,
-    "./src/topics": {
-      getTopicData: async (tid) => state.topics.get(parseInt(tid, 10)) || null,
-      getTopicsFields: async () => [],
-      getTopicsFromSet: async () => [],
-      getTopicField: async () => null
-    },
-    "./src/user": {
-      getUidByUserslug: async (userslug) => {
-        const row = state.usersBySlug.get(userslug);
-        return row ? row.uid : null;
-      },
-      getUserFields: async (uid) => {
-        for (const row of state.usersBySlug.values()) {
-          if (parseInt(row.uid, 10) === parseInt(uid, 10)) {
-            return row;
-          }
+    getUserFields: async (uid) => {
+      for (const row of state.usersBySlug.values()) {
+        if (parseInt(row.uid, 10) === parseInt(uid, 10)) {
+          return row;
         }
-        return null;
-      },
-      isAdministrator: async () => false
+      }
+      return null;
     },
-    "./src/utils": {
-      isNumber: (value) => !Number.isNaN(parseFloat(value))
-    }
-  };
-
-  if (!stubs[id]) {
-    return originalMainRequire(id);
+    isAdministrator: async () => false
   }
-  return stubs[id];
-};
+});
 
-const wikiUserMentions = require("../lib/wiki-user-mentions");
+const wikiUserMentions = require("../lib/content/wiki-user-mentions");
 
 (async () => {
   setUsers([

@@ -8,13 +8,12 @@ const originalMainRequire = require.main.require.bind(require.main);
 
 function clearWikiLinksModule() {
   [
-    "lib/wiki-links.js",
-    "lib/config.js",
-    "lib/serializer.js",
-    "lib/wiki-canonical-path-adapter.js",
-    "lib/wiki-directory-service.js",
-    "lib/wiki-paths.js",
-    "lib/wiki-tombstones.js"
+    "lib/content/wiki-links.js",
+    "lib/core/config.js",
+    "lib/core/serializer.js",
+    "lib/tree/wiki-directory-service.js",
+    "lib/tree/wiki-paths.js",
+    "lib/pages/wiki-tombstones.js"
   ].forEach((relativePath) => {
     const filename = require.resolve(`${root}/${relativePath}`);
     delete require.cache[filename];
@@ -49,7 +48,7 @@ async function withWikiLinksStubs(fn) {
 
   try {
     clearWikiLinksModule();
-    require.cache[require.resolve(`${root}/lib/wiki-directory-service.js`)] = {
+    require.cache[require.resolve(`${root}/lib/tree/wiki-directory-service.js`)] = {
       exports: {
         normalizeWikiLinkTitle: (value) => String(value || "").trim().toLowerCase(),
         getAllTopicSlugRows: async () => [{
@@ -63,8 +62,9 @@ async function withWikiLinksStubs(fn) {
         }]
       }
     };
-    require.cache[require.resolve(`${root}/lib/wiki-canonical-path-adapter.js`)] = {
+    require.cache[require.resolve(`${root}/lib/tree/wiki-paths.js`)] = {
       exports: {
+        ...require(`${root}/lib/tree/wiki-paths.js`),
         getCanonicalNamespaceInfo: async () => ({
           valid: true,
           canonicalPath: "Lore",
@@ -77,7 +77,7 @@ async function withWikiLinksStubs(fn) {
         })
       }
     };
-    return await fn(require("../lib/wiki-links"));
+    return await fn(require("../lib/content/wiki-links"));
   } finally {
     require.main.require = originalMainRequire;
     clearWikiLinksModule();
@@ -112,7 +112,7 @@ async function withThrowingPageStubs(fn) {
 
   try {
     clearWikiLinksModule();
-    require.cache[require.resolve(`${root}/lib/wiki-directory-service.js`)] = {
+    require.cache[require.resolve(`${root}/lib/tree/wiki-directory-service.js`)] = {
       exports: {
         normalizeWikiLinkTitle: (value) => String(value || "").trim().toLowerCase(),
         getAllTopicSlugRows: async () => [
@@ -121,8 +121,9 @@ async function withThrowingPageStubs(fn) {
         ]
       }
     };
-    require.cache[require.resolve(`${root}/lib/wiki-canonical-path-adapter.js`)] = {
+    require.cache[require.resolve(`${root}/lib/tree/wiki-paths.js`)] = {
       exports: {
+        ...require(`${root}/lib/tree/wiki-paths.js`),
         getCanonicalNamespaceInfo: async () => ({
           valid: true,
           canonicalPath: "Lore",
@@ -140,7 +141,7 @@ async function withThrowingPageStubs(fn) {
         }
       }
     };
-    return await fn(require("../lib/wiki-links"));
+    return await fn(require("../lib/content/wiki-links"));
   } finally {
     require.main.require = originalMainRequire;
     clearWikiLinksModule();
@@ -208,7 +209,7 @@ test("transformWikiPostContent survives an internal throw and returns original c
   };
   try {
     clearWikiLinksModule();
-    const wikiLinks = require("../lib/wiki-links");
+    const wikiLinks = require("../lib/content/wiki-links");
     const data = { postData: { pid: 42, tid: 7, cid: 99, content: "[[Public Page]]" } };
 
     const originalConsoleError = console.error;

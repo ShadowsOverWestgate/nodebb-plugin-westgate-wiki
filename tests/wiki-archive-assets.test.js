@@ -3,7 +3,7 @@
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
 
-const archiveAssets = require("../lib/wiki-archive-assets");
+const archiveAssets = require("../lib/archive/wiki-archive-assets");
 
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");

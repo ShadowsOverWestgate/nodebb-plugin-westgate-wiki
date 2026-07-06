@@ -47,7 +47,7 @@ async function withStubs(stubs, fn) {
       }
     });
     require.main.require = originalMainRequire;
-    clearProjectModule("lib/wiki-revision-actions.js");
+    clearProjectModule("lib/pages/wiki-revision-actions.js");
   }
 }
 
@@ -178,13 +178,13 @@ function createHarness(overrides = {}) {
       }
     },
     project: {
-      "lib/topic-service.js": {
+      "lib/read/topic-service.js": {
         getWikiPage: async (tid, uid, options) => {
           calls.getWikiPage.push({ tid, uid, options });
           return state.page;
         }
       },
-      "lib/wiki-revision-permissions.js": {
+      "lib/pages/wiki-revision-permissions.js": {
         canViewHistory: async (cid, uid) => {
           calls.canViewHistory.push({ cid, uid });
           return state.permissions.history;
@@ -198,7 +198,7 @@ function createHarness(overrides = {}) {
           return state.permissions.hardPurge;
         }
       },
-      "lib/wiki-revisions.js": {
+      "lib/pages/wiki-revisions.js": {
         listRevisionSummaries: async (tid) => {
           calls.listRevisionSummaries.push({ tid });
           return state.summaries;
@@ -289,14 +289,14 @@ function createHarness(overrides = {}) {
           return { tid, purged: true };
         }
       },
-      "lib/wiki-edit-locks.js": {
+      "lib/pages/wiki-edit-locks.js": {
         assertSaveLock: async (tid, uid, token) => {
           calls.assertSaveLock.push({ tid, uid, token });
           return state.lockResult;
         },
         getStatusMessage: () => "lock denied"
       },
-      "lib/wiki-page-validation.js": {
+      "lib/pages/wiki-page-validation.js": {
         getValidationMessage: () => "invalid canonical placement",
         isBlockingResult: (result) => !!(result && result.blocking),
         sanitizeAndValidateWikiMainBody: (source) => {
@@ -304,13 +304,13 @@ function createHarness(overrides = {}) {
           return `${state.sanitizedPrefix}${source}`;
         }
       },
-      "lib/wiki-html-sanitizer.js": {
+      "lib/content/wiki-html-sanitizer.js": {
         renderReadOnlyWikiHtml: (source) => {
           calls.renderReadOnlyWikiHtml.push(source);
           return `readonly:${source}`;
         }
       },
-      "lib/wiki-tombstones.js": {
+      "lib/pages/wiki-tombstones.js": {
         clearTombstone: async (tid) => {
           calls.clearTombstone.push({ tid });
           if (state.clearTombstoneError) {
@@ -379,10 +379,10 @@ function createHarness(overrides = {}) {
           return { tid, purged: true };
         }
       },
-      "lib/wiki-directory-service.js": {
+      "lib/tree/wiki-directory-service.js": {
         invalidateNamespace: (cid) => calls.invalidateNamespace.push({ cid })
       },
-      "lib/wiki-paths.js": {
+      "lib/tree/wiki-paths.js": {
         getCanonicalPagePath: async (topic, options) => {
           calls.getCanonicalPagePath.push({ topic, options });
           return state.canonicalPath;
@@ -402,7 +402,7 @@ function createHarness(overrides = {}) {
 
 async function loadActions(harness, fn) {
   return withStubs(harness.stubs, async () => {
-    const actions = require("../lib/wiki-revision-actions");
+    const actions = require("../lib/pages/wiki-revision-actions");
     return fn(actions);
   });
 }
@@ -1580,41 +1580,41 @@ test("registers revision API routes with ensureLoggedIn middleware", async () =>
   const harness = createHarness({
     project: {
       "routes/wiki.js": { register: () => {} },
-      "lib/cache-service.js": {},
-      "lib/config.js": { ensureDefaults: async () => {}, getSettings: async () => ({}) },
+      "lib/core/cache-service.js": {},
+      "lib/core/config.js": { ensureDefaults: async () => {}, getSettings: async () => ({}) },
       "lib/controllers/admin.js": {},
       "lib/controllers/wiki-archive-admin.js": {},
-      "lib/serializer.js": {},
-      "lib/topic-service.js": {},
-      "lib/wiki-link-autocomplete.js": {},
-      "lib/wiki-search-service.js": {},
-      "lib/wiki-user-autocomplete.js": {},
-      "lib/wiki-links.js": {},
-      "lib/wiki-footnotes.js": {},
-      "lib/wiki-html-parse.js": {},
-      "lib/wiki-discussion-placeholder.js": {},
-      "lib/wiki-user-mentions.js": {},
-      "lib/wiki-mention-notifications.js": {},
-      "lib/wiki-topdata-bot-privileges.js": {},
-      "lib/wiki-revision-permissions.js": {},
-      "lib/wiki-revisions.js": {},
-      "lib/wiki-service.js": {},
-      "lib/wiki-page-validation.js": {},
-      "lib/wiki-topic-purge.js": {},
-      "lib/filter-categories-forum.js": {},
-      "lib/filter-forum-feeds.js": {},
-      "lib/filter-forum-search.js": {},
-      "lib/forum-exclusion-service.js": { removeWikiTopicsFromRecentSet: async () => {} },
-      "lib/wiki-namespace-search.js": {},
-      "lib/wiki-homepage.js": {},
-      "lib/wiki-page-toc.js": {},
+      "lib/core/serializer.js": {},
+      "lib/read/topic-service.js": {},
+      "lib/content/wiki-link-autocomplete.js": {},
+      "lib/read/wiki-search-service.js": {},
+      "lib/features/wiki-user-autocomplete.js": {},
+      "lib/content/wiki-links.js": {},
+      "lib/content/wiki-footnotes.js": {},
+      "lib/content/wiki-html-parse.js": {},
+      "lib/read/wiki-discussion-placeholder.js": {},
+      "lib/content/wiki-user-mentions.js": {},
+      "lib/features/wiki-mention-notifications.js": {},
+      "lib/forum/wiki-topdata-bot-privileges.js": {},
+      "lib/pages/wiki-revision-permissions.js": {},
+      "lib/pages/wiki-revisions.js": {},
+      "lib/read/wiki-service.js": {},
+      "lib/pages/wiki-page-validation.js": {},
+      "lib/pages/wiki-topic-purge.js": {},
+      "lib/forum/filter-categories-forum.js": {},
+      "lib/forum/filter-forum-feeds.js": {},
+      "lib/forum/filter-forum-search.js": {},
+      "lib/forum/forum-exclusion-service.js": { removeWikiTopicsFromRecentSet: async () => {} },
+      "lib/features/wiki-namespace-search.js": {},
+      "lib/read/wiki-homepage.js": {},
+      "lib/content/wiki-page-toc.js": {},
       "lib/controllers/wiki-namespace-create.js": {},
       "lib/controllers/wiki-directory.js": {},
-      "lib/wiki-page-actions.js": {},
-      "lib/wiki-edit-locks.js": {},
-      "lib/wiki-article-watch.js": {},
-      "lib/wiki-discussion-settings.js": {},
-      "lib/wiki-article-css.js": {}
+      "lib/pages/wiki-page-actions.js": {},
+      "lib/pages/wiki-edit-locks.js": {},
+      "lib/features/wiki-article-watch.js": {},
+      "lib/read/wiki-discussion-settings.js": {},
+      "lib/content/wiki-article-css.js": {}
     }
   });
   harness.stubs.nodebb["./src/routes/helpers"] = {

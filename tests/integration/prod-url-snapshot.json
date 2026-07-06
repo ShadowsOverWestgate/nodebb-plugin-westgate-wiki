@@ -1,0 +1,6725 @@
+{
+  "articleCount": 1344,
+  "articles": [
+    {
+      "tid": 1,
+      "title": "Acolyte",
+      "path": "Classes/Acolyte"
+    },
+    {
+      "tid": 2,
+      "title": "Adept",
+      "path": "Classes/Adept"
+    },
+    {
+      "tid": 3,
+      "title": "Aristocrat",
+      "path": "Classes/Aristocrat"
+    },
+    {
+      "tid": 4,
+      "title": "Barbarian",
+      "path": "Classes/Barbarian"
+    },
+    {
+      "tid": 5,
+      "title": "Bard",
+      "path": "Classes/Bard"
+    },
+    {
+      "tid": 6,
+      "title": "Blackguard",
+      "path": "Classes/Blackguard"
+    },
+    {
+      "tid": 7,
+      "title": "Cleric",
+      "path": "Classes/Cleric"
+    },
+    {
+      "tid": 8,
+      "title": "Commoner",
+      "path": "Classes/Commoner"
+    },
+    {
+      "tid": 9,
+      "title": "Druid",
+      "path": "Classes/Druid"
+    },
+    {
+      "tid": 10,
+      "title": "Expert",
+      "path": "Classes/Expert"
+    },
+    {
+      "tid": 11,
+      "title": "Fighter",
+      "path": "Classes/Fighter"
+    },
+    {
+      "tid": 12,
+      "title": "Man-At-Arms",
+      "path": "Classes/Man_At_Arms"
+    },
+    {
+      "tid": 13,
+      "title": "Monk",
+      "path": "Classes/Monk"
+    },
+    {
+      "tid": 14,
+      "title": "Paladin",
+      "path": "Classes/Paladin"
+    },
+    {
+      "tid": 15,
+      "title": "Ranger",
+      "path": "Classes/Ranger"
+    },
+    {
+      "tid": 16,
+      "title": "Rogue",
+      "path": "Classes/Rogue"
+    },
+    {
+      "tid": 17,
+      "title": "Sorcerer",
+      "path": "Classes/Sorcerer"
+    },
+    {
+      "tid": 18,
+      "title": "Swashbuckler",
+      "path": "Classes/Swashbuckler"
+    },
+    {
+      "tid": 19,
+      "title": "Wizard",
+      "path": "Classes/Wizard"
+    },
+    {
+      "tid": 20,
+      "title": "Community Charter",
+      "path": "Community_Charter"
+    },
+    {
+      "tid": 21,
+      "title": "Credits",
+      "path": "Credits"
+    },
+    {
+      "tid": 22,
+      "title": "Credits :: Art",
+      "path": "Credits/Art"
+    },
+    {
+      "tid": 23,
+      "title": "Credits :: Assets",
+      "path": "Credits/Assets"
+    },
+    {
+      "tid": 24,
+      "title": "Credits :: Assets :: Characters &amp; Customization",
+      "path": "Credits/Assets/Characters_Customization"
+    },
+    {
+      "tid": 25,
+      "title": "Credits :: Assets :: Creature Appearances",
+      "path": "Credits/Assets/Creature_Appearances"
+    },
+    {
+      "tid": 26,
+      "title": "Credits :: Assets :: Effects &amp; Particles",
+      "path": "Credits/Assets/Effects_Particles"
+    },
+    {
+      "tid": 27,
+      "title": "Credits :: Assets :: Environments &amp; Tilesets",
+      "path": "Credits/Assets/Environments_Tilesets"
+    },
+    {
+      "tid": 28,
+      "title": "Credits :: Assets :: Items &amp; Equipment",
+      "path": "Credits/Assets/Items_Equipment"
+    },
+    {
+      "tid": 29,
+      "title": "Credits :: Assets :: Packs &amp; Collections",
+      "path": "Credits/Assets/Packs_Collections"
+    },
+    {
+      "tid": 30,
+      "title": "Credits :: Assets :: Props &amp; Decor",
+      "path": "Credits/Assets/Props_Decor"
+    },
+    {
+      "tid": 31,
+      "title": "Credits :: Assets :: Visual Overrides",
+      "path": "Credits/Assets/Visual_Overrides"
+    },
+    {
+      "tid": 32,
+      "title": "Credits :: Audio",
+      "path": "Credits/Audio"
+    },
+    {
+      "tid": 33,
+      "title": "Credits :: Code",
+      "path": "Credits/Code"
+    },
+    {
+      "tid": 34,
+      "title": "Credits :: Contributors",
+      "path": "Credits/Contributors"
+    },
+    {
+      "tid": 35,
+      "title": "Credits :: Fonts",
+      "path": "Credits/Fonts"
+    },
+    {
+      "tid": 36,
+      "title": "Credits :: Infrastructure",
+      "path": "Credits/Infrastructure"
+    },
+    {
+      "tid": 37,
+      "title": "Credits :: Special Thanks",
+      "path": "Credits/Special_Thanks"
+    },
+    {
+      "tid": 38,
+      "title": "Credits :: Tools",
+      "path": "Credits/Tools"
+    },
+    {
+      "tid": 39,
+      "title": "Development",
+      "path": "Development"
+    },
+    {
+      "tid": 40,
+      "title": "Server Rules (Deprecated)",
+      "path": "Development/Archive/Server_Rules_Deprecated"
+    },
+    {
+      "tid": 41,
+      "title": "Documentation - Infrastructure",
+      "path": "Development/Documentation_Infrastructure"
+    },
+    {
+      "tid": 42,
+      "title": "Crucible",
+      "path": "Development/Documentation_Infrastructure/Crucible"
+    },
+    {
+      "tid": 43,
+      "title": "Deployment",
+      "path": "Development/Documentation_Infrastructure/Deployment"
+    },
+    {
+      "tid": 44,
+      "title": "Docker",
+      "path": "Development/Documentation_Infrastructure/Docker"
+    },
+    {
+      "tid": 45,
+      "title": "Gitea",
+      "path": "Development/Documentation_Infrastructure/Gitea"
+    },
+    {
+      "tid": 47,
+      "title": "NixOS and Nix",
+      "path": "Development/Documentation_Infrastructure/NixOS_and_Nix"
+    },
+    {
+      "tid": 48,
+      "title": "NodeBB",
+      "path": "Development/Documentation_Infrastructure/NodeBB"
+    },
+    {
+      "tid": 46,
+      "title": "NWN-Anvil",
+      "path": "Development/Documentation_Infrastructure/NWN_Anvil"
+    },
+    {
+      "tid": 49,
+      "title": "Topology",
+      "path": "Development/Documentation_Infrastructure/Topology"
+    },
+    {
+      "tid": 50,
+      "title": "Map Creation Guide",
+      "path": "Development/Map_Creation_Guide"
+    },
+    {
+      "tid": 51,
+      "title": "Module Development Setup on Windows",
+      "path": "Development/Module_Development_Setup_on_Windows"
+    },
+    {
+      "tid": 52,
+      "title": "Newcomer&#x27;s Guide to Creating Feat Scripts",
+      "path": "Development/Newcomers_Guide_to_Creating_Feat_Scripts"
+    },
+    {
+      "tid": 53,
+      "title": "Classes",
+      "path": "Development/Projects/Classes"
+    },
+    {
+      "tid": 54,
+      "title": "Classes :: Acolyte",
+      "path": "Development/Projects/Classes/Acolyte"
+    },
+    {
+      "tid": 55,
+      "title": "Classes :: Adept",
+      "path": "Development/Projects/Classes/Adept"
+    },
+    {
+      "tid": 56,
+      "title": "Classes :: Aristocrat",
+      "path": "Development/Projects/Classes/Aristocrat"
+    },
+    {
+      "tid": 57,
+      "title": "Classes :: Barbarian",
+      "path": "Development/Projects/Classes/Barbarian"
+    },
+    {
+      "tid": 58,
+      "title": "Classes :: Bard",
+      "path": "Development/Projects/Classes/Bard"
+    },
+    {
+      "tid": 59,
+      "title": "Classes :: Cleric",
+      "path": "Development/Projects/Classes/Cleric"
+    },
+    {
+      "tid": 60,
+      "title": "Classes :: Commoner",
+      "path": "Development/Projects/Classes/Commoner"
+    },
+    {
+      "tid": 61,
+      "title": "Classes :: Druid",
+      "path": "Development/Projects/Classes/Druid"
+    },
+    {
+      "tid": 62,
+      "title": "Classes :: Expert",
+      "path": "Development/Projects/Classes/Expert"
+    },
+    {
+      "tid": 63,
+      "title": "Classes :: Fighter",
+      "path": "Development/Projects/Classes/Fighter"
+    },
+    {
+      "tid": 64,
+      "title": "Classes :: Man-At-Arms",
+      "path": "Development/Projects/Classes/Man_At_Arms"
+    },
+    {
+      "tid": 65,
+      "title": "Classes :: Monk",
+      "path": "Development/Projects/Classes/Monk"
+    },
+    {
+      "tid": 67,
+      "title": "Classes :: Paladin",
+      "path": "Development/Projects/Classes/Paladin"
+    },
+    {
+      "tid": 66,
+      "title": "Classes :: PRC - Vampire Hunter",
+      "path": "Development/Projects/Classes/PRC_Vampire_Hunter"
+    },
+    {
+      "tid": 68,
+      "title": "Classes :: Ranger",
+      "path": "Development/Projects/Classes/Ranger"
+    },
+    {
+      "tid": 69,
+      "title": "Classes :: Rogue",
+      "path": "Development/Projects/Classes/Rogue"
+    },
+    {
+      "tid": 70,
+      "title": "Classes :: Sorcerer",
+      "path": "Development/Projects/Classes/Sorcerer"
+    },
+    {
+      "tid": 71,
+      "title": "Classes :: Swashbuckler",
+      "path": "Development/Projects/Classes/Swashbuckler"
+    },
+    {
+      "tid": 72,
+      "title": "Classes :: Templates",
+      "path": "Development/Projects/Classes/Templates"
+    },
+    {
+      "tid": 73,
+      "title": "Classes :: Wizard",
+      "path": "Development/Projects/Classes/Wizard"
+    },
+    {
+      "tid": 74,
+      "title": "Languages",
+      "path": "Development/Projects/Languages"
+    },
+    {
+      "tid": 75,
+      "title": "Languages :: Drow",
+      "path": "Development/Projects/Languages/Drow"
+    },
+    {
+      "tid": 76,
+      "title": "Languages :: Illuskan",
+      "path": "Development/Projects/Languages/Illuskan"
+    },
+    {
+      "tid": 77,
+      "title": "Toril Deities",
+      "path": "Development/Toril_Deities"
+    },
+    {
+      "tid": 78,
+      "title": "AsyncDatabase plugin",
+      "path": "Documentation/AsyncDatabase_plugin"
+    },
+    {
+      "tid": 79,
+      "title": "Character Creation JSON Reference",
+      "path": "Documentation/Character_Creation_JSON_Reference"
+    },
+    {
+      "tid": 80,
+      "title": "Console Commands",
+      "path": "Documentation/Console_Commands"
+    },
+    {
+      "tid": 81,
+      "title": "Function Hooking",
+      "path": "Documentation/Function_Hooking"
+    },
+    {
+      "tid": 82,
+      "title": "IndexBackup",
+      "path": "Documentation/IndexBackup"
+    },
+    {
+      "tid": 83,
+      "title": "Module content checklist",
+      "path": "Documentation/Module_content_checklist"
+    },
+    {
+      "tid": 84,
+      "title": "NUI Building Guide",
+      "path": "Documentation/NUI_Building_Guide"
+    },
+    {
+      "tid": 85,
+      "title": "Services",
+      "path": "Documentation/Services"
+    },
+    {
+      "tid": 86,
+      "title": "Services :: AfkService",
+      "path": "Documentation/Services/AfkService"
+    },
+    {
+      "tid": 87,
+      "title": "Services :: AiService",
+      "path": "Documentation/Services/AiService"
+    },
+    {
+      "tid": 88,
+      "title": "Services :: AreaCleanupService",
+      "path": "Documentation/Services/AreaCleanupService"
+    },
+    {
+      "tid": 89,
+      "title": "Services :: CharacterSheetService",
+      "path": "Documentation/Services/CharacterSheetService"
+    },
+    {
+      "tid": 90,
+      "title": "Services :: ChatLogService",
+      "path": "Documentation/Services/ChatLogService"
+    },
+    {
+      "tid": 91,
+      "title": "Services :: ClassResourceService",
+      "path": "Documentation/Services/ClassResourceService"
+    },
+    {
+      "tid": 92,
+      "title": "Services :: ClockService",
+      "path": "Documentation/Services/ClockService"
+    },
+    {
+      "tid": 93,
+      "title": "Services :: ConcentrationMaintenanceService",
+      "path": "Documentation/Services/ConcentrationMaintenanceService"
+    },
+    {
+      "tid": 94,
+      "title": "Services :: CooldownNuiService",
+      "path": "Documentation/Services/CooldownNuiService"
+    },
+    {
+      "tid": 95,
+      "title": "Services :: CreatureSkinService",
+      "path": "Documentation/Services/CreatureSkinService"
+    },
+    {
+      "tid": 96,
+      "title": "Services :: DisableMinimapService",
+      "path": "Documentation/Services/DisableMinimapService"
+    },
+    {
+      "tid": 97,
+      "title": "Services :: DisablePartyingService",
+      "path": "Documentation/Services/DisablePartyingService"
+    },
+    {
+      "tid": 98,
+      "title": "Services :: DmToolsService",
+      "path": "Documentation/Services/DmToolsService"
+    },
+    {
+      "tid": 99,
+      "title": "Services :: DoorAutoCloseService",
+      "path": "Documentation/Services/DoorAutoCloseService"
+    },
+    {
+      "tid": 100,
+      "title": "Services :: EconomyService",
+      "path": "Documentation/Services/EconomyService"
+    },
+    {
+      "tid": 101,
+      "title": "Services :: EncounterService",
+      "path": "Documentation/Services/EncounterService"
+    },
+    {
+      "tid": 102,
+      "title": "Services :: ExamineService",
+      "path": "Documentation/Services/ExamineService"
+    },
+    {
+      "tid": 103,
+      "title": "Services :: ExperienceService",
+      "path": "Documentation/Services/ExperienceService"
+    },
+    {
+      "tid": 104,
+      "title": "Services :: FeatScriptService",
+      "path": "Documentation/Services/FeatScriptService"
+    },
+    {
+      "tid": 105,
+      "title": "Services :: IdentifyService",
+      "path": "Documentation/Services/IdentifyService"
+    },
+    {
+      "tid": 106,
+      "title": "Services :: InitialPlayerPositionSerivce",
+      "path": "Documentation/Services/InitialPlayerPositionSerivce"
+    },
+    {
+      "tid": 107,
+      "title": "Services :: IsDmService",
+      "path": "Documentation/Services/IsDmService"
+    },
+    {
+      "tid": 108,
+      "title": "Services :: LevelUpService",
+      "path": "Documentation/Services/LevelUpService"
+    },
+    {
+      "tid": 109,
+      "title": "Services :: MessageBoardService",
+      "path": "Documentation/Services/MessageBoardService"
+    },
+    {
+      "tid": 110,
+      "title": "Services :: MetricsService",
+      "path": "Documentation/Services/MetricsService"
+    },
+    {
+      "tid": 111,
+      "title": "Services :: NewCharacterNUIService",
+      "path": "Documentation/Services/NewCharacterNUIService"
+    },
+    {
+      "tid": 112,
+      "title": "Services :: NpcSpellcastingService",
+      "path": "Documentation/Services/NpcSpellcastingService"
+    },
+    {
+      "tid": 113,
+      "title": "Services :: PersistentContainerService",
+      "path": "Documentation/Services/PersistentContainerService"
+    },
+    {
+      "tid": 114,
+      "title": "Services :: PlayerCountMetricsService",
+      "path": "Documentation/Services/PlayerCountMetricsService"
+    },
+    {
+      "tid": 115,
+      "title": "Services :: ServerReadinessService",
+      "path": "Documentation/Services/ServerReadinessService"
+    },
+    {
+      "tid": 116,
+      "title": "Services :: SpecialItemService",
+      "path": "Documentation/Services/SpecialItemService"
+    },
+    {
+      "tid": 117,
+      "title": "Services :: SpellRegenerationService",
+      "path": "Documentation/Services/SpellRegenerationService"
+    },
+    {
+      "tid": 118,
+      "title": "Services :: SpellScriptService",
+      "path": "Documentation/Services/SpellScriptService"
+    },
+    {
+      "tid": 119,
+      "title": "Services :: TalentService",
+      "path": "Documentation/Services/TalentService"
+    },
+    {
+      "tid": 120,
+      "title": "Services :: TextureReplacerService",
+      "path": "Documentation/Services/TextureReplacerService"
+    },
+    {
+      "tid": 121,
+      "title": "Services :: TimeService",
+      "path": "Documentation/Services/TimeService"
+    },
+    {
+      "tid": 122,
+      "title": "Services :: TlkOverrideService",
+      "path": "Documentation/Services/TlkOverrideService"
+    },
+    {
+      "tid": 123,
+      "title": "Services :: TrashService",
+      "path": "Documentation/Services/TrashService"
+    },
+    {
+      "tid": 124,
+      "title": "Services :: WeatherService",
+      "path": "Documentation/Services/WeatherService"
+    },
+    {
+      "tid": 125,
+      "title": "Services :: WindowPositionService",
+      "path": "Documentation/Services/WindowPositionService"
+    },
+    {
+      "tid": 126,
+      "title": "Services :: WritableItemService",
+      "path": "Documentation/Services/WritableItemService"
+    },
+    {
+      "tid": 127,
+      "title": "Vanilla Bugs Fixed",
+      "path": "Documentation/Vanilla_Bugs_Fixed"
+    },
+    {
+      "tid": 128,
+      "title": "Adamant Fortitude",
+      "path": "Feats/Adamant_Fortitude"
+    },
+    {
+      "tid": 129,
+      "title": "Adventurer",
+      "path": "Feats/Adventurer"
+    },
+    {
+      "tid": 130,
+      "title": "Alertness",
+      "path": "Feats/Alertness"
+    },
+    {
+      "tid": 131,
+      "title": "Amphibious",
+      "path": "Feats/Amphibious"
+    },
+    {
+      "tid": 132,
+      "title": "Animal Companion",
+      "path": "Feats/Animal_Companion"
+    },
+    {
+      "tid": 133,
+      "title": "Aquatic",
+      "path": "Feats/Aquatic"
+    },
+    {
+      "tid": 134,
+      "title": "Arcane Defense (Abjuration)",
+      "path": "Feats/Arcane_Defense_Abjuration"
+    },
+    {
+      "tid": 135,
+      "title": "Arcane Defense (Conjuration)",
+      "path": "Feats/Arcane_Defense_Conjuration"
+    },
+    {
+      "tid": 136,
+      "title": "Arcane Defense (Divination)",
+      "path": "Feats/Arcane_Defense_Divination"
+    },
+    {
+      "tid": 137,
+      "title": "Arcane Defense (Enchantment)",
+      "path": "Feats/Arcane_Defense_Enchantment"
+    },
+    {
+      "tid": 138,
+      "title": "Arcane Defense (Evocation)",
+      "path": "Feats/Arcane_Defense_Evocation"
+    },
+    {
+      "tid": 139,
+      "title": "Arcane Defense (Illusion)",
+      "path": "Feats/Arcane_Defense_Illusion"
+    },
+    {
+      "tid": 140,
+      "title": "Arcane Defense (Necromancy)",
+      "path": "Feats/Arcane_Defense_Necromancy"
+    },
+    {
+      "tid": 141,
+      "title": "Arcane Defense (Transmutation)",
+      "path": "Feats/Arcane_Defense_Transmutation"
+    },
+    {
+      "tid": 142,
+      "title": "Armor Proficiency (heavy)",
+      "path": "Feats/Armor_Proficiency_heavy"
+    },
+    {
+      "tid": 143,
+      "title": "Armor Proficiency (light)",
+      "path": "Feats/Armor_Proficiency_light"
+    },
+    {
+      "tid": 144,
+      "title": "Armor Proficiency (medium)",
+      "path": "Feats/Armor_Proficiency_medium"
+    },
+    {
+      "tid": 145,
+      "title": "Armor Skin",
+      "path": "Feats/Armor_Skin"
+    },
+    {
+      "tid": 146,
+      "title": "Artist",
+      "path": "Feats/Artist"
+    },
+    {
+      "tid": 147,
+      "title": "Aura",
+      "path": "Feats/Aura"
+    },
+    {
+      "tid": 148,
+      "title": "Aura of Courage",
+      "path": "Feats/Aura_of_Courage"
+    },
+    {
+      "tid": 149,
+      "title": "Bane of Enemies",
+      "path": "Feats/Bane_of_Enemies"
+    },
+    {
+      "tid": 150,
+      "title": "Barbarian Damage Reduction 1&#x2F;-",
+      "path": "Feats/Barbarian_Damage_Reduction_1"
+    },
+    {
+      "tid": 151,
+      "title": "Barbarian Damage Reduction 2&#x2F;-",
+      "path": "Feats/Barbarian_Damage_Reduction_2"
+    },
+    {
+      "tid": 152,
+      "title": "Barbarian Damage Reduction 3&#x2F;-",
+      "path": "Feats/Barbarian_Damage_Reduction_3"
+    },
+    {
+      "tid": 153,
+      "title": "Barbarian Fast Movement",
+      "path": "Feats/Barbarian_Fast_Movement"
+    },
+    {
+      "tid": 154,
+      "title": "Barbarian Rage",
+      "path": "Feats/Barbarian_Rage"
+    },
+    {
+      "tid": 155,
+      "title": "Bardic Knowledge",
+      "path": "Feats/Bardic_Knowledge"
+    },
+    {
+      "tid": 156,
+      "title": "Bardic Music",
+      "path": "Feats/Bardic_Music"
+    },
+    {
+      "tid": 157,
+      "title": "Battle Training vs. Giants",
+      "path": "Feats/Battle_Training_vs_Giants"
+    },
+    {
+      "tid": 158,
+      "title": "Battle Training vs. Goblins",
+      "path": "Feats/Battle_Training_vs_Goblins"
+    },
+    {
+      "tid": 159,
+      "title": "Battle Training vs. Orcs",
+      "path": "Feats/Battle_Training_vs_Orcs"
+    },
+    {
+      "tid": 160,
+      "title": "Battle Training vs. Reptilians",
+      "path": "Feats/Battle_Training_vs_Reptilians"
+    },
+    {
+      "tid": 161,
+      "title": "Blind-Fight",
+      "path": "Feats/Blind_Fight"
+    },
+    {
+      "tid": 162,
+      "title": "Blinding Speed",
+      "path": "Feats/Blinding_Speed"
+    },
+    {
+      "tid": 163,
+      "title": "Blooded",
+      "path": "Feats/Blooded"
+    },
+    {
+      "tid": 164,
+      "title": "Brew Potion",
+      "path": "Feats/Brew_Potion"
+    },
+    {
+      "tid": 165,
+      "title": "Bullheaded",
+      "path": "Feats/Bullheaded"
+    },
+    {
+      "tid": 166,
+      "title": "Called Shot",
+      "path": "Feats/Called_Shot"
+    },
+    {
+      "tid": 167,
+      "title": "Charisma Training I",
+      "path": "Feats/Charisma_Training_I"
+    },
+    {
+      "tid": 168,
+      "title": "Charisma Training II",
+      "path": "Feats/Charisma_Training_II"
+    },
+    {
+      "tid": 169,
+      "title": "Charisma Training III",
+      "path": "Feats/Charisma_Training_III"
+    },
+    {
+      "tid": 170,
+      "title": "Charisma Training IV",
+      "path": "Feats/Charisma_Training_IV"
+    },
+    {
+      "tid": 171,
+      "title": "Circle Kick",
+      "path": "Feats/Circle_Kick"
+    },
+    {
+      "tid": 172,
+      "title": "Cleave",
+      "path": "Feats/Cleave"
+    },
+    {
+      "tid": 173,
+      "title": "Combat Casting",
+      "path": "Feats/Combat_Casting"
+    },
+    {
+      "tid": 174,
+      "title": "Combat Expertise",
+      "path": "Feats/Combat_Expertise"
+    },
+    {
+      "tid": 175,
+      "title": "Combat Reflexes",
+      "path": "Feats/Combat_Reflexes"
+    },
+    {
+      "tid": 176,
+      "title": "Commoner Weapon Proficiency (club)",
+      "path": "Feats/Commoner_Weapon_Proficiency_club"
+    },
+    {
+      "tid": 177,
+      "title": "Commoner Weapon Proficiency (dagger)",
+      "path": "Feats/Commoner_Weapon_Proficiency_dagger"
+    },
+    {
+      "tid": 178,
+      "title": "Commoner Weapon Proficiency (dart)",
+      "path": "Feats/Commoner_Weapon_Proficiency_dart"
+    },
+    {
+      "tid": 179,
+      "title": "Commoner Weapon Proficiency (heavy crossbow)",
+      "path": "Feats/Commoner_Weapon_Proficiency_heavy_crossbow"
+    },
+    {
+      "tid": 180,
+      "title": "Commoner Weapon Proficiency (heavy mace)",
+      "path": "Feats/Commoner_Weapon_Proficiency_heavy_mace"
+    },
+    {
+      "tid": 181,
+      "title": "Commoner Weapon Proficiency (light crossbow)",
+      "path": "Feats/Commoner_Weapon_Proficiency_light_crossbow"
+    },
+    {
+      "tid": 182,
+      "title": "Commoner Weapon Proficiency (light mace)",
+      "path": "Feats/Commoner_Weapon_Proficiency_light_mace"
+    },
+    {
+      "tid": 183,
+      "title": "Commoner Weapon Proficiency (morningstar)",
+      "path": "Feats/Commoner_Weapon_Proficiency_morningstar"
+    },
+    {
+      "tid": 184,
+      "title": "Commoner Weapon Proficiency (quarterstaff)",
+      "path": "Feats/Commoner_Weapon_Proficiency_quarterstaff"
+    },
+    {
+      "tid": 185,
+      "title": "Commoner Weapon Proficiency (shortspear)",
+      "path": "Feats/Commoner_Weapon_Proficiency_shortspear"
+    },
+    {
+      "tid": 186,
+      "title": "Commoner Weapon Proficiency (sickle)",
+      "path": "Feats/Commoner_Weapon_Proficiency_sickle"
+    },
+    {
+      "tid": 187,
+      "title": "Commoner Weapon Proficiency (sling)",
+      "path": "Feats/Commoner_Weapon_Proficiency_sling"
+    },
+    {
+      "tid": 188,
+      "title": "Commoner Weapon Proficiency (spear)",
+      "path": "Feats/Commoner_Weapon_Proficiency_spear"
+    },
+    {
+      "tid": 189,
+      "title": "Constitution Training I",
+      "path": "Feats/Constitution_Training_I"
+    },
+    {
+      "tid": 190,
+      "title": "Constitution Training II",
+      "path": "Feats/Constitution_Training_II"
+    },
+    {
+      "tid": 191,
+      "title": "Constitution Training III",
+      "path": "Feats/Constitution_Training_III"
+    },
+    {
+      "tid": 192,
+      "title": "Constitution Training IV",
+      "path": "Feats/Constitution_Training_IV"
+    },
+    {
+      "tid": 193,
+      "title": "Courteous Magocracy",
+      "path": "Feats/Courteous_Magocracy"
+    },
+    {
+      "tid": 194,
+      "title": "Craft Wand",
+      "path": "Feats/Craft_Wand"
+    },
+    {
+      "tid": 195,
+      "title": "Crippling Strike",
+      "path": "Feats/Crippling_Strike"
+    },
+    {
+      "tid": 196,
+      "title": "Dancing Lights (drow)",
+      "path": "Feats/Dancing_Lights_drow"
+    },
+    {
+      "tid": 197,
+      "title": "Dark Blessing",
+      "path": "Feats/Dark_Blessing"
+    },
+    {
+      "tid": 198,
+      "title": "Darkness (drow)",
+      "path": "Feats/Darkness_drow"
+    },
+    {
+      "tid": 199,
+      "title": "Darkness (tiefling)",
+      "path": "Feats/Darkness_tiefling"
+    },
+    {
+      "tid": 200,
+      "title": "Darkvision",
+      "path": "Feats/Darkvision"
+    },
+    {
+      "tid": 201,
+      "title": "Daylight (aasimar)",
+      "path": "Feats/Daylight_aasimar"
+    },
+    {
+      "tid": 202,
+      "title": "Defensive Fighting",
+      "path": "Feats/Defensive_Fighting"
+    },
+    {
+      "tid": 203,
+      "title": "Defensive Roll",
+      "path": "Feats/Defensive_Roll"
+    },
+    {
+      "tid": 204,
+      "title": "Deflect Arrows",
+      "path": "Feats/Deflect_Arrows"
+    },
+    {
+      "tid": 205,
+      "title": "Dexterity Training I",
+      "path": "Feats/Dexterity_Training_I"
+    },
+    {
+      "tid": 206,
+      "title": "Dexterity Training II",
+      "path": "Feats/Dexterity_Training_II"
+    },
+    {
+      "tid": 207,
+      "title": "Dexterity Training III",
+      "path": "Feats/Dexterity_Training_III"
+    },
+    {
+      "tid": 208,
+      "title": "Dexterity Training IV",
+      "path": "Feats/Dexterity_Training_IV"
+    },
+    {
+      "tid": 209,
+      "title": "Diamond Body",
+      "path": "Feats/Diamond_Body"
+    },
+    {
+      "tid": 210,
+      "title": "Diamond Soul",
+      "path": "Feats/Diamond_Soul"
+    },
+    {
+      "tid": 211,
+      "title": "Diamond Will",
+      "path": "Feats/Diamond_Will"
+    },
+    {
+      "tid": 212,
+      "title": "Dirty Fighting",
+      "path": "Feats/Dirty_Fighting"
+    },
+    {
+      "tid": 213,
+      "title": "Divine Grace",
+      "path": "Feats/Divine_Grace"
+    },
+    {
+      "tid": 214,
+      "title": "Divine Health",
+      "path": "Feats/Divine_Health"
+    },
+    {
+      "tid": 215,
+      "title": "Divine Might",
+      "path": "Feats/Divine_Might"
+    },
+    {
+      "tid": 216,
+      "title": "Divine Shield",
+      "path": "Feats/Divine_Shield"
+    },
+    {
+      "tid": 217,
+      "title": "Dodge",
+      "path": "Feats/Dodge"
+    },
+    {
+      "tid": 218,
+      "title": "Drow Spell Resistance",
+      "path": "Feats/Drow_Spell_Resistance"
+    },
+    {
+      "tid": 219,
+      "title": "Elemental Shape",
+      "path": "Feats/Elemental_Shape"
+    },
+    {
+      "tid": 220,
+      "title": "Empower Spell",
+      "path": "Feats/Empower_Spell"
+    },
+    {
+      "tid": 221,
+      "title": "Empty Body",
+      "path": "Feats/Empty_Body"
+    },
+    {
+      "tid": 222,
+      "title": "Evasion",
+      "path": "Feats/Evasion"
+    },
+    {
+      "tid": 223,
+      "title": "Extend Spell",
+      "path": "Feats/Extend_Spell"
+    },
+    {
+      "tid": 224,
+      "title": "Extra Music",
+      "path": "Feats/Extra_Music"
+    },
+    {
+      "tid": 225,
+      "title": "Extra Smiting",
+      "path": "Feats/Extra_Smiting"
+    },
+    {
+      "tid": 226,
+      "title": "Extra Turning",
+      "path": "Feats/Extra_Turning"
+    },
+    {
+      "tid": 227,
+      "title": "Faerie Fire (drow)",
+      "path": "Feats/Faerie_Fire_drow"
+    },
+    {
+      "tid": 228,
+      "title": "Fascinate",
+      "path": "Feats/Fascinate"
+    },
+    {
+      "tid": 229,
+      "title": "Favored Enemy: Aberrations",
+      "path": "Feats/Favored_Enemy_Aberrations"
+    },
+    {
+      "tid": 230,
+      "title": "Favored Enemy: Animals",
+      "path": "Feats/Favored_Enemy_Animals"
+    },
+    {
+      "tid": 231,
+      "title": "Favored Enemy: Beasts",
+      "path": "Feats/Favored_Enemy_Beasts"
+    },
+    {
+      "tid": 232,
+      "title": "Favored Enemy: Constructs",
+      "path": "Feats/Favored_Enemy_Constructs"
+    },
+    {
+      "tid": 233,
+      "title": "Favored Enemy: Dragons",
+      "path": "Feats/Favored_Enemy_Dragons"
+    },
+    {
+      "tid": 234,
+      "title": "Favored Enemy: Dwarves",
+      "path": "Feats/Favored_Enemy_Dwarves"
+    },
+    {
+      "tid": 235,
+      "title": "Favored Enemy: Elementals",
+      "path": "Feats/Favored_Enemy_Elementals"
+    },
+    {
+      "tid": 236,
+      "title": "Favored Enemy: Elves",
+      "path": "Feats/Favored_Enemy_Elves"
+    },
+    {
+      "tid": 237,
+      "title": "Favored Enemy: Fey",
+      "path": "Feats/Favored_Enemy_Fey"
+    },
+    {
+      "tid": 238,
+      "title": "Favored Enemy: Giants",
+      "path": "Feats/Favored_Enemy_Giants"
+    },
+    {
+      "tid": 239,
+      "title": "Favored Enemy: Gnomes",
+      "path": "Feats/Favored_Enemy_Gnomes"
+    },
+    {
+      "tid": 240,
+      "title": "Favored Enemy: Goblinoids",
+      "path": "Feats/Favored_Enemy_Goblinoids"
+    },
+    {
+      "tid": 241,
+      "title": "Favored Enemy: Halflings",
+      "path": "Feats/Favored_Enemy_Halflings"
+    },
+    {
+      "tid": 242,
+      "title": "Favored Enemy: Humans",
+      "path": "Feats/Favored_Enemy_Humans"
+    },
+    {
+      "tid": 243,
+      "title": "Favored Enemy: Magical Beasts",
+      "path": "Feats/Favored_Enemy_Magical_Beasts"
+    },
+    {
+      "tid": 244,
+      "title": "Favored Enemy: Monstrous Humanoids",
+      "path": "Feats/Favored_Enemy_Monstrous_Humanoids"
+    },
+    {
+      "tid": 245,
+      "title": "Favored Enemy: Orcs",
+      "path": "Feats/Favored_Enemy_Orcs"
+    },
+    {
+      "tid": 246,
+      "title": "Favored Enemy: Outsiders",
+      "path": "Feats/Favored_Enemy_Outsiders"
+    },
+    {
+      "tid": 247,
+      "title": "Favored Enemy: Reptilian Humanoids",
+      "path": "Feats/Favored_Enemy_Reptilian_Humanoids"
+    },
+    {
+      "tid": 248,
+      "title": "Favored Enemy: Shapechangers",
+      "path": "Feats/Favored_Enemy_Shapechangers"
+    },
+    {
+      "tid": 249,
+      "title": "Favored Enemy: Undead",
+      "path": "Feats/Favored_Enemy_Undead"
+    },
+    {
+      "tid": 250,
+      "title": "Favored Enemy: Vermin",
+      "path": "Feats/Favored_Enemy_Vermin"
+    },
+    {
+      "tid": 251,
+      "title": "Fearless",
+      "path": "Feats/Fearless"
+    },
+    {
+      "tid": 252,
+      "title": "Feather Fall (air genasi)",
+      "path": "Feats/Feather_Fall_air_genasi"
+    },
+    {
+      "tid": 253,
+      "title": "Flurry of Blows",
+      "path": "Feats/Flurry_of_Blows"
+    },
+    {
+      "tid": 254,
+      "title": "Giant Blood",
+      "path": "Feats/Giant_Blood"
+    },
+    {
+      "tid": 255,
+      "title": "Good Aim",
+      "path": "Feats/Good_Aim"
+    },
+    {
+      "tid": 256,
+      "title": "Grandmaster&#x27;s Battle Momentum",
+      "path": "Feats/Grandmasters_Battle_Momentum"
+    },
+    {
+      "tid": 257,
+      "title": "Great Cleave",
+      "path": "Feats/Great_Cleave"
+    },
+    {
+      "tid": 258,
+      "title": "Great Fortitude",
+      "path": "Feats/Great_Fortitude"
+    },
+    {
+      "tid": 259,
+      "title": "Greater Flurry of Blows",
+      "path": "Feats/Greater_Flurry_of_Blows"
+    },
+    {
+      "tid": 260,
+      "title": "Greater Rage",
+      "path": "Feats/Greater_Rage"
+    },
+    {
+      "tid": 261,
+      "title": "Greater Skill Focus (Acrobatics)",
+      "path": "Feats/Greater_Skill_Focus_Acrobatics"
+    },
+    {
+      "tid": 262,
+      "title": "Greater Skill Focus (Animal Handling)",
+      "path": "Feats/Greater_Skill_Focus_Animal_Handling"
+    },
+    {
+      "tid": 263,
+      "title": "Greater Skill Focus (Appraise)",
+      "path": "Feats/Greater_Skill_Focus_Appraise"
+    },
+    {
+      "tid": 264,
+      "title": "Greater Skill Focus (Athletics)",
+      "path": "Feats/Greater_Skill_Focus_Athletics"
+    },
+    {
+      "tid": 265,
+      "title": "Greater Skill Focus (Concentration)",
+      "path": "Feats/Greater_Skill_Focus_Concentration"
+    },
+    {
+      "tid": 266,
+      "title": "Greater Skill Focus (Craft, alchemy)",
+      "path": "Feats/Greater_Skill_Focus_Craft_alchemy"
+    },
+    {
+      "tid": 267,
+      "title": "Greater Skill Focus (Craft, armorsmithing)",
+      "path": "Feats/Greater_Skill_Focus_Craft_armorsmithing"
+    },
+    {
+      "tid": 268,
+      "title": "Greater Skill Focus (Craft, cooking)",
+      "path": "Feats/Greater_Skill_Focus_Craft_cooking"
+    },
+    {
+      "tid": 269,
+      "title": "Greater Skill Focus (Craft, jewelry)",
+      "path": "Feats/Greater_Skill_Focus_Craft_jewelry"
+    },
+    {
+      "tid": 270,
+      "title": "Greater Skill Focus (Craft, leatherworking)",
+      "path": "Feats/Greater_Skill_Focus_Craft_leatherworking"
+    },
+    {
+      "tid": 271,
+      "title": "Greater Skill Focus (Craft, stonework)",
+      "path": "Feats/Greater_Skill_Focus_Craft_stonework"
+    },
+    {
+      "tid": 272,
+      "title": "Greater Skill Focus (Craft, textiles)",
+      "path": "Feats/Greater_Skill_Focus_Craft_textiles"
+    },
+    {
+      "tid": 273,
+      "title": "Greater Skill Focus (Craft, tinkering)",
+      "path": "Feats/Greater_Skill_Focus_Craft_tinkering"
+    },
+    {
+      "tid": 274,
+      "title": "Greater Skill Focus (Craft, weaponsmithing)",
+      "path": "Feats/Greater_Skill_Focus_Craft_weaponsmithing"
+    },
+    {
+      "tid": 275,
+      "title": "Greater Skill Focus (Craft, woodworking)",
+      "path": "Feats/Greater_Skill_Focus_Craft_woodworking"
+    },
+    {
+      "tid": 276,
+      "title": "Greater Skill Focus (Disable Device)",
+      "path": "Feats/Greater_Skill_Focus_Disable_Device"
+    },
+    {
+      "tid": 277,
+      "title": "Greater Skill Focus (Disguise)",
+      "path": "Feats/Greater_Skill_Focus_Disguise"
+    },
+    {
+      "tid": 278,
+      "title": "Greater Skill Focus (Heal)",
+      "path": "Feats/Greater_Skill_Focus_Heal"
+    },
+    {
+      "tid": 279,
+      "title": "Greater Skill Focus (Influence)",
+      "path": "Feats/Greater_Skill_Focus_Influence"
+    },
+    {
+      "tid": 280,
+      "title": "Greater Skill Focus (Intimidate)",
+      "path": "Feats/Greater_Skill_Focus_Intimidate"
+    },
+    {
+      "tid": 281,
+      "title": "Greater Skill Focus (Knowledge, arcana)",
+      "path": "Feats/Greater_Skill_Focus_Knowledge_arcana"
+    },
+    {
+      "tid": 282,
+      "title": "Greater Skill Focus (Knowledge, architecture)",
+      "path": "Feats/Greater_Skill_Focus_Knowledge_architecture"
+    },
+    {
+      "tid": 283,
+      "title": "Greater Skill Focus (Knowledge, dungeoneer)",
+      "path": "Feats/Greater_Skill_Focus_Knowledge_dungeoneer"
+    },
+    {
+      "tid": 284,
+      "title": "Greater Skill Focus (Knowledge, geography)",
+      "path": "Feats/Greater_Skill_Focus_Knowledge_geography"
+    },
+    {
+      "tid": 285,
+      "title": "Greater Skill Focus (Knowledge, history)",
+      "path": "Feats/Greater_Skill_Focus_Knowledge_history"
+    },
+    {
+      "tid": 286,
+      "title": "Greater Skill Focus (Knowledge, local)",
+      "path": "Feats/Greater_Skill_Focus_Knowledge_local"
+    },
+    {
+      "tid": 287,
+      "title": "Greater Skill Focus (Knowledge, nature)",
+      "path": "Feats/Greater_Skill_Focus_Knowledge_nature"
+    },
+    {
+      "tid": 288,
+      "title": "Greater Skill Focus (Knowledge, nobility)",
+      "path": "Feats/Greater_Skill_Focus_Knowledge_nobility"
+    },
+    {
+      "tid": 289,
+      "title": "Greater Skill Focus (Knowledge, planar)",
+      "path": "Feats/Greater_Skill_Focus_Knowledge_planar"
+    },
+    {
+      "tid": 290,
+      "title": "Greater Skill Focus (Knowledge, religion)",
+      "path": "Feats/Greater_Skill_Focus_Knowledge_religion"
+    },
+    {
+      "tid": 291,
+      "title": "Greater Skill Focus (Linguistics)",
+      "path": "Feats/Greater_Skill_Focus_Linguistics"
+    },
+    {
+      "tid": 292,
+      "title": "Greater Skill Focus (Open Lock)",
+      "path": "Feats/Greater_Skill_Focus_Open_Lock"
+    },
+    {
+      "tid": 293,
+      "title": "Greater Skill Focus (Parry)",
+      "path": "Feats/Greater_Skill_Focus_Parry"
+    },
+    {
+      "tid": 294,
+      "title": "Greater Skill Focus (Perception)",
+      "path": "Feats/Greater_Skill_Focus_Perception"
+    },
+    {
+      "tid": 295,
+      "title": "Greater Skill Focus (Perform)",
+      "path": "Feats/Greater_Skill_Focus_Perform"
+    },
+    {
+      "tid": 296,
+      "title": "Greater Skill Focus (Profession, farmer)",
+      "path": "Feats/Greater_Skill_Focus_Profession_farmer"
+    },
+    {
+      "tid": 297,
+      "title": "Greater Skill Focus (Profession, fisher)",
+      "path": "Feats/Greater_Skill_Focus_Profession_fisher"
+    },
+    {
+      "tid": 298,
+      "title": "Greater Skill Focus (Profession, herbalist)",
+      "path": "Feats/Greater_Skill_Focus_Profession_herbalist"
+    },
+    {
+      "tid": 299,
+      "title": "Greater Skill Focus (Profession, hunter)",
+      "path": "Feats/Greater_Skill_Focus_Profession_hunter"
+    },
+    {
+      "tid": 300,
+      "title": "Greater Skill Focus (Profession, miner)",
+      "path": "Feats/Greater_Skill_Focus_Profession_miner"
+    },
+    {
+      "tid": 301,
+      "title": "Greater Skill Focus (Profession, sailor)",
+      "path": "Feats/Greater_Skill_Focus_Profession_sailor"
+    },
+    {
+      "tid": 302,
+      "title": "Greater Skill Focus (Profession, woodcutter)",
+      "path": "Feats/Greater_Skill_Focus_Profession_woodcutter"
+    },
+    {
+      "tid": 303,
+      "title": "Greater Skill Focus (Ride)",
+      "path": "Feats/Greater_Skill_Focus_Ride"
+    },
+    {
+      "tid": 304,
+      "title": "Greater Skill Focus (Scriptcraft)",
+      "path": "Feats/Greater_Skill_Focus_Scriptcraft"
+    },
+    {
+      "tid": 305,
+      "title": "Greater Skill Focus (Sense Motive)",
+      "path": "Feats/Greater_Skill_Focus_Sense_Motive"
+    },
+    {
+      "tid": 306,
+      "title": "Greater Skill Focus (Sleight of Hand)",
+      "path": "Feats/Greater_Skill_Focus_Sleight_of_Hand"
+    },
+    {
+      "tid": 307,
+      "title": "Greater Skill Focus (Spellcraft)",
+      "path": "Feats/Greater_Skill_Focus_Spellcraft"
+    },
+    {
+      "tid": 308,
+      "title": "Greater Skill Focus (Stealth)",
+      "path": "Feats/Greater_Skill_Focus_Stealth"
+    },
+    {
+      "tid": 309,
+      "title": "Greater Skill Focus (Survival)",
+      "path": "Feats/Greater_Skill_Focus_Survival"
+    },
+    {
+      "tid": 310,
+      "title": "Greater Skill Focus (Use Magic Device)",
+      "path": "Feats/Greater_Skill_Focus_Use_Magic_Device"
+    },
+    {
+      "tid": 311,
+      "title": "Greater Skill Focus (Use Rope)",
+      "path": "Feats/Greater_Skill_Focus_Use_Rope"
+    },
+    {
+      "tid": 312,
+      "title": "Greater Spell Focus (Abjuration)",
+      "path": "Feats/Greater_Spell_Focus_Abjuration"
+    },
+    {
+      "tid": 313,
+      "title": "Greater Spell Focus (Conjuration)",
+      "path": "Feats/Greater_Spell_Focus_Conjuration"
+    },
+    {
+      "tid": 314,
+      "title": "Greater Spell Focus (Divination)",
+      "path": "Feats/Greater_Spell_Focus_Divination"
+    },
+    {
+      "tid": 315,
+      "title": "Greater Spell Focus (Enchantment)",
+      "path": "Feats/Greater_Spell_Focus_Enchantment"
+    },
+    {
+      "tid": 316,
+      "title": "Greater Spell Focus (Evocation)",
+      "path": "Feats/Greater_Spell_Focus_Evocation"
+    },
+    {
+      "tid": 317,
+      "title": "Greater Spell Focus (Illusion)",
+      "path": "Feats/Greater_Spell_Focus_Illusion"
+    },
+    {
+      "tid": 318,
+      "title": "Greater Spell Focus (Necromancy)",
+      "path": "Feats/Greater_Spell_Focus_Necromancy"
+    },
+    {
+      "tid": 319,
+      "title": "Greater Spell Focus (Transmutation)",
+      "path": "Feats/Greater_Spell_Focus_Transmutation"
+    },
+    {
+      "tid": 320,
+      "title": "Greater Spell Penetration",
+      "path": "Feats/Greater_Spell_Penetration"
+    },
+    {
+      "tid": 321,
+      "title": "Greater Two-Weapon Fighting",
+      "path": "Feats/Greater_Two_Weapon_Fighting"
+    },
+    {
+      "tid": 322,
+      "title": "Greater Weapon Focus (bastard sword)",
+      "path": "Feats/Greater_Weapon_Focus_bastard_sword"
+    },
+    {
+      "tid": 323,
+      "title": "Greater Weapon Focus (battleaxe)",
+      "path": "Feats/Greater_Weapon_Focus_battleaxe"
+    },
+    {
+      "tid": 324,
+      "title": "Greater Weapon Focus (blunderbuss)",
+      "path": "Feats/Greater_Weapon_Focus_blunderbuss"
+    },
+    {
+      "tid": 325,
+      "title": "Greater Weapon Focus (club)",
+      "path": "Feats/Greater_Weapon_Focus_club"
+    },
+    {
+      "tid": 326,
+      "title": "Greater Weapon Focus (creature slash piercing weapon)",
+      "path": "Feats/Greater_Weapon_Focus_creature_slash_piercing_weapon"
+    },
+    {
+      "tid": 327,
+      "title": "Greater Weapon Focus (dagger)",
+      "path": "Feats/Greater_Weapon_Focus_dagger"
+    },
+    {
+      "tid": 328,
+      "title": "Greater Weapon Focus (dart)",
+      "path": "Feats/Greater_Weapon_Focus_dart"
+    },
+    {
+      "tid": 329,
+      "title": "Greater Weapon Focus (dire mace)",
+      "path": "Feats/Greater_Weapon_Focus_dire_mace"
+    },
+    {
+      "tid": 330,
+      "title": "Greater Weapon Focus (double axe)",
+      "path": "Feats/Greater_Weapon_Focus_double_axe"
+    },
+    {
+      "tid": 331,
+      "title": "Greater Weapon Focus (dwarven waraxe)",
+      "path": "Feats/Greater_Weapon_Focus_dwarven_waraxe"
+    },
+    {
+      "tid": 332,
+      "title": "Greater Weapon Focus (estoc)",
+      "path": "Feats/Greater_Weapon_Focus_estoc"
+    },
+    {
+      "tid": 333,
+      "title": "Greater Weapon Focus (falchion)",
+      "path": "Feats/Greater_Weapon_Focus_falchion"
+    },
+    {
+      "tid": 334,
+      "title": "Greater Weapon Focus (gauntlet)",
+      "path": "Feats/Greater_Weapon_Focus_gauntlet"
+    },
+    {
+      "tid": 335,
+      "title": "Greater Weapon Focus (greataxe)",
+      "path": "Feats/Greater_Weapon_Focus_greataxe"
+    },
+    {
+      "tid": 336,
+      "title": "Greater Weapon Focus (greatsword)",
+      "path": "Feats/Greater_Weapon_Focus_greatsword"
+    },
+    {
+      "tid": 337,
+      "title": "Greater Weapon Focus (halberd)",
+      "path": "Feats/Greater_Weapon_Focus_halberd"
+    },
+    {
+      "tid": 338,
+      "title": "Greater Weapon Focus (handaxe)",
+      "path": "Feats/Greater_Weapon_Focus_handaxe"
+    },
+    {
+      "tid": 339,
+      "title": "Greater Weapon Focus (heavy crossbow)",
+      "path": "Feats/Greater_Weapon_Focus_heavy_crossbow"
+    },
+    {
+      "tid": 340,
+      "title": "Greater Weapon Focus (heavy flail)",
+      "path": "Feats/Greater_Weapon_Focus_heavy_flail"
+    },
+    {
+      "tid": 341,
+      "title": "Greater Weapon Focus (heavy mace)",
+      "path": "Feats/Greater_Weapon_Focus_heavy_mace"
+    },
+    {
+      "tid": 342,
+      "title": "Greater Weapon Focus (kama)",
+      "path": "Feats/Greater_Weapon_Focus_kama"
+    },
+    {
+      "tid": 343,
+      "title": "Greater Weapon Focus (katana)",
+      "path": "Feats/Greater_Weapon_Focus_katana"
+    },
+    {
+      "tid": 344,
+      "title": "Greater Weapon Focus (kukri)",
+      "path": "Feats/Greater_Weapon_Focus_kukri"
+    },
+    {
+      "tid": 345,
+      "title": "Greater Weapon Focus (light crossbow)",
+      "path": "Feats/Greater_Weapon_Focus_light_crossbow"
+    },
+    {
+      "tid": 346,
+      "title": "Greater Weapon Focus (light flail)",
+      "path": "Feats/Greater_Weapon_Focus_light_flail"
+    },
+    {
+      "tid": 347,
+      "title": "Greater Weapon Focus (light hammer)",
+      "path": "Feats/Greater_Weapon_Focus_light_hammer"
+    },
+    {
+      "tid": 348,
+      "title": "Greater Weapon Focus (light mace)",
+      "path": "Feats/Greater_Weapon_Focus_light_mace"
+    },
+    {
+      "tid": 349,
+      "title": "Greater Weapon Focus (longbow)",
+      "path": "Feats/Greater_Weapon_Focus_longbow"
+    },
+    {
+      "tid": 350,
+      "title": "Greater Weapon Focus (longsword)",
+      "path": "Feats/Greater_Weapon_Focus_longsword"
+    },
+    {
+      "tid": 351,
+      "title": "Greater Weapon Focus (maul)",
+      "path": "Feats/Greater_Weapon_Focus_maul"
+    },
+    {
+      "tid": 352,
+      "title": "Greater Weapon Focus (morningstar)",
+      "path": "Feats/Greater_Weapon_Focus_morningstar"
+    },
+    {
+      "tid": 353,
+      "title": "Greater Weapon Focus (quarterstaff)",
+      "path": "Feats/Greater_Weapon_Focus_quarterstaff"
+    },
+    {
+      "tid": 354,
+      "title": "Greater Weapon Focus (rapier)",
+      "path": "Feats/Greater_Weapon_Focus_rapier"
+    },
+    {
+      "tid": 355,
+      "title": "Greater Weapon Focus (scimitar)",
+      "path": "Feats/Greater_Weapon_Focus_scimitar"
+    },
+    {
+      "tid": 356,
+      "title": "Greater Weapon Focus (scythe)",
+      "path": "Feats/Greater_Weapon_Focus_scythe"
+    },
+    {
+      "tid": 357,
+      "title": "Greater Weapon Focus (short sword)",
+      "path": "Feats/Greater_Weapon_Focus_short_sword"
+    },
+    {
+      "tid": 358,
+      "title": "Greater Weapon Focus (shortbow)",
+      "path": "Feats/Greater_Weapon_Focus_shortbow"
+    },
+    {
+      "tid": 359,
+      "title": "Greater Weapon Focus (shortspear)",
+      "path": "Feats/Greater_Weapon_Focus_shortspear"
+    },
+    {
+      "tid": 360,
+      "title": "Greater Weapon Focus (shuriken)",
+      "path": "Feats/Greater_Weapon_Focus_shuriken"
+    },
+    {
+      "tid": 361,
+      "title": "Greater Weapon Focus (sickle)",
+      "path": "Feats/Greater_Weapon_Focus_sickle"
+    },
+    {
+      "tid": 362,
+      "title": "Greater Weapon Focus (sling)",
+      "path": "Feats/Greater_Weapon_Focus_sling"
+    },
+    {
+      "tid": 363,
+      "title": "Greater Weapon Focus (spear)",
+      "path": "Feats/Greater_Weapon_Focus_spear"
+    },
+    {
+      "tid": 364,
+      "title": "Greater Weapon Focus (throwing axe)",
+      "path": "Feats/Greater_Weapon_Focus_throwing_axe"
+    },
+    {
+      "tid": 365,
+      "title": "Greater Weapon Focus (trident)",
+      "path": "Feats/Greater_Weapon_Focus_trident"
+    },
+    {
+      "tid": 366,
+      "title": "Greater Weapon Focus (two-bladed sword)",
+      "path": "Feats/Greater_Weapon_Focus_two_bladed_sword"
+    },
+    {
+      "tid": 367,
+      "title": "Greater Weapon Focus (warhammer)",
+      "path": "Feats/Greater_Weapon_Focus_warhammer"
+    },
+    {
+      "tid": 368,
+      "title": "Greater Weapon Focus (whip)",
+      "path": "Feats/Greater_Weapon_Focus_whip"
+    },
+    {
+      "tid": 369,
+      "title": "Greater Weapon Specialization (bastard sword)",
+      "path": "Feats/Greater_Weapon_Specialization_bastard_sword"
+    },
+    {
+      "tid": 370,
+      "title": "Greater Weapon Specialization (battleaxe)",
+      "path": "Feats/Greater_Weapon_Specialization_battleaxe"
+    },
+    {
+      "tid": 371,
+      "title": "Greater Weapon Specialization (blunderbuss)",
+      "path": "Feats/Greater_Weapon_Specialization_blunderbuss"
+    },
+    {
+      "tid": 372,
+      "title": "Greater Weapon Specialization (club)",
+      "path": "Feats/Greater_Weapon_Specialization_club"
+    },
+    {
+      "tid": 373,
+      "title": "Greater Weapon Specialization (creature slash piercing weapon)",
+      "path": "Feats/Greater_Weapon_Specialization_creature_slash_piercing_weapon"
+    },
+    {
+      "tid": 374,
+      "title": "Greater Weapon Specialization (dagger)",
+      "path": "Feats/Greater_Weapon_Specialization_dagger"
+    },
+    {
+      "tid": 375,
+      "title": "Greater Weapon Specialization (dart)",
+      "path": "Feats/Greater_Weapon_Specialization_dart"
+    },
+    {
+      "tid": 376,
+      "title": "Greater Weapon Specialization (dire mace)",
+      "path": "Feats/Greater_Weapon_Specialization_dire_mace"
+    },
+    {
+      "tid": 377,
+      "title": "Greater Weapon Specialization (double axe)",
+      "path": "Feats/Greater_Weapon_Specialization_double_axe"
+    },
+    {
+      "tid": 378,
+      "title": "Greater Weapon Specialization (dwarven waraxe)",
+      "path": "Feats/Greater_Weapon_Specialization_dwarven_waraxe"
+    },
+    {
+      "tid": 379,
+      "title": "Greater Weapon Specialization (estoc)",
+      "path": "Feats/Greater_Weapon_Specialization_estoc"
+    },
+    {
+      "tid": 380,
+      "title": "Greater Weapon Specialization (falchion)",
+      "path": "Feats/Greater_Weapon_Specialization_falchion"
+    },
+    {
+      "tid": 381,
+      "title": "Greater Weapon Specialization (gauntlet)",
+      "path": "Feats/Greater_Weapon_Specialization_gauntlet"
+    },
+    {
+      "tid": 382,
+      "title": "Greater Weapon Specialization (greataxe)",
+      "path": "Feats/Greater_Weapon_Specialization_greataxe"
+    },
+    {
+      "tid": 383,
+      "title": "Greater Weapon Specialization (greatsword)",
+      "path": "Feats/Greater_Weapon_Specialization_greatsword"
+    },
+    {
+      "tid": 384,
+      "title": "Greater Weapon Specialization (halberd)",
+      "path": "Feats/Greater_Weapon_Specialization_halberd"
+    },
+    {
+      "tid": 385,
+      "title": "Greater Weapon Specialization (handaxe)",
+      "path": "Feats/Greater_Weapon_Specialization_handaxe"
+    },
+    {
+      "tid": 386,
+      "title": "Greater Weapon Specialization (heavy crossbow)",
+      "path": "Feats/Greater_Weapon_Specialization_heavy_crossbow"
+    },
+    {
+      "tid": 387,
+      "title": "Greater Weapon Specialization (heavy flail)",
+      "path": "Feats/Greater_Weapon_Specialization_heavy_flail"
+    },
+    {
+      "tid": 388,
+      "title": "Greater Weapon Specialization (heavy mace)",
+      "path": "Feats/Greater_Weapon_Specialization_heavy_mace"
+    },
+    {
+      "tid": 389,
+      "title": "Greater Weapon Specialization (kama)",
+      "path": "Feats/Greater_Weapon_Specialization_kama"
+    },
+    {
+      "tid": 390,
+      "title": "Greater Weapon Specialization (katana)",
+      "path": "Feats/Greater_Weapon_Specialization_katana"
+    },
+    {
+      "tid": 391,
+      "title": "Greater Weapon Specialization (kukri)",
+      "path": "Feats/Greater_Weapon_Specialization_kukri"
+    },
+    {
+      "tid": 392,
+      "title": "Greater Weapon Specialization (light crossbow)",
+      "path": "Feats/Greater_Weapon_Specialization_light_crossbow"
+    },
+    {
+      "tid": 393,
+      "title": "Greater Weapon Specialization (light flail)",
+      "path": "Feats/Greater_Weapon_Specialization_light_flail"
+    },
+    {
+      "tid": 394,
+      "title": "Greater Weapon Specialization (light hammer)",
+      "path": "Feats/Greater_Weapon_Specialization_light_hammer"
+    },
+    {
+      "tid": 395,
+      "title": "Greater Weapon Specialization (light mace)",
+      "path": "Feats/Greater_Weapon_Specialization_light_mace"
+    },
+    {
+      "tid": 396,
+      "title": "Greater Weapon Specialization (longbow)",
+      "path": "Feats/Greater_Weapon_Specialization_longbow"
+    },
+    {
+      "tid": 397,
+      "title": "Greater Weapon Specialization (longsword)",
+      "path": "Feats/Greater_Weapon_Specialization_longsword"
+    },
+    {
+      "tid": 398,
+      "title": "Greater Weapon Specialization (maul)",
+      "path": "Feats/Greater_Weapon_Specialization_maul"
+    },
+    {
+      "tid": 399,
+      "title": "Greater Weapon Specialization (morningstar)",
+      "path": "Feats/Greater_Weapon_Specialization_morningstar"
+    },
+    {
+      "tid": 400,
+      "title": "Greater Weapon Specialization (quarterstaff)",
+      "path": "Feats/Greater_Weapon_Specialization_quarterstaff"
+    },
+    {
+      "tid": 401,
+      "title": "Greater Weapon Specialization (rapier)",
+      "path": "Feats/Greater_Weapon_Specialization_rapier"
+    },
+    {
+      "tid": 402,
+      "title": "Greater Weapon Specialization (scimitar)",
+      "path": "Feats/Greater_Weapon_Specialization_scimitar"
+    },
+    {
+      "tid": 403,
+      "title": "Greater Weapon Specialization (scythe)",
+      "path": "Feats/Greater_Weapon_Specialization_scythe"
+    },
+    {
+      "tid": 404,
+      "title": "Greater Weapon Specialization (short sword)",
+      "path": "Feats/Greater_Weapon_Specialization_short_sword"
+    },
+    {
+      "tid": 405,
+      "title": "Greater Weapon Specialization (shortbow)",
+      "path": "Feats/Greater_Weapon_Specialization_shortbow"
+    },
+    {
+      "tid": 406,
+      "title": "Greater Weapon Specialization (shortspear)",
+      "path": "Feats/Greater_Weapon_Specialization_shortspear"
+    },
+    {
+      "tid": 407,
+      "title": "Greater Weapon Specialization (shuriken)",
+      "path": "Feats/Greater_Weapon_Specialization_shuriken"
+    },
+    {
+      "tid": 408,
+      "title": "Greater Weapon Specialization (sickle)",
+      "path": "Feats/Greater_Weapon_Specialization_sickle"
+    },
+    {
+      "tid": 409,
+      "title": "Greater Weapon Specialization (sling)",
+      "path": "Feats/Greater_Weapon_Specialization_sling"
+    },
+    {
+      "tid": 410,
+      "title": "Greater Weapon Specialization (spear)",
+      "path": "Feats/Greater_Weapon_Specialization_spear"
+    },
+    {
+      "tid": 411,
+      "title": "Greater Weapon Specialization (throwing axe)",
+      "path": "Feats/Greater_Weapon_Specialization_throwing_axe"
+    },
+    {
+      "tid": 412,
+      "title": "Greater Weapon Specialization (trident)",
+      "path": "Feats/Greater_Weapon_Specialization_trident"
+    },
+    {
+      "tid": 413,
+      "title": "Greater Weapon Specialization (two-bladed sword)",
+      "path": "Feats/Greater_Weapon_Specialization_two_bladed_sword"
+    },
+    {
+      "tid": 414,
+      "title": "Greater Weapon Specialization (warhammer)",
+      "path": "Feats/Greater_Weapon_Specialization_warhammer"
+    },
+    {
+      "tid": 415,
+      "title": "Greater Weapon Specialization (whip)",
+      "path": "Feats/Greater_Weapon_Specialization_whip"
+    },
+    {
+      "tid": 416,
+      "title": "Hardiness vs. Charms",
+      "path": "Feats/Hardiness_vs_Charms"
+    },
+    {
+      "tid": 417,
+      "title": "Hardiness vs. Enchantments",
+      "path": "Feats/Hardiness_vs_Enchantments"
+    },
+    {
+      "tid": 418,
+      "title": "Hardiness vs. Illusions",
+      "path": "Feats/Hardiness_vs_Illusions"
+    },
+    {
+      "tid": 419,
+      "title": "Hardiness vs. Poisons",
+      "path": "Feats/Hardiness_vs_Poisons"
+    },
+    {
+      "tid": 420,
+      "title": "Hardiness vs. Sleep",
+      "path": "Feats/Hardiness_vs_Sleep"
+    },
+    {
+      "tid": 421,
+      "title": "Hardiness vs. Spells",
+      "path": "Feats/Hardiness_vs_Spells"
+    },
+    {
+      "tid": 422,
+      "title": "Illiterate",
+      "path": "Feats/Illiterate"
+    },
+    {
+      "tid": 423,
+      "title": "Immunity To Sleep",
+      "path": "Feats/Immunity_To_Sleep"
+    },
+    {
+      "tid": 424,
+      "title": "Improved Critical (bastard sword)",
+      "path": "Feats/Improved_Critical_bastard_sword"
+    },
+    {
+      "tid": 425,
+      "title": "Improved Critical (battleaxe)",
+      "path": "Feats/Improved_Critical_battleaxe"
+    },
+    {
+      "tid": 426,
+      "title": "Improved Critical (blunderbuss)",
+      "path": "Feats/Improved_Critical_blunderbuss"
+    },
+    {
+      "tid": 427,
+      "title": "Improved Critical (club)",
+      "path": "Feats/Improved_Critical_club"
+    },
+    {
+      "tid": 428,
+      "title": "Improved Critical (creature slash piercing weapon)",
+      "path": "Feats/Improved_Critical_creature_slash_piercing_weapon"
+    },
+    {
+      "tid": 429,
+      "title": "Improved Critical (dagger)",
+      "path": "Feats/Improved_Critical_dagger"
+    },
+    {
+      "tid": 430,
+      "title": "Improved Critical (dart)",
+      "path": "Feats/Improved_Critical_dart"
+    },
+    {
+      "tid": 431,
+      "title": "Improved Critical (dire mace)",
+      "path": "Feats/Improved_Critical_dire_mace"
+    },
+    {
+      "tid": 432,
+      "title": "Improved Critical (double axe)",
+      "path": "Feats/Improved_Critical_double_axe"
+    },
+    {
+      "tid": 433,
+      "title": "Improved Critical (dwarven waraxe)",
+      "path": "Feats/Improved_Critical_dwarven_waraxe"
+    },
+    {
+      "tid": 434,
+      "title": "Improved Critical (estoc)",
+      "path": "Feats/Improved_Critical_estoc"
+    },
+    {
+      "tid": 435,
+      "title": "Improved Critical (falchion)",
+      "path": "Feats/Improved_Critical_falchion"
+    },
+    {
+      "tid": 436,
+      "title": "Improved Critical (gauntlet)",
+      "path": "Feats/Improved_Critical_gauntlet"
+    },
+    {
+      "tid": 437,
+      "title": "Improved Critical (greataxe)",
+      "path": "Feats/Improved_Critical_greataxe"
+    },
+    {
+      "tid": 438,
+      "title": "Improved Critical (greatsword)",
+      "path": "Feats/Improved_Critical_greatsword"
+    },
+    {
+      "tid": 439,
+      "title": "Improved Critical (halberd)",
+      "path": "Feats/Improved_Critical_halberd"
+    },
+    {
+      "tid": 440,
+      "title": "Improved Critical (handaxe)",
+      "path": "Feats/Improved_Critical_handaxe"
+    },
+    {
+      "tid": 441,
+      "title": "Improved Critical (heavy crossbow)",
+      "path": "Feats/Improved_Critical_heavy_crossbow"
+    },
+    {
+      "tid": 442,
+      "title": "Improved Critical (heavy flail)",
+      "path": "Feats/Improved_Critical_heavy_flail"
+    },
+    {
+      "tid": 443,
+      "title": "Improved Critical (heavy mace)",
+      "path": "Feats/Improved_Critical_heavy_mace"
+    },
+    {
+      "tid": 444,
+      "title": "Improved Critical (kama)",
+      "path": "Feats/Improved_Critical_kama"
+    },
+    {
+      "tid": 445,
+      "title": "Improved Critical (katana)",
+      "path": "Feats/Improved_Critical_katana"
+    },
+    {
+      "tid": 446,
+      "title": "Improved Critical (kukri)",
+      "path": "Feats/Improved_Critical_kukri"
+    },
+    {
+      "tid": 447,
+      "title": "Improved Critical (light crossbow)",
+      "path": "Feats/Improved_Critical_light_crossbow"
+    },
+    {
+      "tid": 448,
+      "title": "Improved Critical (light flail)",
+      "path": "Feats/Improved_Critical_light_flail"
+    },
+    {
+      "tid": 449,
+      "title": "Improved Critical (light hammer)",
+      "path": "Feats/Improved_Critical_light_hammer"
+    },
+    {
+      "tid": 450,
+      "title": "Improved Critical (light mace)",
+      "path": "Feats/Improved_Critical_light_mace"
+    },
+    {
+      "tid": 451,
+      "title": "Improved Critical (longbow)",
+      "path": "Feats/Improved_Critical_longbow"
+    },
+    {
+      "tid": 452,
+      "title": "Improved Critical (longsword)",
+      "path": "Feats/Improved_Critical_longsword"
+    },
+    {
+      "tid": 453,
+      "title": "Improved Critical (maul)",
+      "path": "Feats/Improved_Critical_maul"
+    },
+    {
+      "tid": 454,
+      "title": "Improved Critical (morningstar)",
+      "path": "Feats/Improved_Critical_morningstar"
+    },
+    {
+      "tid": 455,
+      "title": "Improved Critical (quarterstaff)",
+      "path": "Feats/Improved_Critical_quarterstaff"
+    },
+    {
+      "tid": 456,
+      "title": "Improved Critical (rapier)",
+      "path": "Feats/Improved_Critical_rapier"
+    },
+    {
+      "tid": 457,
+      "title": "Improved Critical (scimitar)",
+      "path": "Feats/Improved_Critical_scimitar"
+    },
+    {
+      "tid": 458,
+      "title": "Improved Critical (scythe)",
+      "path": "Feats/Improved_Critical_scythe"
+    },
+    {
+      "tid": 459,
+      "title": "Improved Critical (short sword)",
+      "path": "Feats/Improved_Critical_short_sword"
+    },
+    {
+      "tid": 460,
+      "title": "Improved Critical (shortbow)",
+      "path": "Feats/Improved_Critical_shortbow"
+    },
+    {
+      "tid": 461,
+      "title": "Improved Critical (shortspear)",
+      "path": "Feats/Improved_Critical_shortspear"
+    },
+    {
+      "tid": 462,
+      "title": "Improved Critical (shuriken)",
+      "path": "Feats/Improved_Critical_shuriken"
+    },
+    {
+      "tid": 463,
+      "title": "Improved Critical (sickle)",
+      "path": "Feats/Improved_Critical_sickle"
+    },
+    {
+      "tid": 464,
+      "title": "Improved Critical (sling)",
+      "path": "Feats/Improved_Critical_sling"
+    },
+    {
+      "tid": 465,
+      "title": "Improved Critical (spear)",
+      "path": "Feats/Improved_Critical_spear"
+    },
+    {
+      "tid": 466,
+      "title": "Improved Critical (throwing axe)",
+      "path": "Feats/Improved_Critical_throwing_axe"
+    },
+    {
+      "tid": 467,
+      "title": "Improved Critical (trident)",
+      "path": "Feats/Improved_Critical_trident"
+    },
+    {
+      "tid": 468,
+      "title": "Improved Critical (two-bladed sword)",
+      "path": "Feats/Improved_Critical_two_bladed_sword"
+    },
+    {
+      "tid": 469,
+      "title": "Improved Critical (warhammer)",
+      "path": "Feats/Improved_Critical_warhammer"
+    },
+    {
+      "tid": 470,
+      "title": "Improved Critical (whip)",
+      "path": "Feats/Improved_Critical_whip"
+    },
+    {
+      "tid": 471,
+      "title": "Improved Evasion",
+      "path": "Feats/Improved_Evasion"
+    },
+    {
+      "tid": 472,
+      "title": "Improved Grapple",
+      "path": "Feats/Improved_Grapple"
+    },
+    {
+      "tid": 473,
+      "title": "Improved Initiative",
+      "path": "Feats/Improved_Initiative"
+    },
+    {
+      "tid": 474,
+      "title": "Improved Parry",
+      "path": "Feats/Improved_Parry"
+    },
+    {
+      "tid": 475,
+      "title": "Improved Stunning Fist",
+      "path": "Feats/Improved_Stunning_Fist"
+    },
+    {
+      "tid": 476,
+      "title": "Improved Two-Weapon Fighting",
+      "path": "Feats/Improved_Two_Weapon_Fighting"
+    },
+    {
+      "tid": 477,
+      "title": "Improved Unarmed Strike",
+      "path": "Feats/Improved_Unarmed_Strike"
+    },
+    {
+      "tid": 478,
+      "title": "Improved Uncanny Dodge",
+      "path": "Feats/Improved_Uncanny_Dodge"
+    },
+    {
+      "tid": 479,
+      "title": "Improved Whirlwind Attack",
+      "path": "Feats/Improved_Whirlwind_Attack"
+    },
+    {
+      "tid": 480,
+      "title": "Inspire Competence",
+      "path": "Feats/Inspire_Competence"
+    },
+    {
+      "tid": 481,
+      "title": "Inspire Courage +1",
+      "path": "Feats/Inspire_Courage_1"
+    },
+    {
+      "tid": 482,
+      "title": "Inspire Courage +2",
+      "path": "Feats/Inspire_Courage_2"
+    },
+    {
+      "tid": 483,
+      "title": "Inspire Greatness",
+      "path": "Feats/Inspire_Greatness"
+    },
+    {
+      "tid": 484,
+      "title": "Inspire Heroics",
+      "path": "Feats/Inspire_Heroics"
+    },
+    {
+      "tid": 485,
+      "title": "Intelligence Training I",
+      "path": "Feats/Intelligence_Training_I"
+    },
+    {
+      "tid": 486,
+      "title": "Intelligence Training II",
+      "path": "Feats/Intelligence_Training_II"
+    },
+    {
+      "tid": 487,
+      "title": "Intelligence Training III",
+      "path": "Feats/Intelligence_Training_III"
+    },
+    {
+      "tid": 488,
+      "title": "Intelligence Training IV",
+      "path": "Feats/Intelligence_Training_IV"
+    },
+    {
+      "tid": 489,
+      "title": "Iron Skin I",
+      "path": "Feats/Iron_Skin_I"
+    },
+    {
+      "tid": 490,
+      "title": "Iron Skin II",
+      "path": "Feats/Iron_Skin_II"
+    },
+    {
+      "tid": 491,
+      "title": "Iron Skin III",
+      "path": "Feats/Iron_Skin_III"
+    },
+    {
+      "tid": 492,
+      "title": "Iron Will",
+      "path": "Feats/Iron_Will"
+    },
+    {
+      "tid": 493,
+      "title": "Keen Sense",
+      "path": "Feats/Keen_Sense"
+    },
+    {
+      "tid": 494,
+      "title": "Ki Strike +1",
+      "path": "Feats/Ki_Strike_1"
+    },
+    {
+      "tid": 495,
+      "title": "Ki Strike +2",
+      "path": "Feats/Ki_Strike_2"
+    },
+    {
+      "tid": 496,
+      "title": "Ki Strike +3",
+      "path": "Feats/Ki_Strike_3"
+    },
+    {
+      "tid": 497,
+      "title": "Ki-Strike Mastery",
+      "path": "Feats/Ki_Strike_Mastery"
+    },
+    {
+      "tid": 498,
+      "title": "Large Stature",
+      "path": "Feats/Large_Stature"
+    },
+    {
+      "tid": 499,
+      "title": "Lasting Inspiration",
+      "path": "Feats/Lasting_Inspiration"
+    },
+    {
+      "tid": 500,
+      "title": "Lay on Hands",
+      "path": "Feats/Lay_on_Hands"
+    },
+    {
+      "tid": 501,
+      "title": "Lesser Stoneskin (earth genasi)",
+      "path": "Feats/Lesser_Stoneskin_earth_genasi"
+    },
+    {
+      "tid": 502,
+      "title": "Light Blindness",
+      "path": "Feats/Light_Blindness"
+    },
+    {
+      "tid": 503,
+      "title": "Light Sensitivity",
+      "path": "Feats/Light_Sensitivity"
+    },
+    {
+      "tid": 504,
+      "title": "Lightning Reflexes",
+      "path": "Feats/Lightning_Reflexes"
+    },
+    {
+      "tid": 505,
+      "title": "Lingering Song",
+      "path": "Feats/Lingering_Song"
+    },
+    {
+      "tid": 506,
+      "title": "Literate",
+      "path": "Feats/Literate"
+    },
+    {
+      "tid": 507,
+      "title": "Low-light Vision",
+      "path": "Feats/Low_light_Vision"
+    },
+    {
+      "tid": 508,
+      "title": "Luck of Heroes",
+      "path": "Feats/Luck_of_Heroes"
+    },
+    {
+      "tid": 509,
+      "title": "Lucky",
+      "path": "Feats/Lucky"
+    },
+    {
+      "tid": 510,
+      "title": "Magical Affinity (Illusion)",
+      "path": "Feats/Magical_Affinity_Illusion"
+    },
+    {
+      "tid": 511,
+      "title": "Maximize Spell",
+      "path": "Feats/Maximize_Spell"
+    },
+    {
+      "tid": 512,
+      "title": "Metamagic (Anchored Spell)",
+      "path": "Feats/Metamagic_Anchored_Spell"
+    },
+    {
+      "tid": 513,
+      "title": "Metamagic (Elemental Substitution)",
+      "path": "Feats/Metamagic_Elemental_Substitution"
+    },
+    {
+      "tid": 514,
+      "title": "Metamagic (Empower Spell)",
+      "path": "Feats/Metamagic_Empower_Spell"
+    },
+    {
+      "tid": 515,
+      "title": "Metamagic (Enhance Spell)",
+      "path": "Feats/Metamagic_Enhance_Spell"
+    },
+    {
+      "tid": 516,
+      "title": "Metamagic (Extend Spell)",
+      "path": "Feats/Metamagic_Extend_Spell"
+    },
+    {
+      "tid": 517,
+      "title": "Metamagic (Heighten Spell)",
+      "path": "Feats/Metamagic_Heighten_Spell"
+    },
+    {
+      "tid": 518,
+      "title": "Metamagic (Intensify Spell)",
+      "path": "Feats/Metamagic_Intensify_Spell"
+    },
+    {
+      "tid": 519,
+      "title": "Metamagic (Maximize Spell)",
+      "path": "Feats/Metamagic_Maximize_Spell"
+    },
+    {
+      "tid": 520,
+      "title": "Metamagic (Persistent Spell)",
+      "path": "Feats/Metamagic_Persistent_Spell"
+    },
+    {
+      "tid": 521,
+      "title": "Metamagic (Quicken Spell)",
+      "path": "Feats/Metamagic_Quicken_Spell"
+    },
+    {
+      "tid": 522,
+      "title": "Metamagic (Reach Spell)",
+      "path": "Feats/Metamagic_Reach_Spell"
+    },
+    {
+      "tid": 523,
+      "title": "Metamagic (Restrained Spell)",
+      "path": "Feats/Metamagic_Restrained_Spell"
+    },
+    {
+      "tid": 524,
+      "title": "Metamagic (Sculpt Spell)",
+      "path": "Feats/Metamagic_Sculpt_Spell"
+    },
+    {
+      "tid": 525,
+      "title": "Metamagic (Silent Spell)",
+      "path": "Feats/Metamagic_Silent_Spell"
+    },
+    {
+      "tid": 526,
+      "title": "Metamagic (Still Spell)",
+      "path": "Feats/Metamagic_Still_Spell"
+    },
+    {
+      "tid": 527,
+      "title": "Metamagic (Widen Spell)",
+      "path": "Feats/Metamagic_Widen_Spell"
+    },
+    {
+      "tid": 528,
+      "title": "Mighty Rage",
+      "path": "Feats/Mighty_Rage"
+    },
+    {
+      "tid": 529,
+      "title": "Minor Change Shape (changeling)",
+      "path": "Feats/Minor_Change_Shape_changeling"
+    },
+    {
+      "tid": 530,
+      "title": "Mobility",
+      "path": "Feats/Mobility"
+    },
+    {
+      "tid": 531,
+      "title": "Monk AC Bonus",
+      "path": "Feats/Monk_AC_Bonus"
+    },
+    {
+      "tid": 532,
+      "title": "Monk Speed",
+      "path": "Feats/Monk_Speed"
+    },
+    {
+      "tid": 533,
+      "title": "Mounted Archery",
+      "path": "Feats/Mounted_Archery"
+    },
+    {
+      "tid": 534,
+      "title": "Mounted Combat",
+      "path": "Feats/Mounted_Combat"
+    },
+    {
+      "tid": 535,
+      "title": "Native Outsider",
+      "path": "Feats/Native_Outsider"
+    },
+    {
+      "tid": 536,
+      "title": "Native Shapechanger",
+      "path": "Feats/Native_Shapechanger"
+    },
+    {
+      "tid": 537,
+      "title": "Nature Sense",
+      "path": "Feats/Nature_Sense"
+    },
+    {
+      "tid": 538,
+      "title": "Offensive Fighting",
+      "path": "Feats/Offensive_Fighting"
+    },
+    {
+      "tid": 539,
+      "title": "Opportunist",
+      "path": "Feats/Opportunist"
+    },
+    {
+      "tid": 540,
+      "title": "Overwhelming Critical (bastard sword)",
+      "path": "Feats/Overwhelming_Critical_bastard_sword"
+    },
+    {
+      "tid": 541,
+      "title": "Overwhelming Critical (battleaxe)",
+      "path": "Feats/Overwhelming_Critical_battleaxe"
+    },
+    {
+      "tid": 542,
+      "title": "Overwhelming Critical (blunderbuss)",
+      "path": "Feats/Overwhelming_Critical_blunderbuss"
+    },
+    {
+      "tid": 543,
+      "title": "Overwhelming Critical (club)",
+      "path": "Feats/Overwhelming_Critical_club"
+    },
+    {
+      "tid": 544,
+      "title": "Overwhelming Critical (creature slash piercing weapon)",
+      "path": "Feats/Overwhelming_Critical_creature_slash_piercing_weapon"
+    },
+    {
+      "tid": 545,
+      "title": "Overwhelming Critical (dagger)",
+      "path": "Feats/Overwhelming_Critical_dagger"
+    },
+    {
+      "tid": 546,
+      "title": "Overwhelming Critical (dart)",
+      "path": "Feats/Overwhelming_Critical_dart"
+    },
+    {
+      "tid": 547,
+      "title": "Overwhelming Critical (dire mace)",
+      "path": "Feats/Overwhelming_Critical_dire_mace"
+    },
+    {
+      "tid": 548,
+      "title": "Overwhelming Critical (double axe)",
+      "path": "Feats/Overwhelming_Critical_double_axe"
+    },
+    {
+      "tid": 549,
+      "title": "Overwhelming Critical (dwarven waraxe)",
+      "path": "Feats/Overwhelming_Critical_dwarven_waraxe"
+    },
+    {
+      "tid": 550,
+      "title": "Overwhelming Critical (estoc)",
+      "path": "Feats/Overwhelming_Critical_estoc"
+    },
+    {
+      "tid": 551,
+      "title": "Overwhelming Critical (falchion)",
+      "path": "Feats/Overwhelming_Critical_falchion"
+    },
+    {
+      "tid": 552,
+      "title": "Overwhelming Critical (gauntlet)",
+      "path": "Feats/Overwhelming_Critical_gauntlet"
+    },
+    {
+      "tid": 553,
+      "title": "Overwhelming Critical (greataxe)",
+      "path": "Feats/Overwhelming_Critical_greataxe"
+    },
+    {
+      "tid": 554,
+      "title": "Overwhelming Critical (greatsword)",
+      "path": "Feats/Overwhelming_Critical_greatsword"
+    },
+    {
+      "tid": 555,
+      "title": "Overwhelming Critical (halberd)",
+      "path": "Feats/Overwhelming_Critical_halberd"
+    },
+    {
+      "tid": 556,
+      "title": "Overwhelming Critical (handaxe)",
+      "path": "Feats/Overwhelming_Critical_handaxe"
+    },
+    {
+      "tid": 557,
+      "title": "Overwhelming Critical (heavy crossbow)",
+      "path": "Feats/Overwhelming_Critical_heavy_crossbow"
+    },
+    {
+      "tid": 558,
+      "title": "Overwhelming Critical (heavy flail)",
+      "path": "Feats/Overwhelming_Critical_heavy_flail"
+    },
+    {
+      "tid": 559,
+      "title": "Overwhelming Critical (heavy mace)",
+      "path": "Feats/Overwhelming_Critical_heavy_mace"
+    },
+    {
+      "tid": 560,
+      "title": "Overwhelming Critical (kama)",
+      "path": "Feats/Overwhelming_Critical_kama"
+    },
+    {
+      "tid": 561,
+      "title": "Overwhelming Critical (katana)",
+      "path": "Feats/Overwhelming_Critical_katana"
+    },
+    {
+      "tid": 562,
+      "title": "Overwhelming Critical (kukri)",
+      "path": "Feats/Overwhelming_Critical_kukri"
+    },
+    {
+      "tid": 563,
+      "title": "Overwhelming Critical (light crossbow)",
+      "path": "Feats/Overwhelming_Critical_light_crossbow"
+    },
+    {
+      "tid": 564,
+      "title": "Overwhelming Critical (light flail)",
+      "path": "Feats/Overwhelming_Critical_light_flail"
+    },
+    {
+      "tid": 565,
+      "title": "Overwhelming Critical (light hammer)",
+      "path": "Feats/Overwhelming_Critical_light_hammer"
+    },
+    {
+      "tid": 566,
+      "title": "Overwhelming Critical (light mace)",
+      "path": "Feats/Overwhelming_Critical_light_mace"
+    },
+    {
+      "tid": 567,
+      "title": "Overwhelming Critical (longbow)",
+      "path": "Feats/Overwhelming_Critical_longbow"
+    },
+    {
+      "tid": 568,
+      "title": "Overwhelming Critical (longsword)",
+      "path": "Feats/Overwhelming_Critical_longsword"
+    },
+    {
+      "tid": 569,
+      "title": "Overwhelming Critical (maul)",
+      "path": "Feats/Overwhelming_Critical_maul"
+    },
+    {
+      "tid": 570,
+      "title": "Overwhelming Critical (morningstar)",
+      "path": "Feats/Overwhelming_Critical_morningstar"
+    },
+    {
+      "tid": 571,
+      "title": "Overwhelming Critical (quarterstaff)",
+      "path": "Feats/Overwhelming_Critical_quarterstaff"
+    },
+    {
+      "tid": 572,
+      "title": "Overwhelming Critical (rapier)",
+      "path": "Feats/Overwhelming_Critical_rapier"
+    },
+    {
+      "tid": 573,
+      "title": "Overwhelming Critical (scimitar)",
+      "path": "Feats/Overwhelming_Critical_scimitar"
+    },
+    {
+      "tid": 574,
+      "title": "Overwhelming Critical (scythe)",
+      "path": "Feats/Overwhelming_Critical_scythe"
+    },
+    {
+      "tid": 575,
+      "title": "Overwhelming Critical (short sword)",
+      "path": "Feats/Overwhelming_Critical_short_sword"
+    },
+    {
+      "tid": 576,
+      "title": "Overwhelming Critical (shortbow)",
+      "path": "Feats/Overwhelming_Critical_shortbow"
+    },
+    {
+      "tid": 577,
+      "title": "Overwhelming Critical (shortspear)",
+      "path": "Feats/Overwhelming_Critical_shortspear"
+    },
+    {
+      "tid": 578,
+      "title": "Overwhelming Critical (shuriken)",
+      "path": "Feats/Overwhelming_Critical_shuriken"
+    },
+    {
+      "tid": 579,
+      "title": "Overwhelming Critical (sickle)",
+      "path": "Feats/Overwhelming_Critical_sickle"
+    },
+    {
+      "tid": 580,
+      "title": "Overwhelming Critical (sling)",
+      "path": "Feats/Overwhelming_Critical_sling"
+    },
+    {
+      "tid": 581,
+      "title": "Overwhelming Critical (spear)",
+      "path": "Feats/Overwhelming_Critical_spear"
+    },
+    {
+      "tid": 582,
+      "title": "Overwhelming Critical (throwing axe)",
+      "path": "Feats/Overwhelming_Critical_throwing_axe"
+    },
+    {
+      "tid": 583,
+      "title": "Overwhelming Critical (trident)",
+      "path": "Feats/Overwhelming_Critical_trident"
+    },
+    {
+      "tid": 584,
+      "title": "Overwhelming Critical (two-bladed sword)",
+      "path": "Feats/Overwhelming_Critical_two_bladed_sword"
+    },
+    {
+      "tid": 585,
+      "title": "Overwhelming Critical (warhammer)",
+      "path": "Feats/Overwhelming_Critical_warhammer"
+    },
+    {
+      "tid": 586,
+      "title": "Overwhelming Critical (whip)",
+      "path": "Feats/Overwhelming_Critical_whip"
+    },
+    {
+      "tid": 587,
+      "title": "Partial Skill Affinity (perception)",
+      "path": "Feats/Partial_Skill_Affinity_perception"
+    },
+    {
+      "tid": 588,
+      "title": "Perfect Health",
+      "path": "Feats/Perfect_Health"
+    },
+    {
+      "tid": 589,
+      "title": "Perfect Self",
+      "path": "Feats/Perfect_Self"
+    },
+    {
+      "tid": 590,
+      "title": "Planar Turning",
+      "path": "Feats/Planar_Turning"
+    },
+    {
+      "tid": 591,
+      "title": "Point Blank Shot",
+      "path": "Feats/Point_Blank_Shot"
+    },
+    {
+      "tid": 592,
+      "title": "Power Attack",
+      "path": "Feats/Power_Attack"
+    },
+    {
+      "tid": 593,
+      "title": "Produce Flame (fire genasi)",
+      "path": "Feats/Produce_Flame_fire_genasi"
+    },
+    {
+      "tid": 594,
+      "title": "Purity of Body",
+      "path": "Feats/Purity_of_Body"
+    },
+    {
+      "tid": 595,
+      "title": "Quicken Spell",
+      "path": "Feats/Quicken_Spell"
+    },
+    {
+      "tid": 596,
+      "title": "Quicksilver Reflexes",
+      "path": "Feats/Quicksilver_Reflexes"
+    },
+    {
+      "tid": 597,
+      "title": "Quivering Palm",
+      "path": "Feats/Quivering_Palm"
+    },
+    {
+      "tid": 598,
+      "title": "Ranger Combat Style: Beastlord",
+      "path": "Feats/Ranger_Combat_Style_Beastlord"
+    },
+    {
+      "tid": 599,
+      "title": "Ranger Combat Style: Executioner",
+      "path": "Feats/Ranger_Combat_Style_Executioner"
+    },
+    {
+      "tid": 600,
+      "title": "Ranger Combat Style: Farstrider",
+      "path": "Feats/Ranger_Combat_Style_Farstrider"
+    },
+    {
+      "tid": 601,
+      "title": "Ranger Combat Style: Gloomstalker",
+      "path": "Feats/Ranger_Combat_Style_Gloomstalker"
+    },
+    {
+      "tid": 602,
+      "title": "Ranger Combat Style: Marksman",
+      "path": "Feats/Ranger_Combat_Style_Marksman"
+    },
+    {
+      "tid": 603,
+      "title": "Ranger Combat Style: Outrider",
+      "path": "Feats/Ranger_Combat_Style_Outrider"
+    },
+    {
+      "tid": 604,
+      "title": "Ranger Combat Style: Spearwarden",
+      "path": "Feats/Ranger_Combat_Style_Spearwarden"
+    },
+    {
+      "tid": 605,
+      "title": "Ranger Combat Style: Stormhand",
+      "path": "Feats/Ranger_Combat_Style_Stormhand"
+    },
+    {
+      "tid": 606,
+      "title": "Ranger Combat Style: Twinfangs",
+      "path": "Feats/Ranger_Combat_Style_Twinfangs"
+    },
+    {
+      "tid": 607,
+      "title": "Rapid Reload",
+      "path": "Feats/Rapid_Reload"
+    },
+    {
+      "tid": 608,
+      "title": "Rapid Shot",
+      "path": "Feats/Rapid_Shot"
+    },
+    {
+      "tid": 609,
+      "title": "Relentless Stunning Attacks",
+      "path": "Feats/Relentless_Stunning_Attacks"
+    },
+    {
+      "tid": 610,
+      "title": "Remove Disease",
+      "path": "Feats/Remove_Disease"
+    },
+    {
+      "tid": 611,
+      "title": "Resist Disease",
+      "path": "Feats/Resist_Disease"
+    },
+    {
+      "tid": 612,
+      "title": "Resist Energy (acid)",
+      "path": "Feats/Resist_Energy_acid"
+    },
+    {
+      "tid": 613,
+      "title": "Resist Energy (cold)",
+      "path": "Feats/Resist_Energy_cold"
+    },
+    {
+      "tid": 614,
+      "title": "Resist Energy (electrical)",
+      "path": "Feats/Resist_Energy_electrical"
+    },
+    {
+      "tid": 615,
+      "title": "Resist Energy (fire)",
+      "path": "Feats/Resist_Energy_fire"
+    },
+    {
+      "tid": 616,
+      "title": "Resist Energy (sonic)",
+      "path": "Feats/Resist_Energy_sonic"
+    },
+    {
+      "tid": 617,
+      "title": "Resist Nature&#x27;s Lure",
+      "path": "Feats/Resist_Natures_Lure"
+    },
+    {
+      "tid": 618,
+      "title": "Resist Poison",
+      "path": "Feats/Resist_Poison"
+    },
+    {
+      "tid": 619,
+      "title": "Sap",
+      "path": "Feats/Sap"
+    },
+    {
+      "tid": 620,
+      "title": "Scribe Scroll",
+      "path": "Feats/Scribe_Scroll"
+    },
+    {
+      "tid": 621,
+      "title": "Shield Proficiency",
+      "path": "Feats/Shield_Proficiency"
+    },
+    {
+      "tid": 622,
+      "title": "Shield Specialization (large)",
+      "path": "Feats/Shield_Specialization_large"
+    },
+    {
+      "tid": 623,
+      "title": "Shield Specialization (small)",
+      "path": "Feats/Shield_Specialization_small"
+    },
+    {
+      "tid": 624,
+      "title": "Shield Specialization (tower)",
+      "path": "Feats/Shield_Specialization_tower"
+    },
+    {
+      "tid": 625,
+      "title": "Shield Ward",
+      "path": "Feats/Shield_Ward"
+    },
+    {
+      "tid": 626,
+      "title": "Silent Spell",
+      "path": "Feats/Silent_Spell"
+    },
+    {
+      "tid": 627,
+      "title": "Silver Palm",
+      "path": "Feats/Silver_Palm"
+    },
+    {
+      "tid": 629,
+      "title": "Skill Affinity (acrobatics)",
+      "path": "Feats/Skill_Affinity_acrobatics"
+    },
+    {
+      "tid": 630,
+      "title": "Skill Affinity (athletics)",
+      "path": "Feats/Skill_Affinity_athletics"
+    },
+    {
+      "tid": 628,
+      "title": "Skill Affinity (Concentration)",
+      "path": "Feats/Skill_Affinity_Concentration"
+    },
+    {
+      "tid": 631,
+      "title": "Skill Affinity (craft, alchemy)",
+      "path": "Feats/Skill_Affinity_craft_alchemy"
+    },
+    {
+      "tid": 632,
+      "title": "Skill Affinity (craft, armorsmithing)",
+      "path": "Feats/Skill_Affinity_craft_armorsmithing"
+    },
+    {
+      "tid": 633,
+      "title": "Skill Affinity (craft, jewelry)",
+      "path": "Feats/Skill_Affinity_craft_jewelry"
+    },
+    {
+      "tid": 634,
+      "title": "Skill Affinity (craft, stonework)",
+      "path": "Feats/Skill_Affinity_craft_stonework"
+    },
+    {
+      "tid": 635,
+      "title": "Skill Affinity (craft, tinkering)",
+      "path": "Feats/Skill_Affinity_craft_tinkering"
+    },
+    {
+      "tid": 636,
+      "title": "Skill Affinity (craft, weaponsmithing)",
+      "path": "Feats/Skill_Affinity_craft_weaponsmithing"
+    },
+    {
+      "tid": 637,
+      "title": "Skill Affinity (disguise)",
+      "path": "Feats/Skill_Affinity_disguise"
+    },
+    {
+      "tid": 638,
+      "title": "Skill Affinity (influence)",
+      "path": "Feats/Skill_Affinity_influence"
+    },
+    {
+      "tid": 639,
+      "title": "Skill Affinity (intimidate)",
+      "path": "Feats/Skill_Affinity_intimidate"
+    },
+    {
+      "tid": 640,
+      "title": "Skill Affinity (knowledge, arcana)",
+      "path": "Feats/Skill_Affinity_knowledge_arcana"
+    },
+    {
+      "tid": 641,
+      "title": "Skill Affinity (knowledge, architecture)",
+      "path": "Feats/Skill_Affinity_knowledge_architecture"
+    },
+    {
+      "tid": 642,
+      "title": "Skill Affinity (knowledge, dungeoneering)",
+      "path": "Feats/Skill_Affinity_knowledge_dungeoneering"
+    },
+    {
+      "tid": 643,
+      "title": "Skill Affinity (perception)",
+      "path": "Feats/Skill_Affinity_perception"
+    },
+    {
+      "tid": 644,
+      "title": "Skill Affinity (ride)",
+      "path": "Feats/Skill_Affinity_ride"
+    },
+    {
+      "tid": 645,
+      "title": "Skill Affinity (sense motive)",
+      "path": "Feats/Skill_Affinity_sense_motive"
+    },
+    {
+      "tid": 646,
+      "title": "Skill Affinity (stealth)",
+      "path": "Feats/Skill_Affinity_stealth"
+    },
+    {
+      "tid": 647,
+      "title": "Skill Focus (Acrobatics)",
+      "path": "Feats/Skill_Focus_Acrobatics"
+    },
+    {
+      "tid": 648,
+      "title": "Skill Focus (Animal Handling)",
+      "path": "Feats/Skill_Focus_Animal_Handling"
+    },
+    {
+      "tid": 649,
+      "title": "Skill Focus (Appraise)",
+      "path": "Feats/Skill_Focus_Appraise"
+    },
+    {
+      "tid": 650,
+      "title": "Skill Focus (Athletics)",
+      "path": "Feats/Skill_Focus_Athletics"
+    },
+    {
+      "tid": 651,
+      "title": "Skill Focus (Concentration)",
+      "path": "Feats/Skill_Focus_Concentration"
+    },
+    {
+      "tid": 652,
+      "title": "Skill Focus (Craft, alchemy)",
+      "path": "Feats/Skill_Focus_Craft_alchemy"
+    },
+    {
+      "tid": 653,
+      "title": "Skill Focus (Craft, armorsmithing)",
+      "path": "Feats/Skill_Focus_Craft_armorsmithing"
+    },
+    {
+      "tid": 654,
+      "title": "Skill Focus (Craft, cooking)",
+      "path": "Feats/Skill_Focus_Craft_cooking"
+    },
+    {
+      "tid": 655,
+      "title": "Skill Focus (Craft, jewelry)",
+      "path": "Feats/Skill_Focus_Craft_jewelry"
+    },
+    {
+      "tid": 656,
+      "title": "Skill Focus (Craft, leatherworking)",
+      "path": "Feats/Skill_Focus_Craft_leatherworking"
+    },
+    {
+      "tid": 657,
+      "title": "Skill Focus (Craft, stonework)",
+      "path": "Feats/Skill_Focus_Craft_stonework"
+    },
+    {
+      "tid": 658,
+      "title": "Skill Focus (Craft, textiles)",
+      "path": "Feats/Skill_Focus_Craft_textiles"
+    },
+    {
+      "tid": 659,
+      "title": "Skill Focus (Craft, tinkering)",
+      "path": "Feats/Skill_Focus_Craft_tinkering"
+    },
+    {
+      "tid": 660,
+      "title": "Skill Focus (Craft, weaponsmithing)",
+      "path": "Feats/Skill_Focus_Craft_weaponsmithing"
+    },
+    {
+      "tid": 661,
+      "title": "Skill Focus (Craft, woodworking)",
+      "path": "Feats/Skill_Focus_Craft_woodworking"
+    },
+    {
+      "tid": 662,
+      "title": "Skill Focus (Disable Device)",
+      "path": "Feats/Skill_Focus_Disable_Device"
+    },
+    {
+      "tid": 663,
+      "title": "Skill Focus (Disguise)",
+      "path": "Feats/Skill_Focus_Disguise"
+    },
+    {
+      "tid": 664,
+      "title": "Skill Focus (Heal)",
+      "path": "Feats/Skill_Focus_Heal"
+    },
+    {
+      "tid": 665,
+      "title": "Skill Focus (Influence)",
+      "path": "Feats/Skill_Focus_Influence"
+    },
+    {
+      "tid": 666,
+      "title": "Skill Focus (Intimidate)",
+      "path": "Feats/Skill_Focus_Intimidate"
+    },
+    {
+      "tid": 667,
+      "title": "Skill Focus (Knowledge, arcana)",
+      "path": "Feats/Skill_Focus_Knowledge_arcana"
+    },
+    {
+      "tid": 668,
+      "title": "Skill Focus (Knowledge, architecture)",
+      "path": "Feats/Skill_Focus_Knowledge_architecture"
+    },
+    {
+      "tid": 669,
+      "title": "Skill Focus (Knowledge, dungeoneer)",
+      "path": "Feats/Skill_Focus_Knowledge_dungeoneer"
+    },
+    {
+      "tid": 670,
+      "title": "Skill Focus (Knowledge, geography)",
+      "path": "Feats/Skill_Focus_Knowledge_geography"
+    },
+    {
+      "tid": 671,
+      "title": "Skill Focus (Knowledge, history)",
+      "path": "Feats/Skill_Focus_Knowledge_history"
+    },
+    {
+      "tid": 672,
+      "title": "Skill Focus (Knowledge, local)",
+      "path": "Feats/Skill_Focus_Knowledge_local"
+    },
+    {
+      "tid": 673,
+      "title": "Skill Focus (Knowledge, nature)",
+      "path": "Feats/Skill_Focus_Knowledge_nature"
+    },
+    {
+      "tid": 674,
+      "title": "Skill Focus (Knowledge, nobility)",
+      "path": "Feats/Skill_Focus_Knowledge_nobility"
+    },
+    {
+      "tid": 675,
+      "title": "Skill Focus (Knowledge, planar)",
+      "path": "Feats/Skill_Focus_Knowledge_planar"
+    },
+    {
+      "tid": 676,
+      "title": "Skill Focus (Knowledge, religion)",
+      "path": "Feats/Skill_Focus_Knowledge_religion"
+    },
+    {
+      "tid": 677,
+      "title": "Skill Focus (Linguistics)",
+      "path": "Feats/Skill_Focus_Linguistics"
+    },
+    {
+      "tid": 678,
+      "title": "Skill Focus (Open Lock)",
+      "path": "Feats/Skill_Focus_Open_Lock"
+    },
+    {
+      "tid": 679,
+      "title": "Skill Focus (Parry)",
+      "path": "Feats/Skill_Focus_Parry"
+    },
+    {
+      "tid": 680,
+      "title": "Skill Focus (Perception)",
+      "path": "Feats/Skill_Focus_Perception"
+    },
+    {
+      "tid": 681,
+      "title": "Skill Focus (Perform)",
+      "path": "Feats/Skill_Focus_Perform"
+    },
+    {
+      "tid": 682,
+      "title": "Skill Focus (Profession, farmer)",
+      "path": "Feats/Skill_Focus_Profession_farmer"
+    },
+    {
+      "tid": 683,
+      "title": "Skill Focus (Profession, fisher)",
+      "path": "Feats/Skill_Focus_Profession_fisher"
+    },
+    {
+      "tid": 684,
+      "title": "Skill Focus (Profession, herbalist)",
+      "path": "Feats/Skill_Focus_Profession_herbalist"
+    },
+    {
+      "tid": 685,
+      "title": "Skill Focus (Profession, hunter)",
+      "path": "Feats/Skill_Focus_Profession_hunter"
+    },
+    {
+      "tid": 686,
+      "title": "Skill Focus (Profession, miner)",
+      "path": "Feats/Skill_Focus_Profession_miner"
+    },
+    {
+      "tid": 687,
+      "title": "Skill Focus (Profession, sailor)",
+      "path": "Feats/Skill_Focus_Profession_sailor"
+    },
+    {
+      "tid": 688,
+      "title": "Skill Focus (Profession, woodcutter)",
+      "path": "Feats/Skill_Focus_Profession_woodcutter"
+    },
+    {
+      "tid": 689,
+      "title": "Skill Focus (Ride)",
+      "path": "Feats/Skill_Focus_Ride"
+    },
+    {
+      "tid": 690,
+      "title": "Skill Focus (Scriptcraft)",
+      "path": "Feats/Skill_Focus_Scriptcraft"
+    },
+    {
+      "tid": 691,
+      "title": "Skill Focus (Sense Motive)",
+      "path": "Feats/Skill_Focus_Sense_Motive"
+    },
+    {
+      "tid": 692,
+      "title": "Skill Focus (Sleight of Hand)",
+      "path": "Feats/Skill_Focus_Sleight_of_Hand"
+    },
+    {
+      "tid": 693,
+      "title": "Skill Focus (Spellcraft)",
+      "path": "Feats/Skill_Focus_Spellcraft"
+    },
+    {
+      "tid": 694,
+      "title": "Skill Focus (Stealth)",
+      "path": "Feats/Skill_Focus_Stealth"
+    },
+    {
+      "tid": 695,
+      "title": "Skill Focus (Survival)",
+      "path": "Feats/Skill_Focus_Survival"
+    },
+    {
+      "tid": 696,
+      "title": "Skill Focus (Use Magic Device)",
+      "path": "Feats/Skill_Focus_Use_Magic_Device"
+    },
+    {
+      "tid": 697,
+      "title": "Skill Focus (Use Rope)",
+      "path": "Feats/Skill_Focus_Use_Rope"
+    },
+    {
+      "tid": 698,
+      "title": "Skill Mastery",
+      "path": "Feats/Skill_Mastery"
+    },
+    {
+      "tid": 699,
+      "title": "Slippery Mind",
+      "path": "Feats/Slippery_Mind"
+    },
+    {
+      "tid": 700,
+      "title": "Small Stature",
+      "path": "Feats/Small_Stature"
+    },
+    {
+      "tid": 701,
+      "title": "Smite Evil",
+      "path": "Feats/Smite_Evil"
+    },
+    {
+      "tid": 702,
+      "title": "Smite Good",
+      "path": "Feats/Smite_Good"
+    },
+    {
+      "tid": 703,
+      "title": "Snake Blood",
+      "path": "Feats/Snake_Blood"
+    },
+    {
+      "tid": 704,
+      "title": "Snatch Arrows",
+      "path": "Feats/Snatch_Arrows"
+    },
+    {
+      "tid": 705,
+      "title": "Sneak Attack (+1d6)",
+      "path": "Feats/Sneak_Attack_1d6"
+    },
+    {
+      "tid": 706,
+      "title": "Sneak Attack (+2d6)",
+      "path": "Feats/Sneak_Attack_2d6"
+    },
+    {
+      "tid": 707,
+      "title": "Sneak Attack (+3d6)",
+      "path": "Feats/Sneak_Attack_3d6"
+    },
+    {
+      "tid": 708,
+      "title": "Sneak Attack (+4d6)",
+      "path": "Feats/Sneak_Attack_4d6"
+    },
+    {
+      "tid": 709,
+      "title": "Sneak Attack (+5d6)",
+      "path": "Feats/Sneak_Attack_5d6"
+    },
+    {
+      "tid": 710,
+      "title": "Sneak Attack (+6d6)",
+      "path": "Feats/Sneak_Attack_6d6"
+    },
+    {
+      "tid": 711,
+      "title": "Song of Freedom",
+      "path": "Feats/Song_of_Freedom"
+    },
+    {
+      "tid": 712,
+      "title": "Spell Focus (Abjuration)",
+      "path": "Feats/Spell_Focus_Abjuration"
+    },
+    {
+      "tid": 713,
+      "title": "Spell Focus (Conjuration)",
+      "path": "Feats/Spell_Focus_Conjuration"
+    },
+    {
+      "tid": 714,
+      "title": "Spell Focus (Divination)",
+      "path": "Feats/Spell_Focus_Divination"
+    },
+    {
+      "tid": 715,
+      "title": "Spell Focus (Enchantment)",
+      "path": "Feats/Spell_Focus_Enchantment"
+    },
+    {
+      "tid": 716,
+      "title": "Spell Focus (Evocation)",
+      "path": "Feats/Spell_Focus_Evocation"
+    },
+    {
+      "tid": 717,
+      "title": "Spell Focus (Illusion)",
+      "path": "Feats/Spell_Focus_Illusion"
+    },
+    {
+      "tid": 718,
+      "title": "Spell Focus (Necromancy)",
+      "path": "Feats/Spell_Focus_Necromancy"
+    },
+    {
+      "tid": 719,
+      "title": "Spell Focus (Transmutation)",
+      "path": "Feats/Spell_Focus_Transmutation"
+    },
+    {
+      "tid": 720,
+      "title": "Spell Penetration",
+      "path": "Feats/Spell_Penetration"
+    },
+    {
+      "tid": 721,
+      "title": "Spring Attack",
+      "path": "Feats/Spring_Attack"
+    },
+    {
+      "tid": 722,
+      "title": "Stable Footing",
+      "path": "Feats/Stable_Footing"
+    },
+    {
+      "tid": 723,
+      "title": "Stealthy",
+      "path": "Feats/Stealthy"
+    },
+    {
+      "tid": 724,
+      "title": "Still Mind",
+      "path": "Feats/Still_Mind"
+    },
+    {
+      "tid": 725,
+      "title": "Still Spell",
+      "path": "Feats/Still_Spell"
+    },
+    {
+      "tid": 726,
+      "title": "Stonecunning",
+      "path": "Feats/Stonecunning"
+    },
+    {
+      "tid": 727,
+      "title": "Strength Training I",
+      "path": "Feats/Strength_Training_I"
+    },
+    {
+      "tid": 728,
+      "title": "Strength Training II",
+      "path": "Feats/Strength_Training_II"
+    },
+    {
+      "tid": 729,
+      "title": "Strength Training III",
+      "path": "Feats/Strength_Training_III"
+    },
+    {
+      "tid": 730,
+      "title": "Strength Training IV",
+      "path": "Feats/Strength_Training_IV"
+    },
+    {
+      "tid": 731,
+      "title": "Strong Soul",
+      "path": "Feats/Strong_Soul"
+    },
+    {
+      "tid": 732,
+      "title": "Stunning Fist",
+      "path": "Feats/Stunning_Fist"
+    },
+    {
+      "tid": 733,
+      "title": "Summon Familiar",
+      "path": "Feats/Summon_Familiar"
+    },
+    {
+      "tid": 734,
+      "title": "Summon Mount",
+      "path": "Feats/Summon_Mount"
+    },
+    {
+      "tid": 735,
+      "title": "Terrifying Rage",
+      "path": "Feats/Terrifying_Rage"
+    },
+    {
+      "tid": 736,
+      "title": "Thug",
+      "path": "Feats/Thug"
+    },
+    {
+      "tid": 737,
+      "title": "Thundering Rage",
+      "path": "Feats/Thundering_Rage"
+    },
+    {
+      "tid": 738,
+      "title": "Toughness I",
+      "path": "Feats/Toughness_I"
+    },
+    {
+      "tid": 739,
+      "title": "Toughness II",
+      "path": "Feats/Toughness_II"
+    },
+    {
+      "tid": 740,
+      "title": "Toughness III",
+      "path": "Feats/Toughness_III"
+    },
+    {
+      "tid": 741,
+      "title": "Toughness IV",
+      "path": "Feats/Toughness_IV"
+    },
+    {
+      "tid": 742,
+      "title": "Toughness IX",
+      "path": "Feats/Toughness_IX"
+    },
+    {
+      "tid": 743,
+      "title": "Toughness V",
+      "path": "Feats/Toughness_V"
+    },
+    {
+      "tid": 744,
+      "title": "Toughness VI",
+      "path": "Feats/Toughness_VI"
+    },
+    {
+      "tid": 745,
+      "title": "Toughness VII",
+      "path": "Feats/Toughness_VII"
+    },
+    {
+      "tid": 746,
+      "title": "Toughness VIII",
+      "path": "Feats/Toughness_VIII"
+    },
+    {
+      "tid": 747,
+      "title": "Toughness X",
+      "path": "Feats/Toughness_X"
+    },
+    {
+      "tid": 748,
+      "title": "Tower Shield Proficiency",
+      "path": "Feats/Tower_Shield_Proficiency"
+    },
+    {
+      "tid": 749,
+      "title": "Trackless Step",
+      "path": "Feats/Trackless_Step"
+    },
+    {
+      "tid": 750,
+      "title": "Turn Undead",
+      "path": "Feats/Turn_Undead"
+    },
+    {
+      "tid": 751,
+      "title": "Two-Weapon Fighting",
+      "path": "Feats/Two_Weapon_Fighting"
+    },
+    {
+      "tid": 752,
+      "title": "Uncanny Dodge",
+      "path": "Feats/Uncanny_Dodge"
+    },
+    {
+      "tid": 753,
+      "title": "Unseen Form",
+      "path": "Feats/Unseen_Form"
+    },
+    {
+      "tid": 754,
+      "title": "Use Poison",
+      "path": "Feats/Use_Poison"
+    },
+    {
+      "tid": 755,
+      "title": "Venom Immunity",
+      "path": "Feats/Venom_Immunity"
+    },
+    {
+      "tid": 756,
+      "title": "Weapon Focus (bastard sword)",
+      "path": "Feats/Weapon_Focus_bastard_sword"
+    },
+    {
+      "tid": 757,
+      "title": "Weapon Focus (battleaxe)",
+      "path": "Feats/Weapon_Focus_battleaxe"
+    },
+    {
+      "tid": 758,
+      "title": "Weapon Focus (blunderbuss)",
+      "path": "Feats/Weapon_Focus_blunderbuss"
+    },
+    {
+      "tid": 759,
+      "title": "Weapon Focus (club)",
+      "path": "Feats/Weapon_Focus_club"
+    },
+    {
+      "tid": 760,
+      "title": "Weapon Focus (creature slash piercing weapon)",
+      "path": "Feats/Weapon_Focus_creature_slash_piercing_weapon"
+    },
+    {
+      "tid": 761,
+      "title": "Weapon Focus (dagger)",
+      "path": "Feats/Weapon_Focus_dagger"
+    },
+    {
+      "tid": 762,
+      "title": "Weapon Focus (dart)",
+      "path": "Feats/Weapon_Focus_dart"
+    },
+    {
+      "tid": 763,
+      "title": "Weapon Focus (dire mace)",
+      "path": "Feats/Weapon_Focus_dire_mace"
+    },
+    {
+      "tid": 764,
+      "title": "Weapon Focus (double axe)",
+      "path": "Feats/Weapon_Focus_double_axe"
+    },
+    {
+      "tid": 765,
+      "title": "Weapon Focus (dwarven waraxe)",
+      "path": "Feats/Weapon_Focus_dwarven_waraxe"
+    },
+    {
+      "tid": 766,
+      "title": "Weapon Focus (estoc)",
+      "path": "Feats/Weapon_Focus_estoc"
+    },
+    {
+      "tid": 767,
+      "title": "Weapon Focus (falchion)",
+      "path": "Feats/Weapon_Focus_falchion"
+    },
+    {
+      "tid": 768,
+      "title": "Weapon Focus (gauntlet)",
+      "path": "Feats/Weapon_Focus_gauntlet"
+    },
+    {
+      "tid": 769,
+      "title": "Weapon Focus (greataxe)",
+      "path": "Feats/Weapon_Focus_greataxe"
+    },
+    {
+      "tid": 770,
+      "title": "Weapon Focus (greatsword)",
+      "path": "Feats/Weapon_Focus_greatsword"
+    },
+    {
+      "tid": 771,
+      "title": "Weapon Focus (halberd)",
+      "path": "Feats/Weapon_Focus_halberd"
+    },
+    {
+      "tid": 772,
+      "title": "Weapon Focus (handaxe)",
+      "path": "Feats/Weapon_Focus_handaxe"
+    },
+    {
+      "tid": 773,
+      "title": "Weapon Focus (heavy crossbow)",
+      "path": "Feats/Weapon_Focus_heavy_crossbow"
+    },
+    {
+      "tid": 774,
+      "title": "Weapon Focus (heavy flail)",
+      "path": "Feats/Weapon_Focus_heavy_flail"
+    },
+    {
+      "tid": 775,
+      "title": "Weapon Focus (heavy mace)",
+      "path": "Feats/Weapon_Focus_heavy_mace"
+    },
+    {
+      "tid": 776,
+      "title": "Weapon Focus (kama)",
+      "path": "Feats/Weapon_Focus_kama"
+    },
+    {
+      "tid": 777,
+      "title": "Weapon Focus (katana)",
+      "path": "Feats/Weapon_Focus_katana"
+    },
+    {
+      "tid": 778,
+      "title": "Weapon Focus (kukri)",
+      "path": "Feats/Weapon_Focus_kukri"
+    },
+    {
+      "tid": 779,
+      "title": "Weapon Focus (light crossbow)",
+      "path": "Feats/Weapon_Focus_light_crossbow"
+    },
+    {
+      "tid": 780,
+      "title": "Weapon Focus (light flail)",
+      "path": "Feats/Weapon_Focus_light_flail"
+    },
+    {
+      "tid": 781,
+      "title": "Weapon Focus (light hammer)",
+      "path": "Feats/Weapon_Focus_light_hammer"
+    },
+    {
+      "tid": 782,
+      "title": "Weapon Focus (light mace)",
+      "path": "Feats/Weapon_Focus_light_mace"
+    },
+    {
+      "tid": 783,
+      "title": "Weapon Focus (longbow)",
+      "path": "Feats/Weapon_Focus_longbow"
+    },
+    {
+      "tid": 784,
+      "title": "Weapon Focus (longsword)",
+      "path": "Feats/Weapon_Focus_longsword"
+    },
+    {
+      "tid": 785,
+      "title": "Weapon Focus (maul)",
+      "path": "Feats/Weapon_Focus_maul"
+    },
+    {
+      "tid": 786,
+      "title": "Weapon Focus (morningstar)",
+      "path": "Feats/Weapon_Focus_morningstar"
+    },
+    {
+      "tid": 787,
+      "title": "Weapon Focus (quarterstaff)",
+      "path": "Feats/Weapon_Focus_quarterstaff"
+    },
+    {
+      "tid": 788,
+      "title": "Weapon Focus (rapier)",
+      "path": "Feats/Weapon_Focus_rapier"
+    },
+    {
+      "tid": 789,
+      "title": "Weapon Focus (scimitar)",
+      "path": "Feats/Weapon_Focus_scimitar"
+    },
+    {
+      "tid": 790,
+      "title": "Weapon Focus (scythe)",
+      "path": "Feats/Weapon_Focus_scythe"
+    },
+    {
+      "tid": 791,
+      "title": "Weapon Focus (short sword)",
+      "path": "Feats/Weapon_Focus_short_sword"
+    },
+    {
+      "tid": 792,
+      "title": "Weapon Focus (shortbow)",
+      "path": "Feats/Weapon_Focus_shortbow"
+    },
+    {
+      "tid": 793,
+      "title": "Weapon Focus (shortspear)",
+      "path": "Feats/Weapon_Focus_shortspear"
+    },
+    {
+      "tid": 794,
+      "title": "Weapon Focus (shuriken)",
+      "path": "Feats/Weapon_Focus_shuriken"
+    },
+    {
+      "tid": 795,
+      "title": "Weapon Focus (sickle)",
+      "path": "Feats/Weapon_Focus_sickle"
+    },
+    {
+      "tid": 796,
+      "title": "Weapon Focus (sling)",
+      "path": "Feats/Weapon_Focus_sling"
+    },
+    {
+      "tid": 797,
+      "title": "Weapon Focus (spear)",
+      "path": "Feats/Weapon_Focus_spear"
+    },
+    {
+      "tid": 798,
+      "title": "Weapon Focus (throwing axe)",
+      "path": "Feats/Weapon_Focus_throwing_axe"
+    },
+    {
+      "tid": 799,
+      "title": "Weapon Focus (trident)",
+      "path": "Feats/Weapon_Focus_trident"
+    },
+    {
+      "tid": 800,
+      "title": "Weapon Focus (two-bladed sword)",
+      "path": "Feats/Weapon_Focus_two_bladed_sword"
+    },
+    {
+      "tid": 801,
+      "title": "Weapon Focus (warhammer)",
+      "path": "Feats/Weapon_Focus_warhammer"
+    },
+    {
+      "tid": 802,
+      "title": "Weapon Focus (whip)",
+      "path": "Feats/Weapon_Focus_whip"
+    },
+    {
+      "tid": 804,
+      "title": "Weapon Proficiency (aquatic elf)",
+      "path": "Feats/Weapon_Proficiency_aquatic_elf"
+    },
+    {
+      "tid": 805,
+      "title": "Weapon Proficiency (drow)",
+      "path": "Feats/Weapon_Proficiency_drow"
+    },
+    {
+      "tid": 806,
+      "title": "Weapon Proficiency (druid)",
+      "path": "Feats/Weapon_Proficiency_druid"
+    },
+    {
+      "tid": 807,
+      "title": "Weapon Proficiency (dwarf)",
+      "path": "Feats/Weapon_Proficiency_dwarf"
+    },
+    {
+      "tid": 808,
+      "title": "Weapon Proficiency (elf)",
+      "path": "Feats/Weapon_Proficiency_elf"
+    },
+    {
+      "tid": 809,
+      "title": "Weapon Proficiency (exotic)",
+      "path": "Feats/Weapon_Proficiency_exotic"
+    },
+    {
+      "tid": 810,
+      "title": "Weapon Proficiency (firearms)",
+      "path": "Feats/Weapon_Proficiency_firearms"
+    },
+    {
+      "tid": 803,
+      "title": "Weapon Proficiency (Gnome)",
+      "path": "Feats/Weapon_Proficiency_Gnome"
+    },
+    {
+      "tid": 811,
+      "title": "Weapon Proficiency (martial)",
+      "path": "Feats/Weapon_Proficiency_martial"
+    },
+    {
+      "tid": 812,
+      "title": "Weapon Proficiency (monk)",
+      "path": "Feats/Weapon_Proficiency_monk"
+    },
+    {
+      "tid": 813,
+      "title": "Weapon Proficiency (rogue)",
+      "path": "Feats/Weapon_Proficiency_rogue"
+    },
+    {
+      "tid": 814,
+      "title": "Weapon Proficiency (simple)",
+      "path": "Feats/Weapon_Proficiency_simple"
+    },
+    {
+      "tid": 815,
+      "title": "Weapon Proficiency (wizard)",
+      "path": "Feats/Weapon_Proficiency_wizard"
+    },
+    {
+      "tid": 816,
+      "title": "Weapon Specialization (bastard sword)",
+      "path": "Feats/Weapon_Specialization_bastard_sword"
+    },
+    {
+      "tid": 817,
+      "title": "Weapon Specialization (battleaxe)",
+      "path": "Feats/Weapon_Specialization_battleaxe"
+    },
+    {
+      "tid": 818,
+      "title": "Weapon Specialization (blunderbuss)",
+      "path": "Feats/Weapon_Specialization_blunderbuss"
+    },
+    {
+      "tid": 819,
+      "title": "Weapon Specialization (club)",
+      "path": "Feats/Weapon_Specialization_club"
+    },
+    {
+      "tid": 820,
+      "title": "Weapon Specialization (creature slash piercing weapon)",
+      "path": "Feats/Weapon_Specialization_creature_slash_piercing_weapon"
+    },
+    {
+      "tid": 821,
+      "title": "Weapon Specialization (dagger)",
+      "path": "Feats/Weapon_Specialization_dagger"
+    },
+    {
+      "tid": 822,
+      "title": "Weapon Specialization (dart)",
+      "path": "Feats/Weapon_Specialization_dart"
+    },
+    {
+      "tid": 823,
+      "title": "Weapon Specialization (dire mace)",
+      "path": "Feats/Weapon_Specialization_dire_mace"
+    },
+    {
+      "tid": 824,
+      "title": "Weapon Specialization (double axe)",
+      "path": "Feats/Weapon_Specialization_double_axe"
+    },
+    {
+      "tid": 825,
+      "title": "Weapon Specialization (dwarven waraxe)",
+      "path": "Feats/Weapon_Specialization_dwarven_waraxe"
+    },
+    {
+      "tid": 826,
+      "title": "Weapon Specialization (estoc)",
+      "path": "Feats/Weapon_Specialization_estoc"
+    },
+    {
+      "tid": 827,
+      "title": "Weapon Specialization (falchion)",
+      "path": "Feats/Weapon_Specialization_falchion"
+    },
+    {
+      "tid": 828,
+      "title": "Weapon Specialization (gauntlet)",
+      "path": "Feats/Weapon_Specialization_gauntlet"
+    },
+    {
+      "tid": 829,
+      "title": "Weapon Specialization (greataxe)",
+      "path": "Feats/Weapon_Specialization_greataxe"
+    },
+    {
+      "tid": 830,
+      "title": "Weapon Specialization (greatsword)",
+      "path": "Feats/Weapon_Specialization_greatsword"
+    },
+    {
+      "tid": 831,
+      "title": "Weapon Specialization (halberd)",
+      "path": "Feats/Weapon_Specialization_halberd"
+    },
+    {
+      "tid": 832,
+      "title": "Weapon Specialization (handaxe)",
+      "path": "Feats/Weapon_Specialization_handaxe"
+    },
+    {
+      "tid": 833,
+      "title": "Weapon Specialization (heavy crossbow)",
+      "path": "Feats/Weapon_Specialization_heavy_crossbow"
+    },
+    {
+      "tid": 834,
+      "title": "Weapon Specialization (heavy flail)",
+      "path": "Feats/Weapon_Specialization_heavy_flail"
+    },
+    {
+      "tid": 835,
+      "title": "Weapon Specialization (heavy mace)",
+      "path": "Feats/Weapon_Specialization_heavy_mace"
+    },
+    {
+      "tid": 836,
+      "title": "Weapon Specialization (kama)",
+      "path": "Feats/Weapon_Specialization_kama"
+    },
+    {
+      "tid": 837,
+      "title": "Weapon Specialization (katana)",
+      "path": "Feats/Weapon_Specialization_katana"
+    },
+    {
+      "tid": 838,
+      "title": "Weapon Specialization (kukri)",
+      "path": "Feats/Weapon_Specialization_kukri"
+    },
+    {
+      "tid": 839,
+      "title": "Weapon Specialization (light crossbow)",
+      "path": "Feats/Weapon_Specialization_light_crossbow"
+    },
+    {
+      "tid": 840,
+      "title": "Weapon Specialization (light flail)",
+      "path": "Feats/Weapon_Specialization_light_flail"
+    },
+    {
+      "tid": 841,
+      "title": "Weapon Specialization (light hammer)",
+      "path": "Feats/Weapon_Specialization_light_hammer"
+    },
+    {
+      "tid": 842,
+      "title": "Weapon Specialization (light mace)",
+      "path": "Feats/Weapon_Specialization_light_mace"
+    },
+    {
+      "tid": 843,
+      "title": "Weapon Specialization (longbow)",
+      "path": "Feats/Weapon_Specialization_longbow"
+    },
+    {
+      "tid": 844,
+      "title": "Weapon Specialization (longsword)",
+      "path": "Feats/Weapon_Specialization_longsword"
+    },
+    {
+      "tid": 845,
+      "title": "Weapon Specialization (maul)",
+      "path": "Feats/Weapon_Specialization_maul"
+    },
+    {
+      "tid": 846,
+      "title": "Weapon Specialization (morningstar)",
+      "path": "Feats/Weapon_Specialization_morningstar"
+    },
+    {
+      "tid": 847,
+      "title": "Weapon Specialization (quarterstaff)",
+      "path": "Feats/Weapon_Specialization_quarterstaff"
+    },
+    {
+      "tid": 848,
+      "title": "Weapon Specialization (rapier)",
+      "path": "Feats/Weapon_Specialization_rapier"
+    },
+    {
+      "tid": 849,
+      "title": "Weapon Specialization (scimitar)",
+      "path": "Feats/Weapon_Specialization_scimitar"
+    },
+    {
+      "tid": 850,
+      "title": "Weapon Specialization (scythe)",
+      "path": "Feats/Weapon_Specialization_scythe"
+    },
+    {
+      "tid": 851,
+      "title": "Weapon Specialization (short sword)",
+      "path": "Feats/Weapon_Specialization_short_sword"
+    },
+    {
+      "tid": 852,
+      "title": "Weapon Specialization (shortbow)",
+      "path": "Feats/Weapon_Specialization_shortbow"
+    },
+    {
+      "tid": 853,
+      "title": "Weapon Specialization (shortspear)",
+      "path": "Feats/Weapon_Specialization_shortspear"
+    },
+    {
+      "tid": 854,
+      "title": "Weapon Specialization (shuriken)",
+      "path": "Feats/Weapon_Specialization_shuriken"
+    },
+    {
+      "tid": 855,
+      "title": "Weapon Specialization (sickle)",
+      "path": "Feats/Weapon_Specialization_sickle"
+    },
+    {
+      "tid": 856,
+      "title": "Weapon Specialization (sling)",
+      "path": "Feats/Weapon_Specialization_sling"
+    },
+    {
+      "tid": 857,
+      "title": "Weapon Specialization (spear)",
+      "path": "Feats/Weapon_Specialization_spear"
+    },
+    {
+      "tid": 858,
+      "title": "Weapon Specialization (throwing axe)",
+      "path": "Feats/Weapon_Specialization_throwing_axe"
+    },
+    {
+      "tid": 859,
+      "title": "Weapon Specialization (trident)",
+      "path": "Feats/Weapon_Specialization_trident"
+    },
+    {
+      "tid": 860,
+      "title": "Weapon Specialization (two-bladed sword)",
+      "path": "Feats/Weapon_Specialization_two_bladed_sword"
+    },
+    {
+      "tid": 861,
+      "title": "Weapon Specialization (warhammer)",
+      "path": "Feats/Weapon_Specialization_warhammer"
+    },
+    {
+      "tid": 862,
+      "title": "Weapon Specialization (whip)",
+      "path": "Feats/Weapon_Specialization_whip"
+    },
+    {
+      "tid": 863,
+      "title": "Whirlwind Attack",
+      "path": "Feats/Whirlwind_Attack"
+    },
+    {
+      "tid": 864,
+      "title": "Wholeness of Body",
+      "path": "Feats/Wholeness_of_Body"
+    },
+    {
+      "tid": 865,
+      "title": "Wild Shape",
+      "path": "Feats/Wild_Shape"
+    },
+    {
+      "tid": 866,
+      "title": "Wisdom Training I",
+      "path": "Feats/Wisdom_Training_I"
+    },
+    {
+      "tid": 867,
+      "title": "Wisdom Training II",
+      "path": "Feats/Wisdom_Training_II"
+    },
+    {
+      "tid": 868,
+      "title": "Wisdom Training III",
+      "path": "Feats/Wisdom_Training_III"
+    },
+    {
+      "tid": 869,
+      "title": "Wisdom Training IV",
+      "path": "Feats/Wisdom_Training_IV"
+    },
+    {
+      "tid": 870,
+      "title": "Woodland Stride",
+      "path": "Feats/Woodland_Stride"
+    },
+    {
+      "tid": 871,
+      "title": "Zen Archery",
+      "path": "Feats/Zen_Archery"
+    },
+    {
+      "tid": 872,
+      "title": "Gameplay Changes",
+      "path": "Gameplay_Changes"
+    },
+    {
+      "tid": 873,
+      "title": "Alignment",
+      "path": "Guides/Alignment"
+    },
+    {
+      "tid": 874,
+      "title": "Alignment :: Chaotic Evil",
+      "path": "Guides/Alignment/Chaotic_Evil"
+    },
+    {
+      "tid": 875,
+      "title": "Alignment :: Chaotic Good",
+      "path": "Guides/Alignment/Chaotic_Good"
+    },
+    {
+      "tid": 876,
+      "title": "Alignment :: Chaotic Neutral",
+      "path": "Guides/Alignment/Chaotic_Neutral"
+    },
+    {
+      "tid": 877,
+      "title": "Alignment :: Lawful Evil",
+      "path": "Guides/Alignment/Lawful_Evil"
+    },
+    {
+      "tid": 878,
+      "title": "Alignment :: Lawful Good",
+      "path": "Guides/Alignment/Lawful_Good"
+    },
+    {
+      "tid": 879,
+      "title": "Alignment :: Lawful Neutral",
+      "path": "Guides/Alignment/Lawful_Neutral"
+    },
+    {
+      "tid": 880,
+      "title": "Alignment :: Neutral Evil",
+      "path": "Guides/Alignment/Neutral_Evil"
+    },
+    {
+      "tid": 881,
+      "title": "Alignment :: Neutral Good",
+      "path": "Guides/Alignment/Neutral_Good"
+    },
+    {
+      "tid": 882,
+      "title": "Alignment :: True Neutral",
+      "path": "Guides/Alignment/True_Neutral"
+    },
+    {
+      "tid": 883,
+      "title": "Amulet",
+      "path": "Items/Item_Types/Amulet"
+    },
+    {
+      "tid": 884,
+      "title": "Arrow",
+      "path": "Items/Item_Types/Arrow"
+    },
+    {
+      "tid": 885,
+      "title": "Basic Crafting Component",
+      "path": "Items/Item_Types/Basic_Crafting_Component"
+    },
+    {
+      "tid": 886,
+      "title": "Bastard Sword",
+      "path": "Items/Item_Types/Bastard_Sword"
+    },
+    {
+      "tid": 887,
+      "title": "Battleaxe",
+      "path": "Items/Item_Types/Battleaxe"
+    },
+    {
+      "tid": 888,
+      "title": "Belt",
+      "path": "Items/Item_Types/Belt"
+    },
+    {
+      "tid": 889,
+      "title": "Blank Scroll",
+      "path": "Items/Item_Types/Blank_Scroll"
+    },
+    {
+      "tid": 890,
+      "title": "Blunderbuss",
+      "path": "Items/Item_Types/Blunderbuss"
+    },
+    {
+      "tid": 891,
+      "title": "Bolt",
+      "path": "Items/Item_Types/Bolt"
+    },
+    {
+      "tid": 892,
+      "title": "Book",
+      "path": "Items/Item_Types/Book"
+    },
+    {
+      "tid": 893,
+      "title": "Boots",
+      "path": "Items/Item_Types/Boots"
+    },
+    {
+      "tid": 894,
+      "title": "Bracer",
+      "path": "Items/Item_Types/Bracer"
+    },
+    {
+      "tid": 895,
+      "title": "Brewed Potion",
+      "path": "Items/Item_Types/Brewed_Potion"
+    },
+    {
+      "tid": 896,
+      "title": "Bullet",
+      "path": "Items/Item_Types/Bullet"
+    },
+    {
+      "tid": 897,
+      "title": "Cloak",
+      "path": "Items/Item_Types/Cloak"
+    },
+    {
+      "tid": 898,
+      "title": "Club",
+      "path": "Items/Item_Types/Club"
+    },
+    {
+      "tid": 899,
+      "title": "Coin",
+      "path": "Items/Item_Types/Coin"
+    },
+    {
+      "tid": 900,
+      "title": "Container",
+      "path": "Items/Item_Types/Container"
+    },
+    {
+      "tid": 901,
+      "title": "Crafted Wand",
+      "path": "Items/Item_Types/Crafted_Wand"
+    },
+    {
+      "tid": 902,
+      "title": "Crafting Base Material",
+      "path": "Items/Item_Types/Crafting_Base_Material"
+    },
+    {
+      "tid": 903,
+      "title": "Creature Bludgeon Weapon",
+      "path": "Items/Item_Types/Creature_Bludgeon_Weapon"
+    },
+    {
+      "tid": 904,
+      "title": "Creature Item",
+      "path": "Items/Item_Types/Creature_Item"
+    },
+    {
+      "tid": 905,
+      "title": "Creature Pierce Weapon",
+      "path": "Items/Item_Types/Creature_Pierce_Weapon"
+    },
+    {
+      "tid": 906,
+      "title": "Creature Slash Piercing Weapon",
+      "path": "Items/Item_Types/Creature_Slash_Piercing_Weapon"
+    },
+    {
+      "tid": 907,
+      "title": "Creature Slash Weapon",
+      "path": "Items/Item_Types/Creature_Slash_Weapon"
+    },
+    {
+      "tid": 908,
+      "title": "Dagger",
+      "path": "Items/Item_Types/Dagger"
+    },
+    {
+      "tid": 909,
+      "title": "Dart",
+      "path": "Items/Item_Types/Dart"
+    },
+    {
+      "tid": 910,
+      "title": "Dire Mace",
+      "path": "Items/Item_Types/Dire_Mace"
+    },
+    {
+      "tid": 911,
+      "title": "Double Axe",
+      "path": "Items/Item_Types/Double_Axe"
+    },
+    {
+      "tid": 912,
+      "title": "Dwarven Waraxe",
+      "path": "Items/Item_Types/Dwarven_Waraxe"
+    },
+    {
+      "tid": 913,
+      "title": "Enchanted Scroll",
+      "path": "Items/Item_Types/Enchanted_Scroll"
+    },
+    {
+      "tid": 914,
+      "title": "Estoc",
+      "path": "Items/Item_Types/Estoc"
+    },
+    {
+      "tid": 915,
+      "title": "Falchion",
+      "path": "Items/Item_Types/Falchion"
+    },
+    {
+      "tid": 916,
+      "title": "Fishing Pole",
+      "path": "Items/Item_Types/Fishing_Pole"
+    },
+    {
+      "tid": 917,
+      "title": "Gauntlet",
+      "path": "Items/Item_Types/Gauntlet"
+    },
+    {
+      "tid": 918,
+      "title": "Gem",
+      "path": "Items/Item_Types/Gem"
+    },
+    {
+      "tid": 919,
+      "title": "Gold Piece",
+      "path": "Items/Item_Types/Gold_Piece"
+    },
+    {
+      "tid": 920,
+      "title": "Greataxe",
+      "path": "Items/Item_Types/Greataxe"
+    },
+    {
+      "tid": 921,
+      "title": "Greatsword",
+      "path": "Items/Item_Types/Greatsword"
+    },
+    {
+      "tid": 922,
+      "title": "Grenadelike",
+      "path": "Items/Item_Types/Grenadelike"
+    },
+    {
+      "tid": 923,
+      "title": "Halberd",
+      "path": "Items/Item_Types/Halberd"
+    },
+    {
+      "tid": 924,
+      "title": "Handaxe",
+      "path": "Items/Item_Types/Handaxe"
+    },
+    {
+      "tid": 925,
+      "title": "Healer&#x27;s Kit",
+      "path": "Items/Item_Types/Healers_Kit"
+    },
+    {
+      "tid": 926,
+      "title": "Heavy Crossbow",
+      "path": "Items/Item_Types/Heavy_Crossbow"
+    },
+    {
+      "tid": 927,
+      "title": "Heavy Flail",
+      "path": "Items/Item_Types/Heavy_Flail"
+    },
+    {
+      "tid": 928,
+      "title": "Heavy Mace",
+      "path": "Items/Item_Types/Heavy_Mace"
+    },
+    {
+      "tid": 929,
+      "title": "Helmet",
+      "path": "Items/Item_Types/Helmet"
+    },
+    {
+      "tid": 930,
+      "title": "Helmet (Open-Faced)",
+      "path": "Items/Item_Types/Helmet_Open_Faced"
+    },
+    {
+      "tid": 931,
+      "title": "Holdable (1x2)",
+      "path": "Items/Item_Types/Holdable_1x2"
+    },
+    {
+      "tid": 932,
+      "title": "Holdable Sign",
+      "path": "Items/Item_Types/Holdable_Sign"
+    },
+    {
+      "tid": 933,
+      "title": "Kama",
+      "path": "Items/Item_Types/Kama"
+    },
+    {
+      "tid": 934,
+      "title": "Katana",
+      "path": "Items/Item_Types/Katana"
+    },
+    {
+      "tid": 935,
+      "title": "Key",
+      "path": "Items/Item_Types/Key"
+    },
+    {
+      "tid": 936,
+      "title": "Kukri",
+      "path": "Items/Item_Types/Kukri"
+    },
+    {
+      "tid": 937,
+      "title": "Lance",
+      "path": "Items/Item_Types/Lance"
+    },
+    {
+      "tid": 938,
+      "title": "Large Shield",
+      "path": "Items/Item_Types/Large_Shield"
+    },
+    {
+      "tid": 939,
+      "title": "Light Crossbow",
+      "path": "Items/Item_Types/Light_Crossbow"
+    },
+    {
+      "tid": 940,
+      "title": "Light Flail",
+      "path": "Items/Item_Types/Light_Flail"
+    },
+    {
+      "tid": 941,
+      "title": "Light Hammer",
+      "path": "Items/Item_Types/Light_Hammer"
+    },
+    {
+      "tid": 942,
+      "title": "Light Mace",
+      "path": "Items/Item_Types/Light_Mace"
+    },
+    {
+      "tid": 943,
+      "title": "Longbow",
+      "path": "Items/Item_Types/Longbow"
+    },
+    {
+      "tid": 944,
+      "title": "Longsword",
+      "path": "Items/Item_Types/Longsword"
+    },
+    {
+      "tid": 945,
+      "title": "Magic Rod",
+      "path": "Items/Item_Types/Magic_Rod"
+    },
+    {
+      "tid": 946,
+      "title": "Magic Staff",
+      "path": "Items/Item_Types/Magic_Staff"
+    },
+    {
+      "tid": 947,
+      "title": "Magic Wand",
+      "path": "Items/Item_Types/Magic_Wand"
+    },
+    {
+      "tid": 948,
+      "title": "Maul",
+      "path": "Items/Item_Types/Maul"
+    },
+    {
+      "tid": 949,
+      "title": "Miscellaneous Large",
+      "path": "Items/Item_Types/Miscellaneous_Large"
+    },
+    {
+      "tid": 950,
+      "title": "Miscellaneous Medium",
+      "path": "Items/Item_Types/Miscellaneous_Medium"
+    },
+    {
+      "tid": 951,
+      "title": "Miscellaneous Small",
+      "path": "Items/Item_Types/Miscellaneous_Small"
+    },
+    {
+      "tid": 952,
+      "title": "Miscellaneous Thin",
+      "path": "Items/Item_Types/Miscellaneous_Thin"
+    },
+    {
+      "tid": 953,
+      "title": "Moon-on-a-Stick",
+      "path": "Items/Item_Types/Moon_on_a_Stick"
+    },
+    {
+      "tid": 954,
+      "title": "Morningstar",
+      "path": "Items/Item_Types/Morningstar"
+    },
+    {
+      "tid": 955,
+      "title": "Potion",
+      "path": "Items/Item_Types/Potion"
+    },
+    {
+      "tid": 956,
+      "title": "Potion Bottle",
+      "path": "Items/Item_Types/Potion_Bottle"
+    },
+    {
+      "tid": 957,
+      "title": "Quarterstaff",
+      "path": "Items/Item_Types/Quarterstaff"
+    },
+    {
+      "tid": 958,
+      "title": "Rapier",
+      "path": "Items/Item_Types/Rapier"
+    },
+    {
+      "tid": 959,
+      "title": "Ring",
+      "path": "Items/Item_Types/Ring"
+    },
+    {
+      "tid": 960,
+      "title": "Scimitar",
+      "path": "Items/Item_Types/Scimitar"
+    },
+    {
+      "tid": 961,
+      "title": "Scroll",
+      "path": "Items/Item_Types/Scroll"
+    },
+    {
+      "tid": 962,
+      "title": "Scythe",
+      "path": "Items/Item_Types/Scythe"
+    },
+    {
+      "tid": 963,
+      "title": "Short Sword",
+      "path": "Items/Item_Types/Short_Sword"
+    },
+    {
+      "tid": 964,
+      "title": "Shortbow",
+      "path": "Items/Item_Types/Shortbow"
+    },
+    {
+      "tid": 965,
+      "title": "Shortspear",
+      "path": "Items/Item_Types/Shortspear"
+    },
+    {
+      "tid": 966,
+      "title": "Shuriken",
+      "path": "Items/Item_Types/Shuriken"
+    },
+    {
+      "tid": 967,
+      "title": "Sickle",
+      "path": "Items/Item_Types/Sickle"
+    },
+    {
+      "tid": 968,
+      "title": "Sling",
+      "path": "Items/Item_Types/Sling"
+    },
+    {
+      "tid": 969,
+      "title": "Small Crafting Component",
+      "path": "Items/Item_Types/Small_Crafting_Component"
+    },
+    {
+      "tid": 970,
+      "title": "Small Shield",
+      "path": "Items/Item_Types/Small_Shield"
+    },
+    {
+      "tid": 971,
+      "title": "Spear",
+      "path": "Items/Item_Types/Spear"
+    },
+    {
+      "tid": 972,
+      "title": "Standard Equipment",
+      "path": "Items/Item_Types/Standard_Equipment"
+    },
+    {
+      "tid": 973,
+      "title": "Thieves&#x27; Tools",
+      "path": "Items/Item_Types/Thieves_Tools"
+    },
+    {
+      "tid": 974,
+      "title": "Throwing Axe",
+      "path": "Items/Item_Types/Throwing_Axe"
+    },
+    {
+      "tid": 975,
+      "title": "Torch",
+      "path": "Items/Item_Types/Torch"
+    },
+    {
+      "tid": 976,
+      "title": "Tower Shield",
+      "path": "Items/Item_Types/Tower_Shield"
+    },
+    {
+      "tid": 977,
+      "title": "Trap Kit",
+      "path": "Items/Item_Types/Trap_Kit"
+    },
+    {
+      "tid": 978,
+      "title": "Trident",
+      "path": "Items/Item_Types/Trident"
+    },
+    {
+      "tid": 979,
+      "title": "Trumpet",
+      "path": "Items/Item_Types/Trumpet"
+    },
+    {
+      "tid": 980,
+      "title": "Two-Bladed Sword",
+      "path": "Items/Item_Types/Two_Bladed_Sword"
+    },
+    {
+      "tid": 981,
+      "title": "Wand (not enchanted)",
+      "path": "Items/Item_Types/Wand_not_enchanted"
+    },
+    {
+      "tid": 982,
+      "title": "Warhammer",
+      "path": "Items/Item_Types/Warhammer"
+    },
+    {
+      "tid": 983,
+      "title": "Whip",
+      "path": "Items/Item_Types/Whip"
+    },
+    {
+      "tid": 984,
+      "title": "Gond",
+      "path": "Lore/Deities/Gond"
+    },
+    {
+      "tid": 985,
+      "title": "Main Page",
+      "path": "Main_Page"
+    },
+    {
+      "tid": 986,
+      "title": "Aasimar",
+      "path": "Races/Aasimar"
+    },
+    {
+      "tid": 987,
+      "title": "Changeling",
+      "path": "Races/Changeling"
+    },
+    {
+      "tid": 988,
+      "title": "Drow (deepborn)",
+      "path": "Races/Drow_deepborn"
+    },
+    {
+      "tid": 989,
+      "title": "Drow (sunwalker)",
+      "path": "Races/Drow_sunwalker"
+    },
+    {
+      "tid": 990,
+      "title": "Dwarf (shield)",
+      "path": "Races/Dwarf_shield"
+    },
+    {
+      "tid": 991,
+      "title": "Elf (aquatic)",
+      "path": "Races/Elf_aquatic"
+    },
+    {
+      "tid": 992,
+      "title": "Elf (moon)",
+      "path": "Races/Elf_moon"
+    },
+    {
+      "tid": 993,
+      "title": "Elf (sun)",
+      "path": "Races/Elf_sun"
+    },
+    {
+      "tid": 994,
+      "title": "Elf (wild)",
+      "path": "Races/Elf_wild"
+    },
+    {
+      "tid": 995,
+      "title": "Elf (wood)",
+      "path": "Races/Elf_wood"
+    },
+    {
+      "tid": 996,
+      "title": "Genasi (air)",
+      "path": "Races/Genasi_air"
+    },
+    {
+      "tid": 997,
+      "title": "Genasi (earth)",
+      "path": "Races/Genasi_earth"
+    },
+    {
+      "tid": 998,
+      "title": "Genasi (fire)",
+      "path": "Races/Genasi_fire"
+    },
+    {
+      "tid": 999,
+      "title": "Genasi (water)",
+      "path": "Races/Genasi_water"
+    },
+    {
+      "tid": 1000,
+      "title": "Gnome (rock)",
+      "path": "Races/Gnome_rock"
+    },
+    {
+      "tid": 1001,
+      "title": "Goblin",
+      "path": "Races/Goblin"
+    },
+    {
+      "tid": 1002,
+      "title": "Half-Elf",
+      "path": "Races/Half_Elf"
+    },
+    {
+      "tid": 1003,
+      "title": "Half-Ogre",
+      "path": "Races/Half_Ogre"
+    },
+    {
+      "tid": 1004,
+      "title": "Half-Orc",
+      "path": "Races/Half_Orc"
+    },
+    {
+      "tid": 1005,
+      "title": "Halfling (lightfoot)",
+      "path": "Races/Halfling_lightfoot"
+    },
+    {
+      "tid": 1006,
+      "title": "Human",
+      "path": "Races/Human"
+    },
+    {
+      "tid": 1007,
+      "title": "Tiefling",
+      "path": "Races/Tiefling"
+    },
+    {
+      "tid": 1008,
+      "title": "Setting Overview",
+      "path": "Setting_Overview"
+    },
+    {
+      "tid": 1009,
+      "title": "Acrobatics",
+      "path": "Skills/Acrobatics"
+    },
+    {
+      "tid": 1010,
+      "title": "Animal Handling",
+      "path": "Skills/Animal_Handling"
+    },
+    {
+      "tid": 1011,
+      "title": "Appraise",
+      "path": "Skills/Appraise"
+    },
+    {
+      "tid": 1012,
+      "title": "Athletics",
+      "path": "Skills/Athletics"
+    },
+    {
+      "tid": 1013,
+      "title": "Concentration",
+      "path": "Skills/Concentration"
+    },
+    {
+      "tid": 1014,
+      "title": "Craft (alchemy)",
+      "path": "Skills/Craft_alchemy"
+    },
+    {
+      "tid": 1015,
+      "title": "Craft (armorsmithing)",
+      "path": "Skills/Craft_armorsmithing"
+    },
+    {
+      "tid": 1016,
+      "title": "Craft (cooking)",
+      "path": "Skills/Craft_cooking"
+    },
+    {
+      "tid": 1017,
+      "title": "Craft (jewelry)",
+      "path": "Skills/Craft_jewelry"
+    },
+    {
+      "tid": 1018,
+      "title": "Craft (leatherworking)",
+      "path": "Skills/Craft_leatherworking"
+    },
+    {
+      "tid": 1019,
+      "title": "Craft (stonework)",
+      "path": "Skills/Craft_stonework"
+    },
+    {
+      "tid": 1020,
+      "title": "Craft (textiles)",
+      "path": "Skills/Craft_textiles"
+    },
+    {
+      "tid": 1021,
+      "title": "Craft (tinkering)",
+      "path": "Skills/Craft_tinkering"
+    },
+    {
+      "tid": 1022,
+      "title": "Craft (weaponsmithing)",
+      "path": "Skills/Craft_weaponsmithing"
+    },
+    {
+      "tid": 1023,
+      "title": "Craft (woodworking)",
+      "path": "Skills/Craft_woodworking"
+    },
+    {
+      "tid": 1024,
+      "title": "Disable Device",
+      "path": "Skills/Disable_Device"
+    },
+    {
+      "tid": 1025,
+      "title": "Disguise",
+      "path": "Skills/Disguise"
+    },
+    {
+      "tid": 1026,
+      "title": "Heal",
+      "path": "Skills/Heal"
+    },
+    {
+      "tid": 1027,
+      "title": "Influence",
+      "path": "Skills/Influence"
+    },
+    {
+      "tid": 1028,
+      "title": "Intimidate",
+      "path": "Skills/Intimidate"
+    },
+    {
+      "tid": 1029,
+      "title": "Knowledge (arcana)",
+      "path": "Skills/Knowledge_arcana"
+    },
+    {
+      "tid": 1030,
+      "title": "Knowledge (architecture)",
+      "path": "Skills/Knowledge_architecture"
+    },
+    {
+      "tid": 1031,
+      "title": "Knowledge (dungeoneer)",
+      "path": "Skills/Knowledge_dungeoneer"
+    },
+    {
+      "tid": 1032,
+      "title": "Knowledge (geography)",
+      "path": "Skills/Knowledge_geography"
+    },
+    {
+      "tid": 1033,
+      "title": "Knowledge (history)",
+      "path": "Skills/Knowledge_history"
+    },
+    {
+      "tid": 1034,
+      "title": "Knowledge (local)",
+      "path": "Skills/Knowledge_local"
+    },
+    {
+      "tid": 1035,
+      "title": "Knowledge (nature)",
+      "path": "Skills/Knowledge_nature"
+    },
+    {
+      "tid": 1036,
+      "title": "Knowledge (nobility)",
+      "path": "Skills/Knowledge_nobility"
+    },
+    {
+      "tid": 1037,
+      "title": "Knowledge (planar)",
+      "path": "Skills/Knowledge_planar"
+    },
+    {
+      "tid": 1038,
+      "title": "Knowledge (religion)",
+      "path": "Skills/Knowledge_religion"
+    },
+    {
+      "tid": 1039,
+      "title": "Linguistics",
+      "path": "Skills/Linguistics"
+    },
+    {
+      "tid": 1040,
+      "title": "Open Lock",
+      "path": "Skills/Open_Lock"
+    },
+    {
+      "tid": 1041,
+      "title": "Parry",
+      "path": "Skills/Parry"
+    },
+    {
+      "tid": 1042,
+      "title": "Perception",
+      "path": "Skills/Perception"
+    },
+    {
+      "tid": 1043,
+      "title": "Perform",
+      "path": "Skills/Perform"
+    },
+    {
+      "tid": 1044,
+      "title": "Profession (farmer)",
+      "path": "Skills/Profession_farmer"
+    },
+    {
+      "tid": 1045,
+      "title": "Profession (fisher)",
+      "path": "Skills/Profession_fisher"
+    },
+    {
+      "tid": 1046,
+      "title": "Profession (herbalist)",
+      "path": "Skills/Profession_herbalist"
+    },
+    {
+      "tid": 1047,
+      "title": "Profession (hunter)",
+      "path": "Skills/Profession_hunter"
+    },
+    {
+      "tid": 1048,
+      "title": "Profession (miner)",
+      "path": "Skills/Profession_miner"
+    },
+    {
+      "tid": 1049,
+      "title": "Profession (sailor)",
+      "path": "Skills/Profession_sailor"
+    },
+    {
+      "tid": 1050,
+      "title": "Profession (woodcutter)",
+      "path": "Skills/Profession_woodcutter"
+    },
+    {
+      "tid": 1051,
+      "title": "Ride",
+      "path": "Skills/Ride"
+    },
+    {
+      "tid": 1052,
+      "title": "Scriptcraft",
+      "path": "Skills/Scriptcraft"
+    },
+    {
+      "tid": 1053,
+      "title": "Sense Motive",
+      "path": "Skills/Sense_Motive"
+    },
+    {
+      "tid": 1054,
+      "title": "Sleight of Hand",
+      "path": "Skills/Sleight_of_Hand"
+    },
+    {
+      "tid": 1055,
+      "title": "Spellcraft",
+      "path": "Skills/Spellcraft"
+    },
+    {
+      "tid": 1056,
+      "title": "Stealth",
+      "path": "Skills/Stealth"
+    },
+    {
+      "tid": 1057,
+      "title": "Survival",
+      "path": "Skills/Survival"
+    },
+    {
+      "tid": 1058,
+      "title": "Use Magic Device",
+      "path": "Skills/Use_Magic_Device"
+    },
+    {
+      "tid": 1059,
+      "title": "Use Rope",
+      "path": "Skills/Use_Rope"
+    },
+    {
+      "tid": 1060,
+      "title": "Acid Fog",
+      "path": "Spells/Acid_Fog"
+    },
+    {
+      "tid": 1061,
+      "title": "Acid Splash",
+      "path": "Spells/Acid_Splash"
+    },
+    {
+      "tid": 1062,
+      "title": "Aid",
+      "path": "Spells/Aid"
+    },
+    {
+      "tid": 1063,
+      "title": "Amplify",
+      "path": "Spells/Amplify"
+    },
+    {
+      "tid": 1064,
+      "title": "Animate Dead",
+      "path": "Spells/Animate_Dead"
+    },
+    {
+      "tid": 1065,
+      "title": "Aura of Glory",
+      "path": "Spells/Aura_of_Glory"
+    },
+    {
+      "tid": 1066,
+      "title": "Aura of Vitality",
+      "path": "Spells/Aura_of_Vitality"
+    },
+    {
+      "tid": 1067,
+      "title": "Aura versus Alignment",
+      "path": "Spells/Aura_versus_Alignment"
+    },
+    {
+      "tid": 1068,
+      "title": "Awaken",
+      "path": "Spells/Awaken"
+    },
+    {
+      "tid": 1069,
+      "title": "Balagarn&#x27;s Iron Horn",
+      "path": "Spells/Balagarns_Iron_Horn"
+    },
+    {
+      "tid": 1070,
+      "title": "Ball Lightning",
+      "path": "Spells/Ball_Lightning"
+    },
+    {
+      "tid": 1071,
+      "title": "Bane",
+      "path": "Spells/Bane"
+    },
+    {
+      "tid": 1072,
+      "title": "Banishment",
+      "path": "Spells/Banishment"
+    },
+    {
+      "tid": 1073,
+      "title": "Barkskin",
+      "path": "Spells/Barkskin"
+    },
+    {
+      "tid": 1074,
+      "title": "Battletide",
+      "path": "Spells/Battletide"
+    },
+    {
+      "tid": 1075,
+      "title": "Bestow Curse",
+      "path": "Spells/Bestow_Curse"
+    },
+    {
+      "tid": 1076,
+      "title": "Bigby&#x27;s Clenched Fist",
+      "path": "Spells/Bigbys_Clenched_Fist"
+    },
+    {
+      "tid": 1077,
+      "title": "Bigby&#x27;s Crushing Hand",
+      "path": "Spells/Bigbys_Crushing_Hand"
+    },
+    {
+      "tid": 1078,
+      "title": "Bigby&#x27;s Forceful Hand",
+      "path": "Spells/Bigbys_Forceful_Hand"
+    },
+    {
+      "tid": 1079,
+      "title": "Bigby&#x27;s Grasping Hand",
+      "path": "Spells/Bigbys_Grasping_Hand"
+    },
+    {
+      "tid": 1080,
+      "title": "Bigby&#x27;s Interposing Hand",
+      "path": "Spells/Bigbys_Interposing_Hand"
+    },
+    {
+      "tid": 1081,
+      "title": "Black Blade of Disaster",
+      "path": "Spells/Black_Blade_of_Disaster"
+    },
+    {
+      "tid": 1082,
+      "title": "Blackstaff",
+      "path": "Spells/Blackstaff"
+    },
+    {
+      "tid": 1083,
+      "title": "Blade Barrier",
+      "path": "Spells/Blade_Barrier"
+    },
+    {
+      "tid": 1084,
+      "title": "Blade Thirst",
+      "path": "Spells/Blade_Thirst"
+    },
+    {
+      "tid": 1085,
+      "title": "Bless",
+      "path": "Spells/Bless"
+    },
+    {
+      "tid": 1086,
+      "title": "Bless Weapon",
+      "path": "Spells/Bless_Weapon"
+    },
+    {
+      "tid": 1087,
+      "title": "Blindness&#x2F;Deafness",
+      "path": "Spells/Blindness_Deafness"
+    },
+    {
+      "tid": 1088,
+      "title": "Blood Frenzy",
+      "path": "Spells/Blood_Frenzy"
+    },
+    {
+      "tid": 1089,
+      "title": "Bombardment",
+      "path": "Spells/Bombardment"
+    },
+    {
+      "tid": 1090,
+      "title": "Bull&#x27;s Strength",
+      "path": "Spells/Bulls_Strength"
+    },
+    {
+      "tid": 1091,
+      "title": "Burning Hands",
+      "path": "Spells/Burning_Hands"
+    },
+    {
+      "tid": 1092,
+      "title": "Call Lightning",
+      "path": "Spells/Call_Lightning"
+    },
+    {
+      "tid": 1093,
+      "title": "Camouflage",
+      "path": "Spells/Camouflage"
+    },
+    {
+      "tid": 1094,
+      "title": "Cat&#x27;s Grace",
+      "path": "Spells/Cats_Grace"
+    },
+    {
+      "tid": 1095,
+      "title": "Chain Lightning",
+      "path": "Spells/Chain_Lightning"
+    },
+    {
+      "tid": 1096,
+      "title": "Charm Monster",
+      "path": "Spells/Charm_Monster"
+    },
+    {
+      "tid": 1097,
+      "title": "Charm Person",
+      "path": "Spells/Charm_Person"
+    },
+    {
+      "tid": 1098,
+      "title": "Charm Person or Animal",
+      "path": "Spells/Charm_Person_or_Animal"
+    },
+    {
+      "tid": 1099,
+      "title": "Circle of Death",
+      "path": "Spells/Circle_of_Death"
+    },
+    {
+      "tid": 1100,
+      "title": "Circle of Doom",
+      "path": "Spells/Circle_of_Doom"
+    },
+    {
+      "tid": 1101,
+      "title": "Clairaudience&#x2F;Clairvoyance",
+      "path": "Spells/Clairaudience_Clairvoyance"
+    },
+    {
+      "tid": 1102,
+      "title": "Clarity",
+      "path": "Spells/Clarity"
+    },
+    {
+      "tid": 1103,
+      "title": "Cloud of Bewilderment",
+      "path": "Spells/Cloud_of_Bewilderment"
+    },
+    {
+      "tid": 1104,
+      "title": "Cloudkill",
+      "path": "Spells/Cloudkill"
+    },
+    {
+      "tid": 1105,
+      "title": "Color Spray",
+      "path": "Spells/Color_Spray"
+    },
+    {
+      "tid": 1106,
+      "title": "Combust",
+      "path": "Spells/Combust"
+    },
+    {
+      "tid": 1107,
+      "title": "Cone of Cold",
+      "path": "Spells/Cone_of_Cold"
+    },
+    {
+      "tid": 1108,
+      "title": "Confusion",
+      "path": "Spells/Confusion"
+    },
+    {
+      "tid": 1109,
+      "title": "Contagion",
+      "path": "Spells/Contagion"
+    },
+    {
+      "tid": 1110,
+      "title": "Continual Flame",
+      "path": "Spells/Continual_Flame"
+    },
+    {
+      "tid": 1111,
+      "title": "Control Undead",
+      "path": "Spells/Control_Undead"
+    },
+    {
+      "tid": 1112,
+      "title": "Create Greater Undead",
+      "path": "Spells/Create_Greater_Undead"
+    },
+    {
+      "tid": 1113,
+      "title": "Create Undead",
+      "path": "Spells/Create_Undead"
+    },
+    {
+      "tid": 1114,
+      "title": "Creeping Doom",
+      "path": "Spells/Creeping_Doom"
+    },
+    {
+      "tid": 1115,
+      "title": "Crumble",
+      "path": "Spells/Crumble"
+    },
+    {
+      "tid": 1116,
+      "title": "Cure Critical Wounds",
+      "path": "Spells/Cure_Critical_Wounds"
+    },
+    {
+      "tid": 1117,
+      "title": "Cure Light Wounds",
+      "path": "Spells/Cure_Light_Wounds"
+    },
+    {
+      "tid": 1118,
+      "title": "Cure Minor Wounds",
+      "path": "Spells/Cure_Minor_Wounds"
+    },
+    {
+      "tid": 1119,
+      "title": "Cure Moderate Wounds",
+      "path": "Spells/Cure_Moderate_Wounds"
+    },
+    {
+      "tid": 1120,
+      "title": "Cure Serious Wounds",
+      "path": "Spells/Cure_Serious_Wounds"
+    },
+    {
+      "tid": 1121,
+      "title": "Darkfire",
+      "path": "Spells/Darkfire"
+    },
+    {
+      "tid": 1122,
+      "title": "Darkness",
+      "path": "Spells/Darkness"
+    },
+    {
+      "tid": 1123,
+      "title": "Daze",
+      "path": "Spells/Daze"
+    },
+    {
+      "tid": 1124,
+      "title": "Deafening Clang",
+      "path": "Spells/Deafening_Clang"
+    },
+    {
+      "tid": 1125,
+      "title": "Death Armor",
+      "path": "Spells/Death_Armor"
+    },
+    {
+      "tid": 1126,
+      "title": "Death Ward",
+      "path": "Spells/Death_Ward"
+    },
+    {
+      "tid": 1127,
+      "title": "Delayed Blast Fireball",
+      "path": "Spells/Delayed_Blast_Fireball"
+    },
+    {
+      "tid": 1128,
+      "title": "Destruction",
+      "path": "Spells/Destruction"
+    },
+    {
+      "tid": 1129,
+      "title": "Dirge",
+      "path": "Spells/Dirge"
+    },
+    {
+      "tid": 1130,
+      "title": "Dismissal",
+      "path": "Spells/Dismissal"
+    },
+    {
+      "tid": 1131,
+      "title": "Dispel Magic",
+      "path": "Spells/Dispel_Magic"
+    },
+    {
+      "tid": 1132,
+      "title": "Displacement",
+      "path": "Spells/Displacement"
+    },
+    {
+      "tid": 1133,
+      "title": "Divine Favor",
+      "path": "Spells/Divine_Favor"
+    },
+    {
+      "tid": 1134,
+      "title": "Divine Power",
+      "path": "Spells/Divine_Power"
+    },
+    {
+      "tid": 1135,
+      "title": "Dominate Animal",
+      "path": "Spells/Dominate_Animal"
+    },
+    {
+      "tid": 1136,
+      "title": "Dominate Monster",
+      "path": "Spells/Dominate_Monster"
+    },
+    {
+      "tid": 1137,
+      "title": "Dominate Person",
+      "path": "Spells/Dominate_Person"
+    },
+    {
+      "tid": 1138,
+      "title": "Doom",
+      "path": "Spells/Doom"
+    },
+    {
+      "tid": 1139,
+      "title": "Drown",
+      "path": "Spells/Drown"
+    },
+    {
+      "tid": 1140,
+      "title": "Eagle&#x27;s Splendor",
+      "path": "Spells/Eagles_Splendor"
+    },
+    {
+      "tid": 1141,
+      "title": "Earthquake",
+      "path": "Spells/Earthquake"
+    },
+    {
+      "tid": 1142,
+      "title": "Electric Jolt",
+      "path": "Spells/Electric_Jolt"
+    },
+    {
+      "tid": 1143,
+      "title": "Elemental Shield",
+      "path": "Spells/Elemental_Shield"
+    },
+    {
+      "tid": 1144,
+      "title": "Elemental Swarm",
+      "path": "Spells/Elemental_Swarm"
+    },
+    {
+      "tid": 1145,
+      "title": "Endurance",
+      "path": "Spells/Endurance"
+    },
+    {
+      "tid": 1146,
+      "title": "Endure Elements",
+      "path": "Spells/Endure_Elements"
+    },
+    {
+      "tid": 1147,
+      "title": "Energy Buffer",
+      "path": "Spells/Energy_Buffer"
+    },
+    {
+      "tid": 1148,
+      "title": "Energy Drain",
+      "path": "Spells/Energy_Drain"
+    },
+    {
+      "tid": 1149,
+      "title": "Enervation",
+      "path": "Spells/Enervation"
+    },
+    {
+      "tid": 1150,
+      "title": "Entangle",
+      "path": "Spells/Entangle"
+    },
+    {
+      "tid": 1151,
+      "title": "Entropic Shield",
+      "path": "Spells/Entropic_Shield"
+    },
+    {
+      "tid": 1152,
+      "title": "Ethereal Visage",
+      "path": "Spells/Ethereal_Visage"
+    },
+    {
+      "tid": 1153,
+      "title": "Evard&#x27;s Black Tentacles",
+      "path": "Spells/Evards_Black_Tentacles"
+    },
+    {
+      "tid": 1154,
+      "title": "Expeditious Retreat",
+      "path": "Spells/Expeditious_Retreat"
+    },
+    {
+      "tid": 1155,
+      "title": "Fear",
+      "path": "Spells/Fear"
+    },
+    {
+      "tid": 1156,
+      "title": "Feeblemind",
+      "path": "Spells/Feeblemind"
+    },
+    {
+      "tid": 1157,
+      "title": "Find Traps",
+      "path": "Spells/Find_Traps"
+    },
+    {
+      "tid": 1158,
+      "title": "Finger of Death",
+      "path": "Spells/Finger_of_Death"
+    },
+    {
+      "tid": 1159,
+      "title": "Fire Storm",
+      "path": "Spells/Fire_Storm"
+    },
+    {
+      "tid": 1160,
+      "title": "Fireball",
+      "path": "Spells/Fireball"
+    },
+    {
+      "tid": 1161,
+      "title": "Firebrand",
+      "path": "Spells/Firebrand"
+    },
+    {
+      "tid": 1162,
+      "title": "Flame Arrow",
+      "path": "Spells/Flame_Arrow"
+    },
+    {
+      "tid": 1163,
+      "title": "Flame Lash",
+      "path": "Spells/Flame_Lash"
+    },
+    {
+      "tid": 1164,
+      "title": "Flame Strike",
+      "path": "Spells/Flame_Strike"
+    },
+    {
+      "tid": 1165,
+      "title": "Flame Weapon",
+      "path": "Spells/Flame_Weapon"
+    },
+    {
+      "tid": 1166,
+      "title": "Flare",
+      "path": "Spells/Flare"
+    },
+    {
+      "tid": 1167,
+      "title": "Flesh to Stone",
+      "path": "Spells/Flesh_to_Stone"
+    },
+    {
+      "tid": 1168,
+      "title": "Fox&#x27;s Cunning",
+      "path": "Spells/Foxs_Cunning"
+    },
+    {
+      "tid": 1169,
+      "title": "Freedom of Movement",
+      "path": "Spells/Freedom_of_Movement"
+    },
+    {
+      "tid": 1170,
+      "title": "Gate",
+      "path": "Spells/Gate"
+    },
+    {
+      "tid": 1171,
+      "title": "Gedlee&#x27;s Electric Loop",
+      "path": "Spells/Gedlees_Electric_Loop"
+    },
+    {
+      "tid": 1172,
+      "title": "Ghostly Visage",
+      "path": "Spells/Ghostly_Visage"
+    },
+    {
+      "tid": 1173,
+      "title": "Ghoul Touch",
+      "path": "Spells/Ghoul_Touch"
+    },
+    {
+      "tid": 1174,
+      "title": "Globe of Invulnerability",
+      "path": "Spells/Globe_of_Invulnerability"
+    },
+    {
+      "tid": 1175,
+      "title": "Glyph of Warding",
+      "path": "Spells/Glyph_of_Warding"
+    },
+    {
+      "tid": 1176,
+      "title": "Grease",
+      "path": "Spells/Grease"
+    },
+    {
+      "tid": 1177,
+      "title": "Great Thunderclap",
+      "path": "Spells/Great_Thunderclap"
+    },
+    {
+      "tid": 1178,
+      "title": "Greater Dispelling",
+      "path": "Spells/Greater_Dispelling"
+    },
+    {
+      "tid": 1179,
+      "title": "Greater Magic Fang",
+      "path": "Spells/Greater_Magic_Fang"
+    },
+    {
+      "tid": 1180,
+      "title": "Greater Magic Weapon",
+      "path": "Spells/Greater_Magic_Weapon"
+    },
+    {
+      "tid": 1181,
+      "title": "Greater Planar Binding",
+      "path": "Spells/Greater_Planar_Binding"
+    },
+    {
+      "tid": 1182,
+      "title": "Greater Restoration",
+      "path": "Spells/Greater_Restoration"
+    },
+    {
+      "tid": 1183,
+      "title": "Greater Sanctuary",
+      "path": "Spells/Greater_Sanctuary"
+    },
+    {
+      "tid": 1184,
+      "title": "Greater Shadow Conjuration",
+      "path": "Spells/Greater_Shadow_Conjuration"
+    },
+    {
+      "tid": 1185,
+      "title": "Greater Spell Breach",
+      "path": "Spells/Greater_Spell_Breach"
+    },
+    {
+      "tid": 1186,
+      "title": "Greater Spell Mantle",
+      "path": "Spells/Greater_Spell_Mantle"
+    },
+    {
+      "tid": 1187,
+      "title": "Greater Stoneskin",
+      "path": "Spells/Greater_Stoneskin"
+    },
+    {
+      "tid": 1188,
+      "title": "Gust of Wind",
+      "path": "Spells/Gust_of_Wind"
+    },
+    {
+      "tid": 1189,
+      "title": "Hammer of the Gods",
+      "path": "Spells/Hammer_of_the_Gods"
+    },
+    {
+      "tid": 1190,
+      "title": "Harm",
+      "path": "Spells/Harm"
+    },
+    {
+      "tid": 1191,
+      "title": "Haste",
+      "path": "Spells/Haste"
+    },
+    {
+      "tid": 1192,
+      "title": "Heal",
+      "path": "Spells/Heal"
+    },
+    {
+      "tid": 1193,
+      "title": "Healing Circle",
+      "path": "Spells/Healing_Circle"
+    },
+    {
+      "tid": 1194,
+      "title": "Healing Sting",
+      "path": "Spells/Healing_Sting"
+    },
+    {
+      "tid": 1195,
+      "title": "Hold Animal",
+      "path": "Spells/Hold_Animal"
+    },
+    {
+      "tid": 1196,
+      "title": "Hold Monster",
+      "path": "Spells/Hold_Monster"
+    },
+    {
+      "tid": 1197,
+      "title": "Hold Person",
+      "path": "Spells/Hold_Person"
+    },
+    {
+      "tid": 1198,
+      "title": "Holy Sword",
+      "path": "Spells/Holy_Sword"
+    },
+    {
+      "tid": 1199,
+      "title": "Horizikaul&#x27;s Boom",
+      "path": "Spells/Horizikauls_Boom"
+    },
+    {
+      "tid": 1200,
+      "title": "Horrid Wilting",
+      "path": "Spells/Horrid_Wilting"
+    },
+    {
+      "tid": 1201,
+      "title": "Ice Dagger",
+      "path": "Spells/Ice_Dagger"
+    },
+    {
+      "tid": 1202,
+      "title": "Ice Storm",
+      "path": "Spells/Ice_Storm"
+    },
+    {
+      "tid": 1203,
+      "title": "Identify",
+      "path": "Spells/Identify"
+    },
+    {
+      "tid": 1204,
+      "title": "Implosion",
+      "path": "Spells/Implosion"
+    },
+    {
+      "tid": 1205,
+      "title": "Improved Invisibility",
+      "path": "Spells/Improved_Invisibility"
+    },
+    {
+      "tid": 1206,
+      "title": "Incendiary Cloud",
+      "path": "Spells/Incendiary_Cloud"
+    },
+    {
+      "tid": 1207,
+      "title": "Inferno",
+      "path": "Spells/Inferno"
+    },
+    {
+      "tid": 1208,
+      "title": "Infestation of Maggots",
+      "path": "Spells/Infestation_of_Maggots"
+    },
+    {
+      "tid": 1209,
+      "title": "Inflict Critical Wounds",
+      "path": "Spells/Inflict_Critical_Wounds"
+    },
+    {
+      "tid": 1210,
+      "title": "Inflict Light Wounds",
+      "path": "Spells/Inflict_Light_Wounds"
+    },
+    {
+      "tid": 1211,
+      "title": "Inflict Minor Wounds",
+      "path": "Spells/Inflict_Minor_Wounds"
+    },
+    {
+      "tid": 1212,
+      "title": "Inflict Moderate Wounds",
+      "path": "Spells/Inflict_Moderate_Wounds"
+    },
+    {
+      "tid": 1213,
+      "title": "Inflict Serious Wounds",
+      "path": "Spells/Inflict_Serious_Wounds"
+    },
+    {
+      "tid": 1214,
+      "title": "Invisibility",
+      "path": "Spells/Invisibility"
+    },
+    {
+      "tid": 1215,
+      "title": "Invisibility Purge",
+      "path": "Spells/Invisibility_Purge"
+    },
+    {
+      "tid": 1216,
+      "title": "Invisibility Sphere",
+      "path": "Spells/Invisibility_Sphere"
+    },
+    {
+      "tid": 1217,
+      "title": "Ironguts",
+      "path": "Spells/Ironguts"
+    },
+    {
+      "tid": 1218,
+      "title": "Isaac&#x27;s Greater Missile Storm",
+      "path": "Spells/Isaacs_Greater_Missile_Storm"
+    },
+    {
+      "tid": 1219,
+      "title": "Isaac&#x27;s Lesser Missile Storm",
+      "path": "Spells/Isaacs_Lesser_Missile_Storm"
+    },
+    {
+      "tid": 1220,
+      "title": "Keen Edge",
+      "path": "Spells/Keen_Edge"
+    },
+    {
+      "tid": 1221,
+      "title": "Knock",
+      "path": "Spells/Knock"
+    },
+    {
+      "tid": 1222,
+      "title": "Legend Lore",
+      "path": "Spells/Legend_Lore"
+    },
+    {
+      "tid": 1223,
+      "title": "Lesser Dispel",
+      "path": "Spells/Lesser_Dispel"
+    },
+    {
+      "tid": 1224,
+      "title": "Lesser Mind Blank",
+      "path": "Spells/Lesser_Mind_Blank"
+    },
+    {
+      "tid": 1225,
+      "title": "Lesser Planar Binding",
+      "path": "Spells/Lesser_Planar_Binding"
+    },
+    {
+      "tid": 1226,
+      "title": "Lesser Restoration",
+      "path": "Spells/Lesser_Restoration"
+    },
+    {
+      "tid": 1227,
+      "title": "Lesser Spell Breach",
+      "path": "Spells/Lesser_Spell_Breach"
+    },
+    {
+      "tid": 1228,
+      "title": "Lesser Spell Mantle",
+      "path": "Spells/Lesser_Spell_Mantle"
+    },
+    {
+      "tid": 1229,
+      "title": "Light",
+      "path": "Spells/Light"
+    },
+    {
+      "tid": 1230,
+      "title": "Lightning Bolt",
+      "path": "Spells/Lightning_Bolt"
+    },
+    {
+      "tid": 1231,
+      "title": "Mage Armor",
+      "path": "Spells/Mage_Armor"
+    },
+    {
+      "tid": 1232,
+      "title": "Magic Circle against Alignment",
+      "path": "Spells/Magic_Circle_against_Alignment"
+    },
+    {
+      "tid": 1233,
+      "title": "Magic Fang",
+      "path": "Spells/Magic_Fang"
+    },
+    {
+      "tid": 1234,
+      "title": "Magic Missile",
+      "path": "Spells/Magic_Missile"
+    },
+    {
+      "tid": 1235,
+      "title": "Magic Vestment",
+      "path": "Spells/Magic_Vestment"
+    },
+    {
+      "tid": 1236,
+      "title": "Magic Weapon",
+      "path": "Spells/Magic_Weapon"
+    },
+    {
+      "tid": 1237,
+      "title": "Mass Blindness&#x2F;Deafness",
+      "path": "Spells/Mass_Blindness_Deafness"
+    },
+    {
+      "tid": 1238,
+      "title": "Mass Camouflage",
+      "path": "Spells/Mass_Camouflage"
+    },
+    {
+      "tid": 1239,
+      "title": "Mass Charm",
+      "path": "Spells/Mass_Charm"
+    },
+    {
+      "tid": 1240,
+      "title": "Mass Haste",
+      "path": "Spells/Mass_Haste"
+    },
+    {
+      "tid": 1241,
+      "title": "Mass Heal",
+      "path": "Spells/Mass_Heal"
+    },
+    {
+      "tid": 1242,
+      "title": "Melf&#x27;s Acid Arrow",
+      "path": "Spells/Melfs_Acid_Arrow"
+    },
+    {
+      "tid": 1243,
+      "title": "Mestil&#x27;s Acid Breath",
+      "path": "Spells/Mestils_Acid_Breath"
+    },
+    {
+      "tid": 1244,
+      "title": "Mestil&#x27;s Acid Sheath",
+      "path": "Spells/Mestils_Acid_Sheath"
+    },
+    {
+      "tid": 1245,
+      "title": "Meteor Swarm",
+      "path": "Spells/Meteor_Swarm"
+    },
+    {
+      "tid": 1246,
+      "title": "Mind Blank",
+      "path": "Spells/Mind_Blank"
+    },
+    {
+      "tid": 1247,
+      "title": "Mind Fog",
+      "path": "Spells/Mind_Fog"
+    },
+    {
+      "tid": 1248,
+      "title": "Minor Globe of Invulnerability",
+      "path": "Spells/Minor_Globe_of_Invulnerability"
+    },
+    {
+      "tid": 1249,
+      "title": "Monstrous Regeneration",
+      "path": "Spells/Monstrous_Regeneration"
+    },
+    {
+      "tid": 1250,
+      "title": "Mordenkainen&#x27;s Disjunction",
+      "path": "Spells/Mordenkainens_Disjunction"
+    },
+    {
+      "tid": 1251,
+      "title": "Mordenkainen&#x27;s Sword",
+      "path": "Spells/Mordenkainens_Sword"
+    },
+    {
+      "tid": 1252,
+      "title": "Nature&#x27;s Balance",
+      "path": "Spells/Natures_Balance"
+    },
+    {
+      "tid": 1253,
+      "title": "Negative Energy Burst",
+      "path": "Spells/Negative_Energy_Burst"
+    },
+    {
+      "tid": 1254,
+      "title": "Negative Energy Protection",
+      "path": "Spells/Negative_Energy_Protection"
+    },
+    {
+      "tid": 1255,
+      "title": "Negative Energy Ray",
+      "path": "Spells/Negative_Energy_Ray"
+    },
+    {
+      "tid": 1256,
+      "title": "Neutralize Poison",
+      "path": "Spells/Neutralize_Poison"
+    },
+    {
+      "tid": 1257,
+      "title": "One with the Land",
+      "path": "Spells/One_with_the_Land"
+    },
+    {
+      "tid": 1258,
+      "title": "Owl&#x27;s Insight",
+      "path": "Spells/Owls_Insight"
+    },
+    {
+      "tid": 1259,
+      "title": "Owl&#x27;s Wisdom",
+      "path": "Spells/Owls_Wisdom"
+    },
+    {
+      "tid": 1260,
+      "title": "Phantasmal Killer",
+      "path": "Spells/Phantasmal_Killer"
+    },
+    {
+      "tid": 1261,
+      "title": "Planar Ally",
+      "path": "Spells/Planar_Ally"
+    },
+    {
+      "tid": 1262,
+      "title": "Planar Binding",
+      "path": "Spells/Planar_Binding"
+    },
+    {
+      "tid": 1263,
+      "title": "Poison",
+      "path": "Spells/Poison"
+    },
+    {
+      "tid": 1264,
+      "title": "Polymorph Self",
+      "path": "Spells/Polymorph_Self"
+    },
+    {
+      "tid": 1265,
+      "title": "Power Word, Kill",
+      "path": "Spells/Power_Word_Kill"
+    },
+    {
+      "tid": 1266,
+      "title": "Power Word, Stun",
+      "path": "Spells/Power_Word_Stun"
+    },
+    {
+      "tid": 1267,
+      "title": "Prayer",
+      "path": "Spells/Prayer"
+    },
+    {
+      "tid": 1268,
+      "title": "Premonition",
+      "path": "Spells/Premonition"
+    },
+    {
+      "tid": 1269,
+      "title": "Prismatic Spray",
+      "path": "Spells/Prismatic_Spray"
+    },
+    {
+      "tid": 1270,
+      "title": "Protection from Alignment",
+      "path": "Spells/Protection_from_Alignment"
+    },
+    {
+      "tid": 1271,
+      "title": "Protection from Elements",
+      "path": "Spells/Protection_from_Elements"
+    },
+    {
+      "tid": 1272,
+      "title": "Protection from Spells",
+      "path": "Spells/Protection_from_Spells"
+    },
+    {
+      "tid": 1273,
+      "title": "Quillfire",
+      "path": "Spells/Quillfire"
+    },
+    {
+      "tid": 1274,
+      "title": "Raise Dead",
+      "path": "Spells/Raise_Dead"
+    },
+    {
+      "tid": 1275,
+      "title": "Ray of Enfeeblement",
+      "path": "Spells/Ray_of_Enfeeblement"
+    },
+    {
+      "tid": 1276,
+      "title": "Ray of Frost",
+      "path": "Spells/Ray_of_Frost"
+    },
+    {
+      "tid": 1277,
+      "title": "Regenerate",
+      "path": "Spells/Regenerate"
+    },
+    {
+      "tid": 1278,
+      "title": "Remove Blindness&#x2F;Deafness",
+      "path": "Spells/Remove_Blindness_Deafness"
+    },
+    {
+      "tid": 1279,
+      "title": "Remove Curse",
+      "path": "Spells/Remove_Curse"
+    },
+    {
+      "tid": 1280,
+      "title": "Remove Disease",
+      "path": "Spells/Remove_Disease"
+    },
+    {
+      "tid": 1281,
+      "title": "Remove Fear",
+      "path": "Spells/Remove_Fear"
+    },
+    {
+      "tid": 1282,
+      "title": "Remove Paralysis",
+      "path": "Spells/Remove_Paralysis"
+    },
+    {
+      "tid": 1283,
+      "title": "Resist Elements",
+      "path": "Spells/Resist_Elements"
+    },
+    {
+      "tid": 1284,
+      "title": "Resistance",
+      "path": "Spells/Resistance"
+    },
+    {
+      "tid": 1285,
+      "title": "Restoration",
+      "path": "Spells/Restoration"
+    },
+    {
+      "tid": 1286,
+      "title": "Resurrection",
+      "path": "Spells/Resurrection"
+    },
+    {
+      "tid": 1287,
+      "title": "Sanctuary",
+      "path": "Spells/Sanctuary"
+    },
+    {
+      "tid": 1288,
+      "title": "Scare",
+      "path": "Spells/Scare"
+    },
+    {
+      "tid": 1289,
+      "title": "Scintillating Sphere",
+      "path": "Spells/Scintillating_Sphere"
+    },
+    {
+      "tid": 1290,
+      "title": "Searing Light",
+      "path": "Spells/Searing_Light"
+    },
+    {
+      "tid": 1291,
+      "title": "See Invisibility",
+      "path": "Spells/See_Invisibility"
+    },
+    {
+      "tid": 1292,
+      "title": "Shades",
+      "path": "Spells/Shades"
+    },
+    {
+      "tid": 1293,
+      "title": "Shadow Conjuration",
+      "path": "Spells/Shadow_Conjuration"
+    },
+    {
+      "tid": 1294,
+      "title": "Shadow Shield",
+      "path": "Spells/Shadow_Shield"
+    },
+    {
+      "tid": 1295,
+      "title": "Shapechange",
+      "path": "Spells/Shapechange"
+    },
+    {
+      "tid": 1296,
+      "title": "Shelgarn&#x27;s Persistent Blade",
+      "path": "Spells/Shelgarns_Persistent_Blade"
+    },
+    {
+      "tid": 1297,
+      "title": "Shield",
+      "path": "Spells/Shield"
+    },
+    {
+      "tid": 1298,
+      "title": "Shield of Faith",
+      "path": "Spells/Shield_of_Faith"
+    },
+    {
+      "tid": 1299,
+      "title": "Silence",
+      "path": "Spells/Silence"
+    },
+    {
+      "tid": 1300,
+      "title": "Slay Living",
+      "path": "Spells/Slay_Living"
+    },
+    {
+      "tid": 1301,
+      "title": "Sleep",
+      "path": "Spells/Sleep"
+    },
+    {
+      "tid": 1302,
+      "title": "Slow",
+      "path": "Spells/Slow"
+    },
+    {
+      "tid": 1303,
+      "title": "Sound Burst",
+      "path": "Spells/Sound_Burst"
+    },
+    {
+      "tid": 1304,
+      "title": "Spell Mantle",
+      "path": "Spells/Spell_Mantle"
+    },
+    {
+      "tid": 1305,
+      "title": "Spell Resistance",
+      "path": "Spells/Spell_Resistance"
+    },
+    {
+      "tid": 1306,
+      "title": "Spike Growth",
+      "path": "Spells/Spike_Growth"
+    },
+    {
+      "tid": 1307,
+      "title": "Stinking Cloud",
+      "path": "Spells/Stinking_Cloud"
+    },
+    {
+      "tid": 1308,
+      "title": "Stone Bones",
+      "path": "Spells/Stone_Bones"
+    },
+    {
+      "tid": 1309,
+      "title": "Stone to Flesh",
+      "path": "Spells/Stone_to_Flesh"
+    },
+    {
+      "tid": 1310,
+      "title": "Stonehold",
+      "path": "Spells/Stonehold"
+    },
+    {
+      "tid": 1311,
+      "title": "Stoneskin",
+      "path": "Spells/Stoneskin"
+    },
+    {
+      "tid": 1312,
+      "title": "Storm of Vengeance",
+      "path": "Spells/Storm_of_Vengeance"
+    },
+    {
+      "tid": 1313,
+      "title": "Summon Creature I",
+      "path": "Spells/Summon_Creature_I"
+    },
+    {
+      "tid": 1314,
+      "title": "Summon Creature II",
+      "path": "Spells/Summon_Creature_II"
+    },
+    {
+      "tid": 1315,
+      "title": "Summon Creature III",
+      "path": "Spells/Summon_Creature_III"
+    },
+    {
+      "tid": 1316,
+      "title": "Summon Creature IV",
+      "path": "Spells/Summon_Creature_IV"
+    },
+    {
+      "tid": 1317,
+      "title": "Summon Creature IX",
+      "path": "Spells/Summon_Creature_IX"
+    },
+    {
+      "tid": 1318,
+      "title": "Summon Creature V",
+      "path": "Spells/Summon_Creature_V"
+    },
+    {
+      "tid": 1319,
+      "title": "Summon Creature VI",
+      "path": "Spells/Summon_Creature_VI"
+    },
+    {
+      "tid": 1320,
+      "title": "Summon Creature VII",
+      "path": "Spells/Summon_Creature_VII"
+    },
+    {
+      "tid": 1321,
+      "title": "Summon Creature VIII",
+      "path": "Spells/Summon_Creature_VIII"
+    },
+    {
+      "tid": 1322,
+      "title": "Sunbeam",
+      "path": "Spells/Sunbeam"
+    },
+    {
+      "tid": 1323,
+      "title": "Sunburst",
+      "path": "Spells/Sunburst"
+    },
+    {
+      "tid": 1324,
+      "title": "Tasha&#x27;s Hideous Laughter",
+      "path": "Spells/Tashas_Hideous_Laughter"
+    },
+    {
+      "tid": 1325,
+      "title": "Tenser&#x27;s Transformation",
+      "path": "Spells/Tensers_Transformation"
+    },
+    {
+      "tid": 1326,
+      "title": "Time Stop",
+      "path": "Spells/Time_Stop"
+    },
+    {
+      "tid": 1327,
+      "title": "True Seeing",
+      "path": "Spells/True_Seeing"
+    },
+    {
+      "tid": 1328,
+      "title": "True Strike",
+      "path": "Spells/True_Strike"
+    },
+    {
+      "tid": 1329,
+      "title": "Ultravision",
+      "path": "Spells/Ultravision"
+    },
+    {
+      "tid": 1330,
+      "title": "Undeath to Death",
+      "path": "Spells/Undeath_to_Death"
+    },
+    {
+      "tid": 1331,
+      "title": "Undeath&#x27;s Eternal Foe",
+      "path": "Spells/Undeaths_Eternal_Foe"
+    },
+    {
+      "tid": 1332,
+      "title": "Vampiric Touch",
+      "path": "Spells/Vampiric_Touch"
+    },
+    {
+      "tid": 1333,
+      "title": "Vine Mine",
+      "path": "Spells/Vine_Mine"
+    },
+    {
+      "tid": 1334,
+      "title": "Virtue",
+      "path": "Spells/Virtue"
+    },
+    {
+      "tid": 1335,
+      "title": "Wail of the Banshee",
+      "path": "Spells/Wail_of_the_Banshee"
+    },
+    {
+      "tid": 1336,
+      "title": "Wall of Fire",
+      "path": "Spells/Wall_of_Fire"
+    },
+    {
+      "tid": 1337,
+      "title": "War Cry",
+      "path": "Spells/War_Cry"
+    },
+    {
+      "tid": 1338,
+      "title": "Web",
+      "path": "Spells/Web"
+    },
+    {
+      "tid": 1339,
+      "title": "Weird",
+      "path": "Spells/Weird"
+    },
+    {
+      "tid": 1340,
+      "title": "Word of Faith",
+      "path": "Spells/Word_of_Faith"
+    },
+    {
+      "tid": 1341,
+      "title": "Wounding Whispers",
+      "path": "Spells/Wounding_Whispers"
+    },
+    {
+      "tid": 1342,
+      "title": "Damage Types",
+      "path": "Systems/Damage_Types"
+    },
+    {
+      "tid": 1343,
+      "title": "Identification System",
+      "path": "Systems/Identification_System"
+    },
+    {
+      "tid": 1344,
+      "title": "The Team",
+      "path": "The_Team"
+    }
+  ]
+}

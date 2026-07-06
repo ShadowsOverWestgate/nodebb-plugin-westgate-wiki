@@ -1,7 +1,7 @@
 "use strict";
 
 const assert = require("node:assert/strict");
-const serializer = require("../lib/serializer");
+const serializer = require("../lib/core/serializer");
 
 const summary = serializer.serializeTopicSummary({
   tid: 10,

@@ -3,9 +3,9 @@
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
 
-const archiveSchema = require("../lib/wiki-archive-schema");
-const importPreview = require("../lib/wiki-archive-import");
-const archiveApply = require("../lib/wiki-archive-apply");
+const archiveSchema = require("../lib/archive/wiki-archive-schema");
+const importPreview = require("../lib/archive/wiki-archive-import");
+const archiveApply = require("../lib/archive/wiki-archive-apply");
 
 const ROOT_NS = "wgan_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const CHILD_NS = "wgan_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";

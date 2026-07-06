@@ -2,7 +2,7 @@
 
 const assert = require("node:assert/strict");
 
-const wikiHtmlSanitizer = require("../lib/wiki-html-sanitizer");
+const wikiHtmlSanitizer = require("../lib/content/wiki-html-sanitizer");
 
 function test(name, fn) {
   try {

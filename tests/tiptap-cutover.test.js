@@ -23,7 +23,7 @@ test("package scripts and dependencies are Tiptap-only", function () {
 });
 
 test("compose assets expose a stable cache version", function () {
-  const composeAssets = require("../lib/compose-assets");
+  const composeAssets = require("../lib/core/compose-assets");
 
   assert.equal(typeof composeAssets.getAssetVersion, "function");
   const first = composeAssets.getAssetVersion();

@@ -228,6 +228,10 @@
       "method": "invalidateWikiPathCaches"
     },
     {
+      "hook": "action:category.update",
+      "method": "onWikiCategoryUpdate"
+    },
+    {
       "hook": "action:category.delete",
       "method": "invalidateWikiPathCaches"
     },

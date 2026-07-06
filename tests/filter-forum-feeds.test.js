@@ -3,14 +3,15 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
+const { installNodebbStubs, restoreNodebbStubs } = require("./helpers/nodebb-stub");
+
 const root = process.cwd();
-const originalMainRequire = require.main.require.bind(require.main);
 
 function clearForumFeedModules() {
   [
-    "lib/filter-forum-feeds.js",
-    "lib/forum-exclusion-service.js",
-    "lib/config.js"
+    "lib/forum/filter-forum-feeds.js",
+    "lib/forum/forum-exclusion-service.js",
+    "lib/core/config.js"
   ].forEach((relativePath) => {
     const filename = require.resolve(`${root}/${relativePath}`);
     delete require.cache[filename];
@@ -28,13 +29,13 @@ async function withForumFeedStubs(fn) {
     ["202", 20],
     ["303", 30]
   ]);
-  const stubs = {
+  installNodebbStubs({
     "./src/categories": {
       getChildrenCids: async () => [],
       getCidsByPrivilege: async () => [-1, 1, 2, 3]
     },
     "./src/database": {
-      getSortedSetRange: async () => [],
+      getSortedSetRange: async (key) => (key === "cid:2:tids:lastposttime" ? ["20"] : []),
       sortedSetRemove: async () => {}
     },
     "./src/meta": {
@@ -59,18 +60,14 @@ async function withForumFeedStubs(fn) {
         cid: topicCidByTid.get(String(tid))
       }))
     }
-  };
-
-  require.main.require = function requireNodebbStub(id) {
-    return Object.prototype.hasOwnProperty.call(stubs, id) ? stubs[id] : originalMainRequire(id);
-  };
+  });
 
   try {
     clearForumFeedModules();
-    const feeds = require("../lib/filter-forum-feeds");
+    const feeds = require("../lib/forum/filter-forum-feeds");
     await fn(feeds);
   } finally {
-    require.main.require = originalMainRequire;
+    restoreNodebbStubs();
     clearForumFeedModules();
   }
 }
@@ -228,6 +225,52 @@ test("post summary feed hook still strips a wiki post that was never granted hyd
     });
     assert.deepEqual(result.posts.map((p) => p.pid), [101]);
   });
+});
+
+test("wiki tid exclusion set is cached across feed filter calls and patched on create", async () => {
+  const dbCalls = [];
+  installNodebbStubs({
+    "./src/categories": {
+      getChildrenCids: async () => []
+    },
+    "./src/database": {
+      getSortedSetRange: async (key) => {
+        dbCalls.push(key);
+        return key === "cid:2:tids:lastposttime" ? ["20"] : [];
+      },
+      sortedSetRemove: async () => {}
+    },
+    "./src/meta": {
+      settings: {
+        get: async () => ({
+          categoryIds: "2",
+          includeChildCategories: "0"
+        })
+      }
+    },
+    "./src/topics": {
+      getTopicField: async () => 2
+    }
+  });
+
+  try {
+    clearForumFeedModules();
+    const exclusion = require("../lib/forum/forum-exclusion-service");
+
+    assert.deepEqual(await exclusion.filterNonWikiTids([10, 20, 30]), [10, 30]);
+    assert.deepEqual(await exclusion.filterNonWikiTids([20, 30]), [30]);
+    assert.equal(dbCalls.length, 1, "tid set rebuilt instead of served from cache");
+
+    await exclusion.addWikiTids([30]);
+    assert.deepEqual(await exclusion.filterNonWikiTids([10, 20, 30]), [10]);
+
+    exclusion.clearWikiTidCache();
+    await exclusion.filterNonWikiTids([10]);
+    assert.equal(dbCalls.length, 2, "clearWikiTidCache did not force a rebuild");
+  } finally {
+    restoreNodebbStubs();
+    clearForumFeedModules();
+  }
 });
 
 test("recent topics widget pins cid list to non-wiki cids when unconfigured", async () => {

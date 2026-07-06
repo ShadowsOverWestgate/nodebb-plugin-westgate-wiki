@@ -1,40 +1,40 @@
 "use strict";
 
 const routeHelpers = require.main.require("./src/routes/helpers");
-const cacheService = require("./lib/cache-service");
-const config = require("./lib/config");
+const cacheService = require("./lib/core/cache-service");
+const config = require("./lib/core/config");
 const adminControllers = require("./lib/controllers/admin");
 const wikiArchiveAdminControllers = require("./lib/controllers/wiki-archive-admin");
-const serializer = require("./lib/serializer");
-const topicService = require("./lib/topic-service");
-const wikiLinkAutocomplete = require("./lib/wiki-link-autocomplete");
-const wikiSearchService = require("./lib/wiki-search-service");
-const wikiUserAutocomplete = require("./lib/wiki-user-autocomplete");
-const wikiLinks = require("./lib/wiki-links");
-const wikiFootnotes = require("./lib/wiki-footnotes");
-const wikiHtmlParse = require("./lib/wiki-html-parse");
-const wikiDiscussionPlaceholder = require("./lib/wiki-discussion-placeholder");
-const wikiDiscussionSettings = require("./lib/wiki-discussion-settings");
-const wikiArticleCss = require("./lib/wiki-article-css");
-const wikiUserMentions = require("./lib/wiki-user-mentions");
-const wikiMentionNotifications = require("./lib/wiki-mention-notifications");
-const wikiArticleWatch = require("./lib/wiki-article-watch");
-const wikiEditLocks = require("./lib/wiki-edit-locks");
-const wikiPageActions = require("./lib/wiki-page-actions");
-const wikiNativeMutationGuards = require("./lib/wiki-native-mutation-guards");
-const wikiRevisionActions = require("./lib/wiki-revision-actions");
-const wikiTopdataBotPrivileges = require("./lib/wiki-topdata-bot-privileges");
-const wikiRevisionPermissions = require("./lib/wiki-revision-permissions");
-const wikiRevisions = require("./lib/wiki-revisions");
-const wikiService = require("./lib/wiki-service");
-const wikiPaths = require("./lib/wiki-paths");
-const wikiPageValidation = require("./lib/wiki-page-validation");
-const wikiTopicPurge = require("./lib/wiki-topic-purge");
+const serializer = require("./lib/core/serializer");
+const topicService = require("./lib/read/topic-service");
+const wikiLinkAutocomplete = require("./lib/content/wiki-link-autocomplete");
+const wikiSearchService = require("./lib/read/wiki-search-service");
+const wikiUserAutocomplete = require("./lib/features/wiki-user-autocomplete");
+const wikiLinks = require("./lib/content/wiki-links");
+const wikiFootnotes = require("./lib/content/wiki-footnotes");
+const wikiHtmlParse = require("./lib/content/wiki-html-parse");
+const wikiDiscussionPlaceholder = require("./lib/read/wiki-discussion-placeholder");
+const wikiDiscussionSettings = require("./lib/read/wiki-discussion-settings");
+const wikiArticleCss = require("./lib/content/wiki-article-css");
+const wikiUserMentions = require("./lib/content/wiki-user-mentions");
+const wikiMentionNotifications = require("./lib/features/wiki-mention-notifications");
+const wikiArticleWatch = require("./lib/features/wiki-article-watch");
+const wikiEditLocks = require("./lib/pages/wiki-edit-locks");
+const wikiPageActions = require("./lib/pages/wiki-page-actions");
+const wikiNativeMutationGuards = require("./lib/pages/wiki-native-mutation-guards");
+const wikiRevisionActions = require("./lib/pages/wiki-revision-actions");
+const wikiTopdataBotPrivileges = require("./lib/forum/wiki-topdata-bot-privileges");
+const wikiRevisionPermissions = require("./lib/pages/wiki-revision-permissions");
+const wikiRevisions = require("./lib/pages/wiki-revisions");
+const wikiService = require("./lib/read/wiki-service");
+const wikiPaths = require("./lib/tree/wiki-paths");
+const wikiPageValidation = require("./lib/pages/wiki-page-validation");
+const wikiTopicPurge = require("./lib/pages/wiki-topic-purge");
 const wikiRoutes = require("./routes/wiki");
-const filterCategoriesForum = require("./lib/filter-categories-forum");
-const filterForumFeeds = require("./lib/filter-forum-feeds");
-const filterForumSearch = require("./lib/filter-forum-search");
-const forumExclusionService = require("./lib/forum-exclusion-service");
+const filterCategoriesForum = require("./lib/forum/filter-categories-forum");
+const filterForumFeeds = require("./lib/forum/filter-forum-feeds");
+const filterForumSearch = require("./lib/forum/filter-forum-search");
+const forumExclusionService = require("./lib/forum/forum-exclusion-service");
 const wikiDirectoryController = require("./lib/controllers/wiki-directory");
 
 const plugin = module.exports;
@@ -56,38 +56,10 @@ plugin.init = async function (params) {
 };
 
 plugin.registerApiRoutes = async function ({ router, middleware }) {
-  const wikiNamespaceSearch = require("./lib/wiki-namespace-search");
-  const wikiHomepage = require("./lib/wiki-homepage");
-  const wikiPageToc = require("./lib/wiki-page-toc");
+  const wikiNamespaceSearch = require("./lib/features/wiki-namespace-search");
+  const wikiHomepage = require("./lib/read/wiki-homepage");
+  const wikiPageToc = require("./lib/content/wiki-page-toc");
   const wikiNamespaceCreateController = require("./lib/controllers/wiki-namespace-create");
-  routeHelpers.setupApiRoute(
-    router,
-    "get",
-    "/westgate-wiki/path-migration/scan",
-    [middleware.ensureLoggedIn],
-    adminControllers.scanWikiPathMigrationReport
-  );
-  routeHelpers.setupApiRoute(
-    router,
-    "post",
-    "/westgate-wiki/path-migration/prepare",
-    [middleware.ensureLoggedIn],
-    adminControllers.prepareWikiPathMigrationReport
-  );
-  routeHelpers.setupApiRoute(
-    router,
-    "post",
-    "/westgate-wiki/path-migration/apply",
-    [middleware.ensureLoggedIn],
-    adminControllers.applyWikiPathMigration
-  );
-  routeHelpers.setupApiRoute(
-    router,
-    "get",
-    "/westgate-wiki/path-migration/verify",
-    [middleware.ensureLoggedIn],
-    adminControllers.verifyWikiPathMigration
-  );
   routeHelpers.setupApiRoute(
     router,
     "post",
@@ -336,74 +308,13 @@ plugin.filterWikiDiscussionTopicBuild = wikiDiscussionPlaceholder.filterTopicBui
 plugin.filterWikiDiscussionTopicReply = wikiDiscussionSettings.filterTopicReply;
 plugin.clearWikiPostParseCache = cacheService.clearWikiPostParseCache;
 plugin.syncPostedTopdataWikiPageSlug = wikiPageValidation.syncPostedTopdataWikiPageSlug;
-plugin.recordWikiCreateRevision = async function (data) {
-  if (!data) {
-    return data;
-  }
-
-  const posts = require.main.require("./src/posts");
-  const topics = require.main.require("./src/topics");
-  const settings = await config.getSettings();
-  const effectiveCategoryIds = Array.isArray(settings.effectiveCategoryIds) ? settings.effectiveCategoryIds : [];
-  const post = data.post || data.postData || {};
-  const topicInput = data.topic || data.topicData || {};
-  const tid = parseInt(topicInput.tid || post.tid || data.tid, 10);
-  if (!Number.isInteger(tid) || tid <= 0) {
-    return data;
-  }
-
-  const topic = topicInput.cid && topicInput.mainPid ?
-    topicInput :
-    (await topics.getTopicData(tid) || topicInput);
-  const cid = parseInt(topic && topic.cid, 10);
-  if (!Number.isInteger(cid) || cid <= 0 || !effectiveCategoryIds.includes(cid)) {
-    return data;
-  }
-
-  const mainPid = parseInt(topic && topic.mainPid, 10);
-  const pid = parseInt(post.pid || data.pid || mainPid, 10);
-  if (!Number.isInteger(mainPid) || mainPid <= 0 || !Number.isInteger(pid) || pid !== mainPid) {
-    return data;
-  }
-
-  const uid = parseInt(data.uid || post.uid || topic.uid, 10);
-  if (!Number.isInteger(uid) || uid <= 0) {
-    return data;
-  }
-
-  if (await wikiRevisions.hasRevisions(tid)) {
-    return data;
-  }
-
-  let source = String(post.sourceContent || post.content || "");
-  if (!source && typeof posts.getPostFields === "function") {
-    const stored = await posts.getPostFields(mainPid, ["content", "sourceContent"]);
-    source = stored ? String(stored.sourceContent || stored.content || "") : "";
-  }
-  if (!source.trim()) {
-    return data;
-  }
-
-  await wikiRevisions.appendRevision({
-    tid,
-    pid: mainPid,
-    cid,
-    uid,
-    action: "create",
-    title: String(topic.titleRaw || topic.title || ""),
-    oldSource: "",
-    newSource: source,
-    canonicalPath: String(topic.canonicalPath || ""),
-    wikiPath: String(topic.wikiPath || "")
-  });
-
-  return data;
-};
+plugin.recordWikiCreateRevision = wikiRevisionActions.recordCreateRevision;
 plugin.clearWikiPostEditCache = cacheService.clearWikiPostEditCache;
 plugin.onWikiTopicDelete = wikiTopicPurge.onTopicDelete;
 plugin.onWikiTopicsPurge = wikiTopicPurge.onTopicsPurge;
+plugin.onWikiCategoryUpdate = wikiPageActions.relocateNamespaceIndexPageOnCategoryMove;
 plugin.invalidateWikiPathCaches = function () {
-  const wikiDirectory = require("./lib/wiki-directory-service");
+  const wikiDirectory = require("./lib/tree/wiki-directory-service");
   wikiDirectory.invalidateAllWikiCaches();
   wikiPaths.invalidateWikiTreeIndex({ reason: "wiki-path-lifecycle" });
 };
@@ -432,7 +343,7 @@ plugin.filterSearchIndexTopics = filterForumSearch.filterSearchIndexTopics;
 plugin.filterSearchIndexPosts = filterForumSearch.filterSearchIndexPosts;
 plugin.filterSearchContentGetResult = filterForumSearch.filterSearchContentGetResult;
 plugin.onWikiTopicMoved = async function (data) {
-  const wikiDirectory = require("./lib/wiki-directory-service");
+  const wikiDirectory = require("./lib/tree/wiki-directory-service");
   const fromCid = parseInt(data && data.fromCid, 10);
   const toCid = parseInt(data && data.toCid, 10);
   if (Number.isInteger(fromCid) && fromCid > 0) {
@@ -441,6 +352,7 @@ plugin.onWikiTopicMoved = async function (data) {
   if (Number.isInteger(toCid) && toCid > 0) {
     wikiDirectory.invalidateNamespace(toCid);
   }
+  forumExclusionService.clearWikiTidCache();
   wikiPaths.invalidateWikiTreeIndex({ reason: "wiki-topic-moved" });
 };
 plugin.wikiFilterPrivilegesTopicsGet = async function (data) {
@@ -457,7 +369,7 @@ plugin.wikiFilterPrivilegesTopicsGet = async function (data) {
 };
 
 function getWikiCacheMetrics() {
-  const wikiDirectory = require("./lib/wiki-directory-service");
+  const wikiDirectory = require("./lib/tree/wiki-directory-service");
   return {
     config: typeof config.getCacheMetrics === "function" ? config.getCacheMetrics() : {},
     wikiPaths: typeof wikiPaths.getCacheMetrics === "function" ? wikiPaths.getCacheMetrics() : {},
@@ -466,7 +378,7 @@ function getWikiCacheMetrics() {
 }
 
 function resetWikiCacheMetrics() {
-  const wikiDirectory = require("./lib/wiki-directory-service");
+  const wikiDirectory = require("./lib/tree/wiki-directory-service");
   if (typeof config.resetCacheMetrics === "function") {
     config.resetCacheMetrics();
   }
@@ -504,5 +416,5 @@ plugin.services = {
   wikiRevisions,
   wikiPaths,
   wikiService,
-  wikiDirectory: require("./lib/wiki-directory-service")
+  wikiDirectory: require("./lib/tree/wiki-directory-service")
 };

@@ -1,7 +1,7 @@
 "use strict";
 
 const assert = require("node:assert/strict");
-const wikiTopicMutations = require("../lib/wiki-topic-mutations");
+const wikiTopicMutations = require("../lib/pages/wiki-topic-mutations");
 
 const TOMBSTONE_FIELDS = [
   "westgateWikiTombstoned",
@@ -21,7 +21,7 @@ const state = {
   failSetTopicField: ""
 };
 
-const originalMainRequire = require.main.require.bind(require.main);
+const { installNodebbStubs, restoreNodebbStubs } = require("./helpers/nodebb-stub");
 const topicsStub = {
   getTopicFields: async (tid, fields) => {
     state.getTopicFieldsCalls.push({ tid, fields });
@@ -66,7 +66,7 @@ function reset() {
   state.setTopicFieldsCalls = [];
   state.setTopicFieldCalls = [];
   state.failSetTopicField = "";
-  topicsStub.setTopicFields = async (tid, values) => {
+  installedTopicsStub.setTopicFields = async (tid, values) => {
     state.setTopicFieldsCalls.push({ tid, values: { ...values } });
     Object.entries(values).forEach(([field, value]) => {
       topic(tid)[field] = String(value);
@@ -74,16 +74,13 @@ function reset() {
   };
 }
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "./src/topics": topicsStub
-  };
-  return stubs[id] || originalMainRequire(id);
-};
+const installedTopicsStub = installNodebbStubs({
+  "./src/topics": topicsStub
+})["./src/topics"];
 
 (async () => {
   try {
-    const tombstones = require("../lib/wiki-tombstones");
+    const tombstones = require("../lib/pages/wiki-tombstones");
 
     reset();
     const written = await tombstones.setTombstone({
@@ -145,7 +142,7 @@ require.main.require = function requireNodebbStub(id) {
     assert.equal(tombstones.getTombstoneFromFields({ westgateWikiTombstoned: "0" }), null);
 
     reset();
-    topicsStub.setTopicFields = null;
+    installedTopicsStub.setTopicFields = null;
     state.failSetTopicField = "westgateWikiTombstoneRevisionId";
     await assert.rejects(
       () => tombstones.setTombstone({
@@ -360,7 +357,7 @@ require.main.require = function requireNodebbStub(id) {
 
     console.log("wiki tombstones tests passed");
   } finally {
-    require.main.require = originalMainRequire;
+    restoreNodebbStubs();
   }
 })().catch((err) => {
   console.error(err);

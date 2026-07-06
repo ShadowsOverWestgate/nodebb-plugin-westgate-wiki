@@ -5,7 +5,7 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 
-const archiveJobs = require("../lib/wiki-archive-jobs");
+const archiveJobs = require("../lib/archive/wiki-archive-jobs");
 
 (async () => {
   {

@@ -2,7 +2,8 @@
 
 const assert = require("node:assert/strict");
 
-const originalMainRequire = require.main.require.bind(require.main);
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
+
 const state = {
   settings: {},
   categories: new Map(),
@@ -15,35 +16,28 @@ function reset(settings = {}, categories = []) {
   state.setCalls = [];
 }
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "./src/categories": {
-      getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
-      getChildrenCids: async () => []
-    },
-    "./src/meta": {
-      settings: {
-        get: async () => ({ ...state.settings }),
-        setOnEmpty: async (key, defaults) => {
-          if (!Object.keys(state.settings).length) {
-            state.settings = { ...defaults };
-          }
-        },
-        set: async (key, settings) => {
-          state.setCalls.push({ key, settings: { ...settings } });
-          state.settings = { ...settings };
+installNodebbStubs({
+  "./src/categories": {
+    getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
+    getChildrenCids: async () => []
+  },
+  "./src/meta": {
+    settings: {
+      get: async () => ({ ...state.settings }),
+      setOnEmpty: async (key, defaults) => {
+        if (!Object.keys(state.settings).length) {
+          state.settings = { ...defaults };
         }
+      },
+      set: async (key, settings) => {
+        state.setCalls.push({ key, settings: { ...settings } });
+        state.settings = { ...settings };
       }
     }
-  };
-
-  if (!stubs[id]) {
-    return originalMainRequire(id);
   }
-  return stubs[id];
-};
+});
 
-const config = require("../lib/config");
+const config = require("../lib/core/config");
 
 assert.deepStrictEqual(
   config.parseWikiNamespaceCreateGroupNames("Wiki Editor, administrators"),

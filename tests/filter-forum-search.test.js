@@ -8,10 +8,9 @@ const originalMainRequire = require.main.require.bind(require.main);
 
 function clearForumSearchModules() {
   [
-    "lib/filter-forum-search.js",
-    "lib/forum-exclusion-service.js",
-    "lib/wiki-canonical-path-adapter.js",
-    "lib/config.js"
+    "lib/forum/filter-forum-search.js",
+    "lib/forum/forum-exclusion-service.js",
+    "lib/core/config.js"
   ].forEach((relativePath) => {
     const filename = require.resolve(`${root}/${relativePath}`);
     delete require.cache[filename];
@@ -68,8 +67,9 @@ async function withForumSearchStubs(fn) {
 
   try {
     clearForumSearchModules();
-    require.cache[require.resolve(`${root}/lib/wiki-canonical-path-adapter.js`)] = {
+    require.cache[require.resolve(`${root}/lib/tree/wiki-paths.js`)] = {
       exports: {
+        ...require(`${root}/lib/tree/wiki-paths.js`),
         getCanonicalNamespaceInfo: async (category) => ({
           valid: true,
           canonicalPath: `Category_${category.cid}`,
@@ -86,7 +86,7 @@ async function withForumSearchStubs(fn) {
         }
       }
     };
-    const forumSearch = require("../lib/filter-forum-search");
+    const forumSearch = require("../lib/forum/filter-forum-search");
     await fn(forumSearch, state);
   } finally {
     require.main.require = originalMainRequire;

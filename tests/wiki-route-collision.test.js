@@ -2,46 +2,36 @@
 
 const assert = require("node:assert/strict");
 
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
+
 const capturedRoutes = new Map();
-const originalMainRequire = require.main.require.bind(require.main);
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "nconf": { get: () => "" },
-    "./src/controllers/api": { loadConfig: async () => ({ relative_path: "", csrf_token: "", "cache-buster": "" }) },
-    "./src/controllers/helpers": {
-      notAllowed: () => {
-        throw new Error("notAllowed should not be called");
-      },
-      redirect: () => {
-        throw new Error("redirect should not be called");
-      }
+installNodebbStubs({
+  "nconf": { get: () => "" },
+  "./src/controllers/api": { loadConfig: async () => ({ relative_path: "", csrf_token: "", "cache-buster": "" }) },
+  "./src/controllers/helpers": {
+    notAllowed: () => {
+      throw new Error("notAllowed should not be called");
     },
-    "./src/categories": { getCategoryData: async () => null, getChildren: async () => [[]], getChildrenCids: async () => [] },
-    "./src/database": { getSortedSetRange: async () => [], getSortedSetRevRange: async () => [], getObjectField: async () => null, getObject: async () => ({}) },
-    "./src/groups": { getNonPrivilegeGroups: async () => [] },
-    "./src/meta": { settings: { get: async () => ({}), setOnEmpty: async () => {}, set: async () => {} } },
-    "./src/middleware": { ensureLoggedIn: () => {} },
-    "./src/notifications": {},
-    "./src/plugins": { hooks: { on: () => {} } },
-    "./src/posts": { getPostSummaryByPids: async () => [], getUserInfoForPosts: async () => [] },
-    "./src/privileges": { categories: {}, topics: {}, posts: {} },
-    "./src/routes/helpers": {
-      setupPageRoute: (router, routePath, middlewareOrHandler, maybeHandler) => {
-        capturedRoutes.set(routePath, typeof middlewareOrHandler === "function" ? middlewareOrHandler : maybeHandler);
-      }
-    },
-    "./src/slugify": (value) => String(value || "").toLowerCase(),
-    "./src/topics": {},
-    "./src/user": {},
-    "./src/utils": { isNumber: () => true, toISOString: (value) => new Date(value).toISOString() }
-  };
-
-  return stubs[id] || originalMainRequire(id);
-};
+    redirect: () => {
+      throw new Error("redirect should not be called");
+    }
+  },
+  "./src/meta": { settings: { get: async () => ({}), setOnEmpty: async () => {}, set: async () => {} } },
+  "./src/middleware": { ensureLoggedIn: () => {} },
+  "./src/plugins": { hooks: { on: () => {} } },
+  "./src/posts": { getPostSummaryByPids: async () => [], getUserInfoForPosts: async () => [] },
+  "./src/routes/helpers": {
+    setupPageRoute: (router, routePath, middlewareOrHandler, maybeHandler) => {
+      capturedRoutes.set(routePath, typeof middlewareOrHandler === "function" ? middlewareOrHandler : maybeHandler);
+    }
+  },
+  "./src/slugify": (value) => String(value || "").toLowerCase(),
+  "./src/utils": { isNumber: () => true, toISOString: (value) => new Date(value).toISOString() }
+});
 
 const routes = require("../routes/wiki");
-const wikiPaths = require("../lib/wiki-paths");
+const wikiPaths = require("../lib/tree/wiki-paths");
 
 let legacyNamespaceCalls = 0;
 let legacyArticleCalls = 0;

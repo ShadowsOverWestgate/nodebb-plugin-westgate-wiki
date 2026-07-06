@@ -3,23 +3,23 @@
 const helpers = require.main.require("./src/controllers/helpers");
 const middleware = require.main.require("./src/middleware");
 const routeHelpers = require.main.require("./src/routes/helpers");
-const composeAssets = require("../lib/compose-assets");
+const composeAssets = require("../lib/core/compose-assets");
 const composeController = require("../lib/controllers/compose");
 const wikiManageController = require("../lib/controllers/wiki-manage");
 const wikiNamespaceCreateController = require("../lib/controllers/wiki-namespace-create");
 const wikiRevisionController = require("../lib/controllers/wiki-revisions");
-const config = require("../lib/config");
-const wikiNamespaceCreators = require("../lib/wiki-namespace-creators");
-const wikiAlphabeticalIndex = require("../lib/wiki-alphabetical-index");
-const serializer = require("../lib/serializer");
-const wikiService = require("../lib/wiki-service");
-const topicService = require("../lib/topic-service");
-const wikiSearchService = require("../lib/wiki-search-service");
-const wikiBreadcrumbTrail = require("../lib/wiki-breadcrumb-trail");
-const wikiMissingPageCreate = require("../lib/wiki-missing-page-create");
-const wikiPageActions = require("../lib/wiki-page-actions");
-const wikiPaths = require("../lib/wiki-paths");
-const wikiRevisionPermissions = require("../lib/wiki-revision-permissions");
+const config = require("../lib/core/config");
+const wikiNamespaceCreators = require("../lib/features/wiki-namespace-creators");
+const wikiAlphabeticalIndex = require("../lib/tree/wiki-alphabetical-index");
+const serializer = require("../lib/core/serializer");
+const wikiService = require("../lib/read/wiki-service");
+const topicService = require("../lib/read/topic-service");
+const wikiSearchService = require("../lib/read/wiki-search-service");
+const wikiBreadcrumbTrail = require("../lib/tree/wiki-breadcrumb-trail");
+const wikiMissingPageCreate = require("../lib/features/wiki-missing-page-create");
+const wikiPageActions = require("../lib/pages/wiki-page-actions");
+const wikiPaths = require("../lib/tree/wiki-paths");
+const wikiRevisionPermissions = require("../lib/pages/wiki-revision-permissions");
 
 function getCreateIntentTitle(req) {
   return String((req.query && req.query.create) || "").trim();
@@ -224,6 +224,11 @@ async function buildCanonicalPageRenderData(req, nodeResult, wikiPage, wikiSecti
 
   return {
     ...(await buildWikiPageRenderData(wikiPage, { isWikiHome: false, uid: req.uid })),
+    // The index topic lives in the PARENT category, so the page render data
+    // above builds the nav drawer for the parent namespace. When this page is
+    // a namespace index, the drawer must show the namespace's own children.
+    // No currentTid: the index topic is not among them.
+    ...(section ? buildWikiNavRenderData(section, { filterId: `section-${section.cid}` }) : {}),
     ...wikiBreadcrumbTrail.forCanonicalNodeView(nodeResult),
     canonicalNodeView: true,
     canonicalPath: nodeResult.canonicalPath || node.canonicalPath || "",

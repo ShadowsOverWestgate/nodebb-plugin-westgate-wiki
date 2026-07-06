@@ -2,38 +2,25 @@
 
 const assert = require("node:assert/strict");
 
-const originalMainRequire = require.main.require.bind(require.main);
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "nconf": { get: () => "" },
-    "./src/categories": {},
-    "./src/controllers/api": {},
-    "./src/controllers/helpers": { formatApiResponse: () => {} },
-    "./src/database": {},
-    "./src/groups": { getNonPrivilegeGroups: async () => [] },
-    "./src/meta": { settings: { get: async () => ({}), setOnEmpty: async () => {}, set: async () => {} } },
-    "./src/middleware": { ensureLoggedIn: () => {}, checkRequired: () => {} },
-    "./src/notifications": {},
-    "./src/plugins": { hooks: { on: () => {} } },
-    "./src/posts": {},
-    "./src/privileges": {},
-    "./src/routes/helpers": {
-      setupAdminPageRoute: () => {},
-      setupPageRoute: () => {},
-      setupApiRoute(router, method, routePath, middleware, handler) {
-        router.registeredRoutes.push({ method, routePath, middleware, handler });
-      }
-    },
-    "./src/slugify": (value) => String(value || "").toLowerCase(),
-    "./src/topics": {},
-    "./src/user": {},
-    "./src/utils": { isNumber: () => true }
-  };
-  return Object.prototype.hasOwnProperty.call(stubs, id) ? stubs[id] : originalMainRequire(id);
-};
+installNodebbStubs({
+  "nconf": { get: () => "" },
+  "./src/controllers/api": {},
+  "./src/middleware": { ensureLoggedIn: () => {}, checkRequired: () => {} },
+  "./src/plugins": { hooks: { on: () => {} } },
+  "./src/routes/helpers": {
+    setupAdminPageRoute: () => {},
+    setupPageRoute: () => {},
+    setupApiRoute(router, method, routePath, middleware, handler) {
+      router.registeredRoutes.push({ method, routePath, middleware, handler });
+    }
+  },
+  "./src/slugify": (value) => String(value || "").toLowerCase(),
+  "./src/utils": { isNumber: () => true }
+});
 
-const wikiDirectory = require("../lib/wiki-directory-service");
+const wikiDirectory = require("../lib/tree/wiki-directory-service");
 
 const rows = wikiDirectory.sortSummaries([
   { tid: 40, title: "Alpha", titleLeaf: "Alpha", titlePath: ["Alpha"] },

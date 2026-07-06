@@ -2,6 +2,8 @@
 
 const assert = require("assert");
 
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
+
 const state = {
   settings: {
     categoryIds: "1, 2, 3",
@@ -13,8 +15,6 @@ const state = {
   readableCategories: new Set([1, 2, 3]),
   readableTopics: new Set()
 };
-
-const originalMainRequire = require.main.require.bind(require.main);
 
 function slugify(value) {
   return String(value || "")
@@ -50,18 +50,17 @@ function reset({ settings, categories, topics, readableCids, readableTids }) {
   setCategories(categories || [], readableCids);
   setTopics(topics || [], readableTids);
   try {
-    require("../lib/config").invalidateSettingsCache();
-    require("../lib/wiki-paths").invalidateNamespaceIndexCache({ skipSettingsInvalidation: true });
-    require("../lib/wiki-directory-service").invalidateAllWikiCaches();
+    require("../lib/core/config").invalidateSettingsCache();
+    require("../lib/tree/wiki-paths").invalidateNamespaceIndexCache({ skipSettingsInvalidation: true });
+    require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
   } catch (e) {
     // Modules may not be loaded yet during test bootstrap.
   }
 }
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "nconf": { get: () => "" },
-    "./src/categories": {
+installNodebbStubs({
+  "nconf": { get: () => "" },
+  "./src/categories": {
       getCategoryData: async (cid) => state.categories.get(parseInt(cid, 10)) || null,
       getChildren: async (cids) => (Array.isArray(cids) ? cids : []).map((cid) => {
         const parsedCid = parseInt(cid, 10);
@@ -79,6 +78,7 @@ require.main.require = function requireNodebbStub(id) {
     "./src/database": {
       getSortedSetRange: async (key) => state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || [],
       getSortedSetRevRange: async (key) => state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || [],
+      sortedSetCard: async (key) => (state.tidsByCid.get(parseInt(key.match(/^cid:(\d+):tids$/)[1], 10)) || []).length,
       isSetMember: async () => false,
       getObjectField: async () => null,
       getObject: async () => ({})
@@ -150,15 +150,12 @@ require.main.require = function requireNodebbStub(id) {
       },
       toISOString: (value) => new Date(value).toISOString()
     }
-  };
+});
 
-  return stubs[id] || originalMainRequire(id);
-};
-
-const wikiSearch = require("../lib/wiki-search-service");
-const wikiDirectory = require("../lib/wiki-directory-service");
-const wikiService = require("../lib/wiki-service");
-const topicService = require("../lib/topic-service");
+const wikiSearch = require("../lib/read/wiki-search-service");
+const wikiDirectory = require("../lib/tree/wiki-directory-service");
+const wikiService = require("../lib/read/wiki-service");
+const topicService = require("../lib/read/topic-service");
 
 (async () => {
   reset({

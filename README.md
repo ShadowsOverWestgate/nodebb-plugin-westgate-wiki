@@ -27,9 +27,9 @@ spaces with `_`, for example `/wiki/Lore/Deities/Gond` or
 
 The governing contracts are:
 
-- [CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md)
-- [HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md)
-- [CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md)
+- [CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md](docs/history/CANONICAL_WIKI_PATH_TREE_AND_TOPDATA_ALIGNMENT_CONTRACT.md)
+- [HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md](docs/history/HARDLINE_WIKI_PATH_STANDARDIZATION_CONTRACT.md)
+- [CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md](docs/history/CANONICAL_WIKI_TREE_INDEX_AND_NAMESPACE_INDEX_PAGES_CONTRACT.md)
 
 Migration reporting remains in the ACP so operators can recognize and clear
 pre-Apply state: blocking title/category collisions, retired namespace main-page
@@ -42,8 +42,8 @@ behavior, slug-leaf routing, namespace-main-page selectors, `wiki_slug`, and
 Administrator-only wiki ZIP import/export is available after the canonical
 path/tree cutover. Its implementation authority lives in:
 
-- [WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md)
-- [WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
+- [WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md](docs/WIKI_IMPORT_EXPORT_ARCHIVE_CONTRACT.md)
+- [WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md](docs/history/WIKI_IMPORT_EXPORT_ARCHIVE_IMPLEMENTATION_ENTRYPOINT_PLAN.md)
 
 The V1 format is a `westgate-wiki-archive/v1` ZIP containing `manifest.json`,
 per-page sanitized article HTML, bundled validated local upload assets, an
@@ -171,16 +171,16 @@ and empty or reserved segments are rejected.
 
 The plugin is intentionally split by responsibility:
 
-- [library.js](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/library.js): plugin entrypoint and exported service surface
-- [routes/wiki.js](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/routes/wiki.js): wiki route registration
-- [lib/config.js](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/lib/config.js): settings loading and effective namespace expansion
-- [lib/wiki-service.js](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/lib/wiki-service.js): namespace retrieval and serialization preparation
-- [lib/topic-service.js](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/lib/topic-service.js): wiki page retrieval
-- [lib/wiki-links.js](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/lib/wiki-links.js): internal wiki link parsing and redlink generation
-- [lib/serializer.js](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/lib/serializer.js): wiki path and view-model shaping
-- [templates/](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/templates): wiki-facing templates
-- [public/wiki.js](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/public/wiki.js): client-side create-page and redlink behavior
-- [public/wiki.css](/home/vicky/Projects/nodebb-dev/nodebb-plugin-westgate-wiki/public/wiki.css): wiki shell layout + optional `--wiki-chrome-*` hooks (Bootstrap defaults when unset)
+- [library.js](library.js): plugin entrypoint and exported service surface
+- [routes/wiki.js](routes/wiki.js): wiki route registration
+- [lib/config.js](lib/config.js): settings loading and effective namespace expansion
+- [lib/wiki-service.js](lib/wiki-service.js): namespace retrieval and serialization preparation
+- [lib/topic-service.js](lib/topic-service.js): wiki page retrieval
+- [lib/wiki-links.js](lib/wiki-links.js): internal wiki link parsing and redlink generation
+- [lib/serializer.js](lib/serializer.js): wiki path and view-model shaping
+- [templates/](templates): wiki-facing templates
+- [public/wiki.js](public/wiki.js): client-side create-page and redlink behavior
+- [public/wiki.css](public/wiki.css): wiki shell layout + optional `--wiki-chrome-*` hooks (Bootstrap defaults when unset)
 
 ### Styling and theme hooks
 

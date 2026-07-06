@@ -7,8 +7,9 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
+const { installNodebbStubs, restoreNodebbStubs } = require("./helpers/nodebb-stub");
+
 const root = path.resolve(__dirname, "..");
-const originalMainRequire = require.main.require.bind(require.main);
 
 function clearProjectModule(relativePath) {
   const modulePath = path.join(root, relativePath);
@@ -35,15 +36,12 @@ function patchProjectModule(relativePath, exports) {
 }
 
 async function withNodebbStubs(stubs, fn) {
-  const previousMainRequire = require.main.require;
-  require.main.require = function requireNodebbStub(id) {
-    return Object.prototype.hasOwnProperty.call(stubs, id) ? stubs[id] : originalMainRequire(id);
-  };
+  installNodebbStubs(stubs);
 
   try {
     return await fn();
   } finally {
-    require.main.require = previousMainRequire;
+    restoreNodebbStubs();
   }
 }
 
@@ -157,10 +155,10 @@ test("runtime apply services provide page, asset, identity, and upload associati
   const state = { uploadPath, events: [] };
 
   await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
-    clearProjectModule("lib/wiki-archive-runtime.js");
-    clearProjectModule("lib/wiki-article-css.js");
-    clearProjectModule("lib/wiki-discussion-settings.js");
-    const runtime = require("../lib/wiki-archive-runtime");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
+    clearProjectModule("lib/content/wiki-article-css.js");
+    clearProjectModule("lib/read/wiki-discussion-settings.js");
+    const runtime = require("../lib/archive/wiki-archive-runtime");
     const services = runtime.createApplyServices();
 
     assert.equal(typeof services.assets.importAsset, "function");
@@ -205,7 +203,7 @@ test("runtime revision service records one create revision for archive-created p
   const state = { uploadPath, events: [] };
   let hasExistingRevision = false;
 
-  const restoreRevisions = patchProjectModule("lib/wiki-revisions.js", {
+  const restoreRevisions = patchProjectModule("lib/pages/wiki-revisions.js", {
     hasRevisions: async (tid) => {
       state.events.push(`revision.has:${tid}`);
       return hasExistingRevision;
@@ -218,8 +216,8 @@ test("runtime revision service records one create revision for archive-created p
 
   try {
     await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
-      clearProjectModule("lib/wiki-archive-runtime.js");
-      const runtime = require("../lib/wiki-archive-runtime");
+      clearProjectModule("lib/archive/wiki-archive-runtime.js");
+      const runtime = require("../lib/archive/wiki-archive-runtime");
       const services = runtime.createApplyServices();
 
       assert.deepEqual(await services.revisions.ensureCreateRevision({
@@ -251,7 +249,7 @@ test("runtime revision service records one create revision for archive-created p
     });
   } finally {
     restoreRevisions();
-    clearProjectModule("lib/wiki-archive-runtime.js");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
   }
 });
 
@@ -259,7 +257,7 @@ test("runtime updatePage routes updates through wiki page actions and an interna
   const uploadPath = await fs.mkdtemp(path.join(os.tmpdir(), "wg-runtime-update-page-"));
   const state = { uploadPath, events: [] };
 
-  const restorePageActions = patchProjectModule("lib/wiki-page-actions.js", {
+  const restorePageActions = patchProjectModule("lib/pages/wiki-page-actions.js", {
     moveWikiPage: async (req, res) => {
       state.events.push(`action.move:${req.body.tid}:${req.body.cid}:${req.body.title}:${req.uid}`);
       res.statusCode = 200;
@@ -285,7 +283,7 @@ test("runtime updatePage routes updates through wiki page actions and an interna
       return res.payload;
     }
   });
-  const restoreEditLocks = patchProjectModule("lib/wiki-edit-locks.js", {
+  const restoreEditLocks = patchProjectModule("lib/pages/wiki-edit-locks.js", {
     acquireLock: async (tid, uid) => {
       state.events.push(`lock.acquire:${tid}:${uid}`);
       return { status: "ok", token: "runtime-lock-token" };
@@ -299,8 +297,8 @@ test("runtime updatePage routes updates through wiki page actions and an interna
 
   try {
     await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
-      clearProjectModule("lib/wiki-archive-runtime.js");
-      const runtime = require("../lib/wiki-archive-runtime");
+      clearProjectModule("lib/archive/wiki-archive-runtime.js");
+      const runtime = require("../lib/archive/wiki-archive-runtime");
       const services = runtime.createApplyServices();
 
       assert.equal(typeof services.pages.updatePage, "function");
@@ -348,7 +346,7 @@ test("runtime updatePage routes updates through wiki page actions and an interna
   } finally {
     restorePageActions();
     restoreEditLocks();
-    clearProjectModule("lib/wiki-archive-runtime.js");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
   }
 });
 
@@ -374,8 +372,8 @@ test("runtime apply settings preserves routeRootCid", async () => {
       }
     }
   }, async () => {
-    clearProjectModule("lib/wiki-archive-runtime.js");
-    const runtime = require("../lib/wiki-archive-runtime");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
+    const runtime = require("../lib/archive/wiki-archive-runtime");
     const services = runtime.createApplyServices();
 
     await services.settings.applySettings({
@@ -414,10 +412,10 @@ test("collectDestination includes hashed upload assets from the default upload p
       getPostFields: async () => ({ content: "<p>Gond</p>", sourceContent: "<p>Gond</p>" })
     }
   }, async () => {
-    clearProjectModule("lib/wiki-archive-runtime.js");
-    clearProjectModule("lib/wiki-path-migration.js");
-    clearProjectModule("lib/wiki-tree-index.js");
-    const runtime = require("../lib/wiki-archive-runtime");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
+    clearProjectModule("lib/tree/wiki-canonical-diagnostics.js");
+    clearProjectModule("lib/tree/wiki-tree-index.js");
+    const runtime = require("../lib/archive/wiki-archive-runtime");
     const crypto = require("node:crypto");
     const sha256 = crypto.createHash("sha256").update("asset-bytes").digest("hex");
 
@@ -439,8 +437,8 @@ test("collectDestinationAssets hashes uploads with streams and can narrow by sha
   const state = { uploadPath, events: [] };
 
   await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
-    clearProjectModule("lib/wiki-archive-runtime.js");
-    const runtime = require("../lib/wiki-archive-runtime");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
+    const runtime = require("../lib/archive/wiki-archive-runtime");
     const readFile = fs.readFile;
     fs.readFile = async () => {
       throw new Error("destination asset hashing must not use fs.promises.readFile");
@@ -465,8 +463,8 @@ test("apply asset findBySha256 uses a cached destination asset index", async () 
   const state = { uploadPath, events: [] };
 
   await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
-    clearProjectModule("lib/wiki-archive-runtime.js");
-    const runtime = require("../lib/wiki-archive-runtime");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
+    const runtime = require("../lib/archive/wiki-archive-runtime");
     const services = runtime.createApplyServices();
     const first = await services.assets.findBySha256(sha256);
     await fs.rm(existingPath);
@@ -483,8 +481,8 @@ test("apply asset findBySha256 uses seeded destination assets without scanning u
   const state = { uploadPath, events: [] };
 
   await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
-    clearProjectModule("lib/wiki-archive-runtime.js");
-    const runtime = require("../lib/wiki-archive-runtime");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
+    const runtime = require("../lib/archive/wiki-archive-runtime");
     const readdir = fs.readdir;
     fs.readdir = async () => {
       throw new Error("seeded asset index should not scan upload files");
@@ -514,8 +512,8 @@ test("createUploadStore reads asset references from upload_path directly", async
   const state = { uploadPath, events: [] };
 
   await withNodebbStubs(createRuntimeNodebbStubs(state), async () => {
-    clearProjectModule("lib/wiki-archive-runtime.js");
-    const runtime = require("../lib/wiki-archive-runtime");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
+    const runtime = require("../lib/archive/wiki-archive-runtime");
     const upload = await runtime.createUploadStore().readLocalUpload("/assets/uploads/files/foo.png");
 
     assert.equal(upload.buffer.toString("utf8"), "image-bytes");

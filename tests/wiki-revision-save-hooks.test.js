@@ -86,11 +86,11 @@ function createNodebbStubs(state) {
 
 async function loadPlugin(state, revisionCalls, options = {}) {
   const patches = [];
-  patchProjectModule("lib/config.js", {
+  patchProjectModule("lib/core/config.js", {
     ensureDefaults: async () => {},
     getSettings: async () => ({ effectiveCategoryIds: [10] })
   }, patches);
-  patchProjectModule("lib/wiki-revisions.js", {
+  patchProjectModule("lib/pages/wiki-revisions.js", {
     hasRevisions: async (tid) => {
       const existingRevisionTids = options.existingRevisionTids || new Set();
       return existingRevisionTids.has(parseInt(tid, 10));

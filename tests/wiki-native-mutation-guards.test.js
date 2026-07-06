@@ -37,8 +37,8 @@ async function withStubs(stubs, fn) {
   }
 
   try {
-    clearProjectModule("lib/wiki-native-mutation-guards.js");
-    return await fn(require("../lib/wiki-native-mutation-guards"));
+    clearProjectModule("lib/pages/wiki-native-mutation-guards.js");
+    return await fn(require("../lib/pages/wiki-native-mutation-guards"));
   } finally {
     patched.reverse().forEach(([filename, previous]) => {
       if (previous) {
@@ -48,7 +48,7 @@ async function withStubs(stubs, fn) {
       }
     });
     require.main.require = originalMainRequire;
-    clearProjectModule("lib/wiki-native-mutation-guards.js");
+    clearProjectModule("lib/pages/wiki-native-mutation-guards.js");
   }
 }
 
@@ -124,7 +124,7 @@ function createHarness() {
         "./src/topics": topicsStub
       },
       project: {
-        "lib/config.js": {
+        "lib/core/config.js": {
           getSettings: async () => state.settings
         }
       }
@@ -175,7 +175,7 @@ test("posts purge guard blocks unmanaged wiki main posts but allows replies, non
       uid: 9
     });
 
-    const wikiTopicMutations = require("../lib/wiki-topic-mutations");
+    const wikiTopicMutations = require("../lib/pages/wiki-topic-mutations");
     await wikiTopicMutations.withManagedMutationContext(async () => {
       await guards.validatePostsPurge({
         posts: [{ pid: 420, tid: 42 }],
@@ -208,7 +208,7 @@ test("installed topic move wrapper blocks unmanaged wiki moves and allows manage
     assert.deepEqual(allowed, { tid: 62, cid: 11 });
     assert.equal(harness.calls.move.length, 1);
 
-    const wikiTopicMutations = require("../lib/wiki-topic-mutations");
+    const wikiTopicMutations = require("../lib/pages/wiki-topic-mutations");
     const managed = await wikiTopicMutations.withManagedMutationContext(() => (
       harness.topicsStub.tools.move(42, { cid: 9, uid: 9 })
     ));
@@ -255,7 +255,7 @@ test("installed topic purge wrappers allow managed wiki hard purge contexts", as
   await withStubs(harness.stubs, async (guards) => {
     guards.install();
 
-    const wikiTopicMutations = require("../lib/wiki-topic-mutations");
+    const wikiTopicMutations = require("../lib/pages/wiki-topic-mutations");
     await wikiTopicMutations.withManagedMutationContext(async () => {
       await harness.topicsStub.tools.purge(42, 9);
       await harness.topicsStub.purgePostsAndTopic(42, 9);

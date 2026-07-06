@@ -536,7 +536,7 @@
   left: auto;
   margin: 0;
   position: fixed;
-  right: max(4rem, env(safe-area-inset-right, 0px));
+  right: max(1rem, env(safe-area-inset-right, 0px));
   top: auto;
   transform: none;
   transition:
@@ -959,7 +959,7 @@ body.wiki-history-fullscreen-open {
 }
 
 .wiki-article-drawers {
-  --wiki-article-drawer-side-gutter: 3.28rem;
+  --wiki-article-drawer-side-gutter: 0rem;
   --wiki-article-drawer-peek: 2.75rem;
   --wiki-article-drawer-width: min(21rem, calc(50vw - var(--wiki-article-drawer-side-gutter) - 0.75rem));
   --wiki-article-drawer-top: max(6.25rem, env(safe-area-inset-top, 0px));

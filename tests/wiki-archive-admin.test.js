@@ -7,8 +7,9 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
+const { installNodebbStubs, restoreNodebbStubs } = require("./helpers/nodebb-stub");
+
 const root = path.resolve(__dirname, "..");
-const originalMainRequire = require.main.require.bind(require.main);
 
 function clearProjectModule(relativePath) {
   const modulePath = path.join(root, relativePath);
@@ -16,15 +17,12 @@ function clearProjectModule(relativePath) {
 }
 
 async function withNodebbStubs(stubs, fn) {
-  const previousMainRequire = require.main.require;
-  require.main.require = function requireNodebbStub(id) {
-    return Object.prototype.hasOwnProperty.call(stubs, id) ? stubs[id] : originalMainRequire(id);
-  };
+  installNodebbStubs(stubs);
 
   try {
     return await fn();
   } finally {
-    require.main.require = previousMainRequire;
+    restoreNodebbStubs();
   }
 }
 
@@ -144,7 +142,7 @@ test("registers all archive admin API routes with ensureLoggedIn middleware", as
 
 test("archive admin routes return 403 for non-administrators", async () => {
   const privateDir = await fsp.mkdtemp(path.join(os.tmpdir(), "wg-archive-admin-auth-"));
-  const archiveJobs = require("../lib/wiki-archive-jobs");
+  const archiveJobs = require("../lib/archive/wiki-archive-jobs");
   const jobs = archiveJobs.createArchiveJobService({ privateDir, idFactory: (type) => `job_${type}_authaaaa` });
   const controller = await createController({ jobs });
 
@@ -167,7 +165,7 @@ test("archive admin routes return 403 for non-administrators", async () => {
 
 test("export job creates a completed private zip artifact and download hides private paths", async () => {
   const privateDir = await fsp.mkdtemp(path.join(os.tmpdir(), "wg-archive-admin-export-"));
-  const archiveJobs = require("../lib/wiki-archive-jobs");
+  const archiveJobs = require("../lib/archive/wiki-archive-jobs");
   const jobs = archiveJobs.createArchiveJobService({
     privateDir,
     idFactory: () => "job_export_exportaaaa"
@@ -216,7 +214,7 @@ test("export job creates a completed private zip artifact and download hides pri
 
 test("job status returns sanitized export and import snapshots", async () => {
   const privateDir = await fsp.mkdtemp(path.join(os.tmpdir(), "wg-archive-admin-status-"));
-  const archiveJobs = require("../lib/wiki-archive-jobs");
+  const archiveJobs = require("../lib/archive/wiki-archive-jobs");
   const jobs = archiveJobs.createArchiveJobService({
     privateDir,
     idFactory: (type) => `job_${type}_statusaaa`
@@ -243,7 +241,7 @@ test("job status returns sanitized export and import snapshots", async () => {
 
 test("import preview reads uploaded archive zip and stores serializable private payload", async () => {
   const privateDir = await fsp.mkdtemp(path.join(os.tmpdir(), "wg-archive-admin-import-"));
-  const archiveJobs = require("../lib/wiki-archive-jobs");
+  const archiveJobs = require("../lib/archive/wiki-archive-jobs");
   const jobs = archiveJobs.createArchiveJobService({
     privateDir,
     idFactory: () => "job_import_importaaaa"
@@ -330,7 +328,7 @@ test("import preview accepts multer disk files and rejects over-limit uploads be
   const uploadDir = await fsp.mkdtemp(path.join(os.tmpdir(), "wg-archive-admin-disk-upload-"));
   const archivePath = path.join(uploadDir, "archive.zip");
   await fsp.writeFile(archivePath, "zip-on-disk");
-  const archiveJobs = require("../lib/wiki-archive-jobs");
+  const archiveJobs = require("../lib/archive/wiki-archive-jobs");
   const jobs = archiveJobs.createArchiveJobService({
     privateDir,
     idFactory: () => "job_import_diskfile"
@@ -405,7 +403,7 @@ test("import preview accepts multer disk files and rejects over-limit uploads be
 
 test("import preview passes archive asset hashes to destination collection", async () => {
   const privateDir = await fsp.mkdtemp(path.join(os.tmpdir(), "wg-archive-admin-asset-filter-"));
-  const archiveJobs = require("../lib/wiki-archive-jobs");
+  const archiveJobs = require("../lib/archive/wiki-archive-jobs");
   const jobs = archiveJobs.createArchiveJobService({
     privateDir,
     idFactory: () => "job_import_filterhash"
@@ -451,7 +449,7 @@ test("import preview passes archive asset hashes to destination collection", asy
 
 test("apply recollects archive asset hashes and seeds default apply services with destination assets", async () => {
   const privateDir = await fsp.mkdtemp(path.join(os.tmpdir(), "wg-archive-admin-apply-assets-"));
-  const archiveJobs = require("../lib/wiki-archive-jobs");
+  const archiveJobs = require("../lib/archive/wiki-archive-jobs");
   const jobs = archiveJobs.createArchiveJobService({
     privateDir,
     idFactory: (type) => type === "import" ? `job_import_${jobs.nextId.shift()}` : "job_export_unused"
@@ -517,7 +515,7 @@ test("apply recollects archive asset hashes and seeds default apply services wit
 
 test("apply refuses missing approval and blocked previews, then calls apply service when approved", async () => {
   const privateDir = await fsp.mkdtemp(path.join(os.tmpdir(), "wg-archive-admin-apply-"));
-  const archiveJobs = require("../lib/wiki-archive-jobs");
+  const archiveJobs = require("../lib/archive/wiki-archive-jobs");
   const jobs = archiveJobs.createArchiveJobService({
     privateDir,
     idFactory: (type) => type === "import" ? `job_import_${jobs.nextId.shift()}` : "job_export_unused"
@@ -621,7 +619,7 @@ test("apply refuses missing approval and blocked previews, then calls apply serv
 
 test("default runtime apply services let approved page and asset imports reach apply", async () => {
   const privateDir = await fsp.mkdtemp(path.join(os.tmpdir(), "wg-archive-admin-default-apply-"));
-  const archiveJobs = require("../lib/wiki-archive-jobs");
+  const archiveJobs = require("../lib/archive/wiki-archive-jobs");
   const jobs = archiveJobs.createArchiveJobService({
     privateDir,
     idFactory: (type) => type === "import" ? `job_import_${jobs.nextId.shift()}` : "job_export_unused"
@@ -662,9 +660,9 @@ test("default runtime apply services let approved page and asset imports reach a
   });
 
   await withNodebbStubs(stubs, async () => {
-    clearProjectModule("lib/wiki-archive-runtime.js");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
     clearProjectModule("lib/controllers/wiki-archive-admin.js");
-    const runtime = require("../lib/wiki-archive-runtime");
+    const runtime = require("../lib/archive/wiki-archive-runtime");
     const controller = await createController({
       jobs,
       archiveZip: {
@@ -725,7 +723,7 @@ test("import preview sees default runtime destination upload assets", async () =
   const uploadPath = await fsp.mkdtemp(path.join(os.tmpdir(), "wg-archive-admin-upload-assets-"));
   await fsp.mkdir(path.join(uploadPath, "files"), { recursive: true });
   await fsp.writeFile(path.join(uploadPath, "files", "gond.png"), "asset-bytes");
-  const archiveJobs = require("../lib/wiki-archive-jobs");
+  const archiveJobs = require("../lib/archive/wiki-archive-jobs");
   const jobs = archiveJobs.createArchiveJobService({
     privateDir,
     idFactory: () => "job_import_assetpreview"
@@ -775,10 +773,10 @@ test("import preview sees default runtime destination upload assets", async () =
   });
 
   await withNodebbStubs(stubs, async () => {
-    clearProjectModule("lib/wiki-archive-runtime.js");
+    clearProjectModule("lib/archive/wiki-archive-runtime.js");
     clearProjectModule("lib/controllers/wiki-archive-admin.js");
-    clearProjectModule("lib/wiki-path-migration.js");
-    clearProjectModule("lib/wiki-tree-index.js");
+    clearProjectModule("lib/tree/wiki-canonical-diagnostics.js");
+    clearProjectModule("lib/tree/wiki-tree-index.js");
     const controller = await createController({
       jobs,
       archiveZip: {

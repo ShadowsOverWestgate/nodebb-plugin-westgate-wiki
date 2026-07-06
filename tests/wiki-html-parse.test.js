@@ -4,39 +4,11 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const originalMainRequire = require.main.require.bind(require.main);
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    nconf: {
-      get: () => ""
-    },
-    "./src/categories": {
-      getChildrenCids: async () => []
-    },
-    "./src/meta": {
-      settings: {
-        get: async () => ({}),
-        setOnEmpty: async () => {},
-        set: async () => {}
-      }
-    },
-    "./src/privileges": {
-      categories: {
-        get: async () => ({ read: true, "topics:read": true })
-      }
-    },
-    "./src/topics": {},
-    "./src/slugify": (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
-  };
+installNodebbStubs();
 
-  if (!stubs[id]) {
-    return originalMainRequire(id);
-  }
-  return stubs[id];
-};
-
-const wikiHtmlParse = require("../lib/wiki-html-parse");
+const wikiHtmlParse = require("../lib/content/wiki-html-parse");
 
 function test(name, fn) {
   try {

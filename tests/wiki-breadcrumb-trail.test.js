@@ -2,7 +2,7 @@
 
 const assert = require("assert");
 
-const wikiBreadcrumbTrail = require("../lib/wiki-breadcrumb-trail");
+const wikiBreadcrumbTrail = require("../lib/tree/wiki-breadcrumb-trail");
 
 function texts(trail) {
   return trail.wikiBreadcrumbs.map((crumb) => crumb.text);

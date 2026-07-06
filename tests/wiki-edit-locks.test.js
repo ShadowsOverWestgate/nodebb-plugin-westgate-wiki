@@ -1,14 +1,13 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
 
 const state = {
   now: 100000,
   objects: new Map(),
   topics: new Map([[10, { tid: 10, cid: 1, mainPid: 100, title: "Locked Page" }]])
 };
-
-const originalMainRequire = require.main.require.bind(require.main);
 
 function getObject(key) {
   if (!state.objects.has(key)) {
@@ -17,49 +16,38 @@ function getObject(key) {
   return state.objects.get(key);
 }
 
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "./src/controllers/helpers": {
-      formatApiResponse: (status, res, payload) => {
-        res.statusCode = status;
-        res.payload = payload;
-        return payload;
-      }
+installNodebbStubs({
+  "./src/database": {
+    delete: async (key) => {
+      state.objects.delete(key);
     },
-    "./src/database": {
-      delete: async (key) => {
-        state.objects.delete(key);
-      },
-      deleteObject: async (key) => {
-        state.objects.delete(key);
-      },
-      getObject: async (key) => state.objects.get(key) || null,
-      setObject: async (key, value) => {
-        state.objects.set(key, { ...value });
-      },
-      setObjectField: async (key, field, value) => {
-        getObject(key)[field] = value;
-      }
+    deleteObject: async (key) => {
+      state.objects.delete(key);
     },
-    "./src/topics": {
-      getTopicField: async (tid, field) => {
-        const topic = state.topics.get(parseInt(tid, 10));
-        return topic ? topic[field] : null;
-      }
+    getObject: async (key) => state.objects.get(key) || null,
+    setObject: async (key, value) => {
+      state.objects.set(key, { ...value });
     },
-    "./src/user": {
-      getUserFields: async (uid) => ({
-        uid,
-        username: uid === 2 ? "Editor" : "Other",
-        displayname: uid === 2 ? "Editor" : "Other"
-      })
+    setObjectField: async (key, field, value) => {
+      getObject(key)[field] = value;
     }
-  };
+  },
+  "./src/topics": {
+    getTopicField: async (tid, field) => {
+      const topic = state.topics.get(parseInt(tid, 10));
+      return topic ? topic[field] : null;
+    }
+  },
+  "./src/user": {
+    getUserFields: async (uid) => ({
+      uid,
+      username: uid === 2 ? "Editor" : "Other",
+      displayname: uid === 2 ? "Editor" : "Other"
+    })
+  }
+});
 
-  return stubs[id] || originalMainRequire(id);
-};
-
-const wikiEditLocks = require("../lib/wiki-edit-locks");
+const wikiEditLocks = require("../lib/pages/wiki-edit-locks");
 
 wikiEditLocks.setNowProvider(() => state.now);
 wikiEditLocks.setTokenProvider(() => `token-${state.now}`);

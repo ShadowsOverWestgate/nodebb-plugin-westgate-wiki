@@ -2,6 +2,8 @@
 
 const assert = require("node:assert/strict");
 
+const { installNodebbStubs } = require("./helpers/nodebb-stub");
+
 const state = {
   settings: {
     categoryIds: "1",
@@ -13,34 +15,28 @@ const state = {
   childrenCalls: 0
 };
 
-const originalMainRequire = require.main.require.bind(require.main);
-
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "./src/categories": {
-      getChildrenCids: async (cid) => {
-        state.childrenCalls += 1;
-        return state.childrenByCid.get(parseInt(cid, 10)) || [];
-      }
-    },
-    "./src/meta": {
-      settings: {
-        get: async () => {
-          state.metaGetCalls += 1;
-          return { ...state.settings };
-        },
-        setOnEmpty: async () => {},
-        set: async (key, next) => {
-          state.settings = { ...next };
-        }
+installNodebbStubs({
+  "./src/categories": {
+    getChildrenCids: async (cid) => {
+      state.childrenCalls += 1;
+      return state.childrenByCid.get(parseInt(cid, 10)) || [];
+    }
+  },
+  "./src/meta": {
+    settings: {
+      get: async () => {
+        state.metaGetCalls += 1;
+        return { ...state.settings };
+      },
+      setOnEmpty: async () => {},
+      set: async (key, next) => {
+        state.settings = { ...next };
       }
     }
-  };
+  }
+});
 
-  return stubs[id] || originalMainRequire(id);
-};
-
-const config = require("../lib/config");
+const config = require("../lib/core/config");
 
 (async () => {
   const first = await config.getSettings();

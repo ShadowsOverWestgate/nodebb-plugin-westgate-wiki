@@ -16,26 +16,13 @@ const state = {
   nextCid: 2
 };
 
-const originalMainRequire = require.main.require.bind(require.main);
+const { slugify, installNodebbStubs } = require("./helpers/nodebb-stub");
 
-function slugify(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-require.main.require = function requireNodebbStub(id) {
-  const stubs = {
-    "nconf": {
-      get: () => ""
-    },
-    "./src/controllers/api": {
-      loadConfig: async () => ({ relative_path: "", csrf_token: "csrf" })
-    },
-    "./src/categories": {
+installNodebbStubs({
+  "./src/controllers/api": {
+    loadConfig: async () => ({ relative_path: "", csrf_token: "csrf" })
+  },
+  "./src/categories": {
       create: async (payload) => {
         const cid = state.nextCid++;
         const row = {
@@ -59,9 +46,6 @@ require.main.require = function requireNodebbStub(id) {
       },
       notAllowed: () => {}
     },
-    "./src/database": {
-      getSortedSetRange: async () => []
-    },
     "./src/groups": {
       isMemberOfGroups: async () => []
     },
@@ -79,19 +63,12 @@ require.main.require = function requireNodebbStub(id) {
         get: async () => ({ read: true, "topics:read": true })
       }
     },
-    "./src/slugify": slugify,
-    "./src/topics": {
-      getTopicData: async () => null
-    },
     "./src/user": {
       isAdministrator: async () => true
     }
-  };
+});
 
-  return stubs[id] || originalMainRequire(id);
-};
-
-const wikiServicePath = require.resolve("../lib/wiki-service");
+const wikiServicePath = require.resolve("../lib/read/wiki-service");
 require.cache[wikiServicePath] = {
   id: wikiServicePath,
   filename: wikiServicePath,
