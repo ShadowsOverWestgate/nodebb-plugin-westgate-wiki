@@ -29,7 +29,7 @@
           </style>
           <!-- ENDIF article.hasArticleCss -->
           <div class="card-body wiki-article-custom-css-scope-{article.topic.tid}">
-            {article.mainPost.content}
+            {{txEscape(article.mainPost.content)}}
           </div>
         </article>
       </section>

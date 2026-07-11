@@ -67,7 +67,7 @@
             </style>
             <!-- ENDIF hasArticleCss -->
             <div class="card-body wiki-article-custom-css-scope-{topic.tid}">
-              {mainPost.content}
+              {{txEscape(mainPost.content)}}
             </div>
           </article>
           <!-- ELSE -->
