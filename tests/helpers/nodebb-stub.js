@@ -183,6 +183,7 @@ function buildDefaultStubs() {
     },
     "./src/user": {
       isAdministrator: async () => false,
+      isAdminOrGlobalMod: async () => false,
       getUserFields: async () => ({})
     },
     "./src/groups": {

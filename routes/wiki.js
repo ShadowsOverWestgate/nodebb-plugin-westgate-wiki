@@ -3,6 +3,7 @@
 const helpers = require.main.require("./src/controllers/helpers");
 const middleware = require.main.require("./src/middleware");
 const routeHelpers = require.main.require("./src/routes/helpers");
+const user = require.main.require("./src/user");
 const composeAssets = require("../lib/core/compose-assets");
 const composeController = require("../lib/controllers/compose");
 const wikiManageController = require("../lib/controllers/wiki-manage");
@@ -434,9 +435,12 @@ function register(params) {
 
       if (!settings.isConfigured) {
         const ctx = await getWikiFallbackContext(req.uid);
+        const showSetupNotices = await user.isAdminOrGlobalMod(req.uid);
         return res.render("wiki", {
           title: "Westgate Wiki",
           ...hubTrail,
+          showSetupNotices,
+          showWikiEmptyState: !showSetupNotices && !ctx.hasSections,
           setupRequired: true,
           homePageSetupRequired: false,
           homePageLoadError: false,
@@ -457,9 +461,14 @@ function register(params) {
           }
         }
         const canBootstrapHome = Number.isInteger(parseInt(bootstrapHomeCid, 10)) && parseInt(bootstrapHomeCid, 10) > 0;
+        const showSetupNotices = await user.isAdminOrGlobalMod(req.uid);
+        const showHomeSetupCard = canBootstrapHome || showSetupNotices;
         return res.render("wiki", {
           title: "Westgate Wiki",
           ...hubTrail,
+          showSetupNotices,
+          showHomeSetupCard,
+          showWikiEmptyState: !showHomeSetupCard && !ctx.hasSections,
           setupRequired: false,
           homePageSetupRequired: true,
           homePageLoadError: false,
@@ -487,9 +496,12 @@ function register(params) {
 
       const status = wikiPage.status;
       const ctx = await getWikiFallbackContext(req.uid);
+      const showSetupNotices = await user.isAdminOrGlobalMod(req.uid);
       return res.render("wiki", {
         title: "Westgate Wiki",
         ...hubTrail,
+        showSetupNotices,
+        showWikiEmptyState: !showSetupNotices && !ctx.hasSections,
         setupRequired: false,
         homePageSetupRequired: false,
         homePageLoadError: true,

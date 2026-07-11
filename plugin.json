@@ -16,7 +16,15 @@
     "public/wiki.css"
   ],
   "modules": {
-    "../admin/plugins/westgate-wiki.js": "./public/admin.js"
+    "../admin/plugins/westgate-wiki.js": "./public/admin.js",
+    "../client/wiki.js": "./public/forum-page-noop.js",
+    "../client/wiki-page.js": "./public/forum-page-noop.js",
+    "../client/wiki-section.js": "./public/forum-page-noop.js",
+    "../client/wiki-search.js": "./public/forum-page-noop.js",
+    "../client/wiki-compose.js": "./public/forum-page-noop.js",
+    "../client/wiki-manage.js": "./public/forum-page-noop.js",
+    "../client/wiki-namespace-create.js": "./public/forum-page-noop.js",
+    "../client/wiki-history.js": "./public/forum-page-noop.js"
   },
   "templates": "templates",
   "staticDirs": {

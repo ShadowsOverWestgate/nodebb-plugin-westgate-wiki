@@ -76,6 +76,7 @@
   </div>
   <!-- ELSE -->
 
+  <!-- IF showSetupNotices -->
   <!-- IF setupRequired -->
   <section class="wiki-status-card card mb-4">
     <div class="card-body">
@@ -87,8 +88,9 @@
     </div>
   </section>
   <!-- ENDIF setupRequired -->
+  <!-- ENDIF showSetupNotices -->
 
-  <!-- IF homePageSetupRequired -->
+  <!-- IF showHomeSetupCard -->
   <section class="wiki-status-card card mb-4">
     <div class="card-body">
       <h2>Set the Wiki Homepage</h2>
@@ -114,8 +116,9 @@
       <!-- ENDIF canBootstrapHome -->
     </div>
   </section>
-  <!-- ENDIF homePageSetupRequired -->
+  <!-- ENDIF showHomeSetupCard -->
 
+  <!-- IF showSetupNotices -->
   <!-- IF homePageLoadError -->
   <section class="wiki-status-card wiki-status-card-warning card mb-4">
     <div class="card-body">
@@ -144,6 +147,19 @@
     </div>
   </section>
   <!-- ENDIF hasInvalidCategoryIds -->
+  <!-- ENDIF showSetupNotices -->
+
+  <!-- IF showWikiEmptyState -->
+  <section class="wiki-status-card card mb-4">
+    <div class="card-body">
+      <h2>No Wiki Pages Yet</h2>
+      <p class="mb-0">
+        The Westgate wiki has no published pages yet. Check back soon, or return to the
+        <a href="{config.relative_path}/">forum</a> in the meantime.
+      </p>
+    </div>
+  </section>
+  <!-- ENDIF showWikiEmptyState -->
 
   <!-- IF showNamespaceIndex -->
   <!-- IF hasSections -->
@@ -211,6 +227,7 @@
   <section class="wiki-status-card card">
     <div class="card-body">
       <h2>No Wiki Pages Yet</h2>
+      <!-- IF showSetupNotices -->
       <p>
         {configuredCategoryCount} wiki categories are configured, but there are no visible topics to list right now.
       </p>
@@ -219,6 +236,12 @@
         Descendant namespace inheritance is enabled, so the wiki currently spans {effectiveCategoryCount} categories including child namespaces.
       </p>
       <!-- ENDIF includeChildCategories -->
+      <!-- ELSE -->
+      <p class="mb-0">
+        The Westgate wiki has no published pages yet. Check back soon, or return to the
+        <a href="{config.relative_path}/">forum</a> in the meantime.
+      </p>
+      <!-- ENDIF showSetupNotices -->
     </div>
   </section>
   <!-- ENDIF hasSections -->
