@@ -318,9 +318,15 @@
     if (!drawersGlobalBound) {
       drawersGlobalBound = true;
       document.addEventListener("keydown", function onDrawerKeydown(ev) {
-        if (ev.key === "Escape") {
-          closeArticleDrawers();
+        if (ev.key !== "Escape") {
+          return;
         }
+        if (isSmallDrawerViewport()) {
+          closeArticleDrawers();
+          return;
+        }
+        // Desktop: the TOC is a docked in-flow panel, not a drawer; only close nav
+        setDrawerOpen(getDrawer("nav"), false);
       });
       window.addEventListener("resize", syncBackdrop);
     }

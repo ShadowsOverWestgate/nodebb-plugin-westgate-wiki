@@ -100,9 +100,7 @@
   flex-wrap: wrap;
   font-size: 0.875rem;
   gap: 0.35rem 0.5rem;
-  letter-spacing: 0.06em;
   margin-bottom: 0.75rem;
-  text-transform: uppercase;
 }
 
 .wiki-search-chrome {
@@ -452,7 +450,7 @@
 .wiki-card-link {
   align-self: flex-start;
   color: var(--wiki-chrome-link-color, var(--bs-link-color, inherit));
-  font-size: 0.95rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   text-decoration: none;
 }
@@ -472,7 +470,7 @@
   color: var(--wiki-chrome-muted-color, var(--bs-secondary-color, inherit));
   display: flex;
   flex-wrap: wrap;
-  font-size: 0.9rem;
+  font-size: 0.9375rem;
   gap: 0.5rem 0.75rem;
   justify-content: flex-end;
   margin: 0;
@@ -549,7 +547,7 @@
     opacity 0.3s ease,
     transform 0.3s ease,
     visibility 0.3s ease;
-  z-index: 1035;
+  z-index: var(--wiki-fab-dock-layer, 1035);
 }
 
 @media (max-width: 991px) {
@@ -710,7 +708,7 @@
 .wiki-history-revision__badge {
   border: 1px solid currentColor;
   border-radius: 999px;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 1;
   padding: 0.15rem 0.35rem;
 }
@@ -871,7 +869,7 @@
 .wiki-history-fullscreen {
   inset: 0;
   position: fixed;
-  z-index: 1080;
+  z-index: var(--wiki-history-fullscreen-layer, 1080);
 }
 
 .wiki-history-fullscreen__backdrop {
@@ -1057,7 +1055,7 @@ body.wiki-history-fullscreen-open {
 
 .wiki-article-drawer__tab-label {
   display: inline-block;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.1;
@@ -1077,9 +1075,10 @@ body.wiki-history-fullscreen-open {
   outline: none;
 }
 
-.wiki-article-drawer__tab:focus,
-.wiki-article-drawer__close:focus {
-  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--wiki-chrome-link-color, var(--bs-link-color, #0d6efd)) 28%, transparent);
+.wiki-article-drawer__tab:focus-visible,
+.wiki-article-drawer__close:focus-visible {
+  /* ≥3:1 non-text contrast for the focus indicator (WCAG 2.2); 28% alpha washed out on dark themes */
+  box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--wiki-chrome-link-color, var(--bs-link-color, #0d6efd)) 65%, transparent);
 }
 
 .wiki-article-drawer__panel {
@@ -1166,10 +1165,50 @@ body.wiki-history-fullscreen-open {
     display: none;
   }
 
+  /* Docked TOC: when the article has a Contents list, give it the right margin
+     as a persistent in-flow column instead of an overlay drawer. The PAGES
+     drawer keeps its fixed/slide behavior (fixed positioning escapes the grid). */
+  .wiki-with-fab:has(.wiki-article-drawer--toc:not([hidden])) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--wiki-chrome-toc-width, 16rem);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .wiki-with-fab:has(.wiki-article-drawer--toc:not([hidden])) > .wiki-content-layout {
+    grid-column: 1;
+  }
+
+  .wiki-with-fab:has(.wiki-article-drawer--toc:not([hidden])) > .wiki-article-drawers {
+    grid-column: 2;
+    min-width: 0;
+    pointer-events: auto;
+  }
+
+  .wiki-article-drawer--toc {
+    bottom: auto;
+    max-height: calc(100vh - var(--wiki-chrome-toc-top, 5rem) - 1.5rem);
+    pointer-events: auto;
+    position: sticky;
+    top: var(--wiki-chrome-toc-top, 5rem);
+    transform: none;
+    transition: none;
+    width: auto;
+    z-index: auto;
+  }
+
+  .wiki-article-drawer--toc .wiki-article-drawer__tab {
+    display: none;
+  }
+
+  .wiki-article-drawer--toc .wiki-article-drawer__panel {
+    box-shadow: none; /* docked panel doesn't float; floating-only shadow rule */
+    height: auto;
+    max-height: inherit;
+  }
+
   .wiki-article-drawer--nav:hover,
-  .wiki-article-drawer--nav:focus-within,
-  .wiki-article-drawer--toc:hover,
-  .wiki-article-drawer--toc:focus-within {
+  .wiki-article-drawer--nav:focus-within {
     transform: translateX(0);
   }
 
@@ -1236,7 +1275,7 @@ body.wiki-history-fullscreen-open {
     border-radius: 0;
     bottom: var(--wiki-article-drawer-trigger-bottom);
     flex-direction: row;
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     gap: 0.4rem;
     min-height: 2.65rem;
     padding: 0.55rem 0.7rem;
@@ -1756,7 +1795,7 @@ body.wiki-history-fullscreen-open {
 .wiki-topic-parent-path {
   color: var(--wiki-chrome-muted-color, var(--bs-secondary-color, inherit));
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   opacity: 0.92;
 }
 
@@ -1811,13 +1850,13 @@ body.wiki-history-fullscreen-open {
 
 .wiki-namespace-index-title {
   color: var(--wiki-chrome-heading-color, var(--bs-heading-color, var(--bs-emphasis-color, inherit)));
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   margin-bottom: 0.35rem;
 }
 
 .wiki-namespace-index-lead {
   color: var(--wiki-chrome-muted-color, var(--bs-secondary-color, inherit));
-  font-size: 0.95rem;
+  font-size: 0.9375rem;
   margin-bottom: 0;
 }
 
@@ -1920,7 +1959,7 @@ body.wiki-history-fullscreen-open {
 .wiki-index-letter {
   border-bottom: 1px solid var(--wiki-chrome-surface-border, var(--bs-border-color, #dee2e6));
   color: var(--wiki-chrome-heading-color, var(--bs-heading-color, var(--bs-emphasis-color, inherit)));
-  font-size: 1.35rem;
+  font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   line-height: 1.2;
@@ -1986,7 +2025,7 @@ body.wiki-history-fullscreen-open {
   border: 1px solid var(--wiki-chrome-surface-border, var(--bs-border-color, #dee2e6));
   border-radius: var(--wiki-chrome-radius, var(--bs-border-radius, 0.25rem));
   color: var(--wiki-chrome-muted-color, var(--bs-secondary-color, inherit));
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   line-height: 1;
@@ -2027,7 +2066,7 @@ body.wiki-history-fullscreen-open {
 
 .wiki-topic-card h2,
 .wiki-subsection-card h3 {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
 }
 
 .wiki-topic-card h2 a {
@@ -2146,7 +2185,7 @@ a[href*="/wiki/"][href*="redlink=1"] {
 .wiki-compose-error-dialog-shell {
   position: fixed;
   inset: 0;
-  z-index: 1060;
+  z-index: var(--wiki-compose-error-dialog-layer, 1060);
   display: grid;
   place-items: center;
   padding: 1rem;
@@ -2168,7 +2207,7 @@ a[href*="/wiki/"][href*="redlink=1"] {
 .wiki-compose-error-dialog__title {
   margin: 0 0 0.75rem;
   color: var(--wiki-chrome-heading-color, var(--bs-emphasis-color, inherit));
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 650;
 }
 

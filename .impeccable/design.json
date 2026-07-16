@@ -1,0 +1,342 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-16T21:07:19.126988+00:00",
+  "title": "Design System: Westgate Wiki Plugin",
+  "extensions": {
+    "colorMeta": {
+      "scrim": {
+        "role": "neutral",
+        "displayName": "Overlay Scrim",
+        "canonical": "rgba(15, 23, 42, 0.5)",
+        "tonalRamp": [
+          "#0f172a",
+          "#1e293b",
+          "#334155",
+          "#475569",
+          "#64748b",
+          "#94a3b8",
+          "#cbd5e1",
+          "#f1f5f9"
+        ]
+      },
+      "scrim-strong": {
+        "role": "neutral",
+        "displayName": "Strong Scrim",
+        "canonical": "rgba(15, 10, 24, 0.74)",
+        "tonalRamp": [
+          "#0f0a18",
+          "#1d1430",
+          "#2c1f47",
+          "#3c2b5f",
+          "#4d3877",
+          "#6f5a9b",
+          "#9c8ac0",
+          "#d3cbe6"
+        ]
+      },
+      "editor-night": {
+        "role": "neutral",
+        "displayName": "Editor Night",
+        "canonical": "#111827",
+        "tonalRamp": [
+          "#111827",
+          "#1f2937",
+          "#374151",
+          "#4b5563",
+          "#6b7280",
+          "#9ca3af",
+          "#d1d5db",
+          "#f3f4f6"
+        ]
+      },
+      "editor-ink": {
+        "role": "neutral",
+        "displayName": "Editor Ink",
+        "canonical": "#e5e7eb",
+        "tonalRamp": [
+          "#1f2937",
+          "#374151",
+          "#4b5563",
+          "#6b7280",
+          "#9ca3af",
+          "#d1d5db",
+          "#e5e7eb",
+          "#f9fafb"
+        ]
+      },
+      "editor-ash": {
+        "role": "neutral",
+        "displayName": "Editor Ash",
+        "canonical": "#94a3b8",
+        "tonalRamp": [
+          "#1e293b",
+          "#334155",
+          "#475569",
+          "#64748b",
+          "#94a3b8",
+          "#b8c3d3",
+          "#d8dfe8",
+          "#f0f3f7"
+        ]
+      },
+      "editor-rose": {
+        "role": "tertiary",
+        "displayName": "Editor Rose",
+        "canonical": "#f472b6",
+        "tonalRamp": [
+          "#500724",
+          "#831843",
+          "#9d174d",
+          "#be185d",
+          "#db2777",
+          "#ec4899",
+          "#f472b6",
+          "#fbcfe8"
+        ]
+      },
+      "callout-slate": {
+        "role": "neutral",
+        "displayName": "Callout Slate",
+        "canonical": "#443b49",
+        "tonalRamp": [
+          "#1a161d",
+          "#2c2531",
+          "#443b49",
+          "#5c5162",
+          "#766f7d",
+          "#948d9a",
+          "#b5afba",
+          "#dbd7de"
+        ]
+      },
+      "callout-parchment": {
+        "role": "neutral",
+        "displayName": "Callout Parchment",
+        "canonical": "#ece7df",
+        "tonalRamp": [
+          "#3d382f",
+          "#57503f",
+          "#736a56",
+          "#8f8570",
+          "#aba28e",
+          "#c8c0ae",
+          "#ece7df",
+          "#f8f6f1"
+        ]
+      },
+      "code-keyword-gold": {
+        "role": "tertiary",
+        "displayName": "Keyword Gold",
+        "canonical": "#d9b76f",
+        "tonalRamp": [
+          "#4a3a12",
+          "#6b551e",
+          "#8c702c",
+          "#ad8c3e",
+          "#c4a154",
+          "#d9b76f",
+          "#e7cf9a",
+          "#f4e8cb"
+        ]
+      },
+      "code-string-moss": {
+        "role": "tertiary",
+        "displayName": "String Moss",
+        "canonical": "#9fca92",
+        "tonalRamp": [
+          "#22371c",
+          "#35522c",
+          "#4a6e3e",
+          "#618b52",
+          "#7ba869",
+          "#9fca92",
+          "#c0ddb7",
+          "#e2f0dd"
+        ]
+      },
+      "code-comment-dusk": {
+        "role": "tertiary",
+        "displayName": "Comment Dusk",
+        "canonical": "#8f8298",
+        "tonalRamp": [
+          "#2a2430",
+          "#3f3748",
+          "#554b60",
+          "#6c6079",
+          "#8f8298",
+          "#a99ec0",
+          "#c8c0d4",
+          "#e6e2ec"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Body",
+        "purpose": "Article prose; 1rem on 1.68 leading is the reading-room signature. Family inherited from the host theme."
+      },
+      "headline": {
+        "displayName": "Article H1",
+        "purpose": "Page titles; overridable via --wiki-prose-h1-size."
+      },
+      "title": {
+        "displayName": "Article H2",
+        "purpose": "Section headings; h2/h3/h4 step 1.55/1.3/1.15rem."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Inline code and pre blocks on the dark code well; family inherited from --bs-font-monospace."
+      },
+      "compact": {
+        "displayName": "Compact",
+        "purpose": "Dense UI text: TOC links, card links, section stats, dialog paths (0.9375rem)."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Metadata rows, breadcrumbs, leads, captions, footnotes (0.875rem)."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Secondary metadata, jump links, disclosure summaries, FAB labels (0.8125rem)."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Badges and drawer-tab labels (0.75rem); the only tier that may pair 0.04-0.06em tracking with uppercase, plugin-owned labels only."
+      },
+      "subtitle": {
+        "displayName": "Subtitle",
+        "purpose": "Chrome headings on the h3 step (1.3rem): index titles, letter headers, card headings, dialog titles."
+      },
+      "subheading": {
+        "displayName": "Subheading",
+        "purpose": "Chrome headings on the h4 step (1.15rem): infobox titles, index subsection titles."
+      },
+      "ornament": {
+        "displayName": "Ornament",
+        "purpose": "Decorative poetry-quote glyph (2.4rem, --wiki-prose-quote-ornament-font-family, Georgia serif fallback). Never for text."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating",
+        "value": "var(--bs-box-shadow)",
+        "purpose": "Only for elements that overlap content: footnote popover, drawers, FAB dock, dialogs. Surfaces at rest are flat."
+      }
+    ],
+    "motion": [
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce)",
+        "purpose": "Every transition ships a reduced alternative; WCAG 2.2 AA commitment."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "bootstrap",
+        "value": "inherited",
+        "purpose": "Bootstrap 5 grid breakpoints; the plugin adds no scale of its own."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Wiki Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat bordered surface for directory, sidebar, and manage panels.",
+      "html": "<div class=\"ds-wiki-panel\"><h3>Recent changes</h3><p>Flat surface, 1px border, no resting shadow.</p></div>",
+      "css": ".ds-wiki-panel { background: var(--wiki-chrome-surface-bg, var(--bs-card-bg, #fff)); border: 1px solid var(--wiki-chrome-surface-border, var(--bs-card-border-color, rgba(0,0,0,0.175))); border-radius: var(--wiki-chrome-radius, 0.375rem); padding: 1rem 1.25rem; color: var(--wiki-chrome-text-color, var(--bs-body-color, #212529)); } .ds-wiki-panel h3 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--wiki-chrome-heading-color, var(--bs-heading-color, inherit)); } .ds-wiki-panel p { margin: 0; }"
+    },
+    {
+      "name": "Redlink",
+      "kind": "custom",
+      "refersTo": "redlink",
+      "description": "Link to a missing wiki page; the classic wiki affordance, distinct from normal links on any theme.",
+      "html": "<p class=\"ds-redlink-demo\">See <a class=\"ds-redlink\" href=\"#\">Uncharted District</a> for details.</p>",
+      "css": ".ds-redlink-demo { color: var(--bs-body-color, #212529); } .ds-redlink { color: var(--wiki-redlink-color, #b04a4e); text-decoration: var(--wiki-redlink-decoration, underline dashed); text-underline-offset: var(--wiki-redlink-underline-offset, 3px); } .ds-redlink:hover { color: var(--wiki-redlink-action-color, #d06a6e); } .ds-redlink:focus-visible { outline: 2px solid var(--bs-focus-ring-color, rgba(13,110,253,0.25)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Callout",
+      "kind": "custom",
+      "refersTo": "callout",
+      "description": "Article callout panel: full border and icon well, never a side stripe.",
+      "html": "<aside class=\"ds-callout\"><span class=\"ds-callout-icon\" aria-hidden=\"true\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"13\"/><circle cx=\"12\" cy=\"16.5\" r=\"0.5\"/></svg></span><div>Lore note: the plugin ships this slate default; themes retint via --wiki-callout-*.</div></aside>",
+      "css": ".ds-callout { display: flex; gap: 0.75rem; align-items: flex-start; background: var(--wiki-callout-bg, #443b49); border: 1px solid var(--wiki-callout-border, #766f7d); border-radius: 0.375rem; padding: 0.85rem 1rem; color: var(--wiki-callout-text, #ece7df); } .ds-callout-icon { display: inline-flex; padding: 0.35rem; border-radius: 0.25rem; background: var(--wiki-callout-icon-bg, #332c38); color: var(--wiki-callout-text, #ece7df); flex: none; }"
+    },
+    {
+      "name": "Footnote Popover",
+      "kind": "custom",
+      "refersTo": "footnote-popover",
+      "description": "Floating footnote preview; one of the few shadowed elements.",
+      "html": "<div class=\"ds-footnote-pop\"><sup>3</sup> The scrim tokens were unified in the 2026 audit.</div>",
+      "css": ".ds-footnote-pop { background: var(--wiki-prose-footnote-popover-bg, var(--bs-body-bg, #fff)); border: 1px solid var(--wiki-prose-footnote-popover-border, var(--bs-border-color, #dee2e6)); border-radius: 0.375rem; box-shadow: var(--wiki-prose-footnote-popover-shadow, 0 0.5rem 1rem rgba(0,0,0,0.15)); padding: 0.6rem 0.8rem; max-width: 22rem; font-size: 0.9rem; color: var(--bs-body-color, #212529); } .ds-footnote-pop sup { color: var(--wiki-prose-footnote-marker-color, var(--bs-secondary-color, #6c757d)); margin-right: 0.3rem; }"
+    },
+    {
+      "name": "Code Well",
+      "kind": "custom",
+      "refersTo": "code-well",
+      "description": "Dark syntax-highlighted pre block; self-contained on any theme.",
+      "html": "<pre class=\"ds-code-well\"><code><span class=\"ds-tok-kw\">function</span> <span class=\"ds-tok-fn\">resolvePath</span>(<span class=\"ds-tok-var\">segments</span>) {\n  <span class=\"ds-tok-cm\">// canonical title path</span>\n  <span class=\"ds-tok-kw\">return</span> <span class=\"ds-tok-str\">\"/wiki/\"</span> + segments.join(<span class=\"ds-tok-str\">\"/\"</span>);\n}</code></pre>",
+      "css": ".ds-code-well { background: #201c26; color: #ddd6cb; border: 1px solid rgba(255,255,255,0.08); border-radius: 0.375rem; padding: 0.9rem 1.1rem; font-family: ui-monospace, monospace; font-size: 0.88rem; line-height: 1.55; overflow-x: auto; } .ds-tok-kw { color: var(--wiki-code-token-keyword, #d9b76f); } .ds-tok-fn { color: var(--wiki-code-token-function, #8fb7c9); } .ds-tok-var { color: var(--wiki-code-token-variable, #c9b8dc); } .ds-tok-cm { color: var(--wiki-code-token-comment, #8f8298); font-style: italic; } .ds-tok-str { color: var(--wiki-code-token-string, #9fca92); }"
+    },
+    {
+      "name": "CSS Source Editor",
+      "kind": "input",
+      "refersTo": "editor",
+      "description": "The one custom input: a dark mono editing surface, overridable via --wiki-chrome-editor-*.",
+      "html": "<textarea class=\"ds-css-editor\" rows=\"4\" spellcheck=\"false\">.wiki-infobox {\n  border-color: var(--wiki-chrome-surface-border);\n}</textarea>",
+      "css": ".ds-css-editor { display: block; width: 100%; background: var(--wiki-chrome-editor-bg, #111827); color: var(--wiki-chrome-editor-fg, #e5e7eb); caret-color: var(--wiki-chrome-editor-caret, #f9fafb); border: 1px solid var(--wiki-chrome-editor-border, #374151); border-radius: 0.375rem; padding: 0.75rem 0.9rem; font-family: ui-monospace, monospace; font-size: 0.88rem; line-height: 1.6; resize: vertical; } .ds-css-editor::selection { background: var(--wiki-chrome-editor-selection, rgba(148,163,184,0.35)); } .ds-css-editor:focus-visible { outline: 2px solid var(--wiki-chrome-editor-accent, #f472b6); outline-offset: 1px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Unfurnished Library",
+    "overview": "Sound structure, good light, empty walls: a reading room built to be furnished by whichever theme moves in. The plugin owns layout, hierarchy, and reading rhythm; it deliberately owns almost no color. Every visual decision routes through a three-tier fallback \u2014 var(--wiki-*, var(--bs-*, literal)) \u2014 so the same markup is complete on stock Bootstrap 5, on NodeBB Harmony, and fully re-skinned under nodebb-theme-westgate. The plugin must never reference a theme; themes opt in by setting tokens.",
+    "keyCharacteristics": [
+      "Quiet and structural: nothing decorative; every element earns its border.",
+      "~100-token override contract in three families: --wiki-chrome-* (shell), --wiki-prose-* (article body), --wiki-redlink-* (missing-page links).",
+      "Flat surfaces; shadows only on things that literally float.",
+      "Reading-first: 1rem/1.68 prose, restrained heading scale, TOC and links tuned for lookup speed."
+    ],
+    "rules": [
+      {
+        "name": "The Three-Tier Rule",
+        "body": "Every color in plugin CSS is written var(--wiki-*, var(--bs-*, literal)). A bare literal color outside the owned dark surfaces is a defect. A reference to any theme-specific variable (e.g. --wg-*) is forbidden.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tenant's Rule",
+        "body": "The plugin never sets a token a theme is meant to own; themes never need to touch plugin selectors \u2014 tokens only.",
+        "section": "colors"
+      },
+      {
+        "name": "The Author's Casing Rule",
+        "body": "Headings, TOC labels, and titles render exactly as written. No JS or CSS recasing, ever.",
+        "section": "typography"
+      },
+      {
+        "name": "The Floating-Only Rule",
+        "body": "If it doesn't overlap other content, it doesn't get a shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Four-Tier Chrome Rule",
+        "body": "UI chrome text uses exactly four sub-body sizes - 0.9375 / 0.875 / 0.8125 / 0.75rem. A font-size between or below these steps is drift, not nuance.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do write every color as var(--wiki-*, var(--bs-*, literal)) \u2014 The Three-Tier Rule.",
+      "Do add a --wiki-chrome-* / --wiki-prose-* token whenever a theme could plausibly want to restyle a new element; ship it with a valid Bootstrap or literal default.",
+      "Do keep body prose at 1rem/1.68 and headings on the documented scale.",
+      "Do meet WCAG 2.2 AA: \u22654.5:1 body contrast, keyboard-operable drawers/dialogs/editor, prefers-reduced-motion alternatives."
+    ],
+    "donts": [
+      "Don't reference theme variables (--wg-* or any theme's tokens) or theme class names in plugin CSS \u2014 the plugin must stay theme-independent.",
+      "Don't let wiki pages read as \"a generic forum topic view\": no post bylines, reply affordances, or thread chrome inside the article surface.",
+      "Don't build \"heavy docs-site chrome\": no persistent multi-rail app shell, breadcrumb ribbons, or toolbars everywhere.",
+      "Don't add \"Fandom/wikia clutter\": no ad-shaped modules, badge noise, or cramped content wells.",
+      "Don't recase headings or TOC labels; author intent survives.",
+      "Don't put resting shadows on panels, or side-stripe border-left accents on callouts and alerts."
+    ]
+  }
+}

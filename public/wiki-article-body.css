@@ -8,7 +8,7 @@
  *
  *   Prose (read + editor content):
  *   --wiki-prose-font-family, --wiki-prose-heading-font-family
- *   --wiki-prose-font-size, --wiki-prose-line-height
+ *   --wiki-prose-font-size, --wiki-prose-line-height, --wiki-prose-measure
  *   --wiki-prose-color, --wiki-prose-heading-color
  *   --wiki-prose-heading-font-weight, --wiki-prose-heading-bold-font-weight, --wiki-prose-heading-text-shadow
  *   --wiki-prose-link-color, --wiki-prose-link-hover-color
@@ -26,6 +26,13 @@
  *   --wiki-prose-image-radius, --wiki-prose-image-shadow
  *   --wiki-prose-media-iframe-border
  *   --wiki-prose-raw-embed-bg, --wiki-prose-raw-embed-border, --wiki-prose-raw-embed-color
+ *
+ *   Callouts (per-variant; <variant> = note | success | warning | danger):
+ *   --wiki-callout-<variant>-bg, --wiki-callout-<variant>-border, --wiki-callout-<variant>-rail
+ *   --wiki-callout-<variant>-icon-bg, --wiki-callout-<variant>-icon, --wiki-callout-<variant>-text
+ *
+ *   Media cells (dark gilded/well variants):
+ *   --wiki-media-cell-color
  *
  *   Infobox (read + editor content):
  *   --wiki-infobox-bg, --wiki-infobox-border, --wiki-infobox-radius
@@ -68,6 +75,11 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Reading measure: cap text flow, not full-width furniture (tables, code wells, media, infobox) */
+.wiki-article-prose :where(p, ul, ol, blockquote, .wiki-footnotes, h1, h2, h3, h4, h5, h6) {
+  max-width: var(--wiki-prose-measure, 70ch);
+}
+
 .wiki-article-prose :where(p, li, td, th) {
   font-family: var(--wiki-prose-font-family, var(--bs-body-font-family, inherit));
   color: var(--wiki-prose-color, var(--bs-body-color, inherit));
@@ -81,7 +93,8 @@
   line-height: 1.25;
   margin-top: 0.85em;
   margin-bottom: 0.4em;
-  text-shadow: var(--wiki-prose-heading-text-shadow, 2px 2px 10px rgb(0, 0, 0));
+  /* Quiet default; the Westgate theme opts into its glow via the token */
+  text-shadow: var(--wiki-prose-heading-text-shadow, none);
 }
 
 .wiki-article-prose :where(h1, h2, h3, h4, h5, h6) :where(strong, b) {
@@ -89,8 +102,10 @@
 }
 
 /* !important: Harmony/Bootstrap may set `#content h1` etc. with higher specificity than two classes */
+/* In-article h1 renders at the h2 slot: the page header owns the true h1, so
+   author h1s must never compete with the page title */
 .wiki-article-prose h1 {
-  font-size: var(--wiki-prose-h1-size, 1.85rem) !important;
+  font-size: var(--wiki-prose-h1-size, var(--wiki-prose-h2-size, 1.55rem)) !important;
 }
 
 .wiki-article-prose h2 {
@@ -169,16 +184,18 @@
   color: var(--wiki-prose-entity-color, var(--wiki-prose-color, var(--bs-body-color, inherit)));
 }
 
+/* Defaults must hold 4.5:1 on light themes; dark themes brighten via the tokens
+   (e.g. --wiki-prose-user-good-color: #8fdc9a) */
 .wiki-article-prose .wiki-entity--user-good {
-  border-color: color-mix(in srgb, var(--wiki-prose-user-good-color, #8fdc9a) 68%, transparent);
-  background: color-mix(in srgb, var(--wiki-prose-user-good-color, #8fdc9a) 18%, transparent);
-  color: var(--wiki-prose-user-good-color, #8fdc9a);
+  border-color: color-mix(in srgb, var(--wiki-prose-user-good-color, #2e7d3b) 68%, transparent);
+  background: color-mix(in srgb, var(--wiki-prose-user-good-color, #2e7d3b) 18%, transparent);
+  color: var(--wiki-prose-user-good-color, #2e7d3b);
 }
 
 .wiki-article-prose .wiki-entity--user-bad {
-  border-color: color-mix(in srgb, var(--wiki-prose-user-bad-color, #ff8b8b) 70%, transparent);
-  background: color-mix(in srgb, var(--wiki-prose-user-bad-color, #ff8b8b) 17%, transparent);
-  color: var(--wiki-prose-user-bad-color, #ff8b8b);
+  border-color: color-mix(in srgb, var(--wiki-prose-user-bad-color, #c13333) 70%, transparent);
+  background: color-mix(in srgb, var(--wiki-prose-user-bad-color, #c13333) 17%, transparent);
+  color: var(--wiki-prose-user-bad-color, #c13333);
   text-decoration: underline;
   text-decoration-color: currentColor;
   text-decoration-style: dotted;
@@ -186,8 +203,8 @@
 }
 
 .wiki-article-prose .wiki-entity--footnote {
-  background: color-mix(in srgb, var(--wiki-prose-footnote-marker-color, #f2cf63) 22%, transparent);
-  color: var(--wiki-prose-footnote-marker-color, #f2cf63);
+  background: color-mix(in srgb, var(--wiki-prose-footnote-marker-color, #8a6a14) 22%, transparent);
+  color: var(--wiki-prose-footnote-marker-color, #8a6a14);
   font-size: 0.86em;
   vertical-align: super;
 }
@@ -201,7 +218,7 @@
 }
 
 .wiki-article-prose :where(code:not(pre code)) {
-  font-family: var(--wiki-prose-code-font-family, var(--bs-font-monospace-family, ui-monospace, monospace)) !important;
+  font-family: var(--wiki-prose-code-font-family, var(--bs-font-monospace, ui-monospace, monospace)) !important;
   font-size: 0.92em;
   background: var(--wiki-prose-code-bg, var(--bs-tertiary-bg, rgba(0, 0, 0, 0.06)));
   border: 1px solid var(--wiki-prose-code-border, var(--bs-border-color-translucent, var(--bs-border-color, #dee2e6)));
@@ -230,7 +247,7 @@
   --wiki-code-token-punctuation: #8f8498;
   --wiki-code-token-addition: #8fbf9f;
   --wiki-code-token-deletion: #c87979;
-  font-family: var(--wiki-prose-code-font-family, var(--bs-font-monospace-family, ui-monospace, monospace)) !important;
+  font-family: var(--wiki-prose-code-font-family, var(--bs-font-monospace, ui-monospace, monospace)) !important;
   background: var(--wiki-prose-pre-bg, var(--bs-tertiary-bg, rgba(0, 0, 0, 0.06)));
   border: 1px solid var(--wiki-prose-pre-border, var(--bs-border-color, #dee2e6));
   border-radius: var(--bs-border-radius, 0.375rem);
@@ -448,7 +465,7 @@
 }
 
 .wiki-article-prose .wiki-footnote-item:target {
-  background: var(--wiki-prose-footnote-target-bg, rgba(13, 110, 253, 0.08));
+  background: var(--wiki-prose-footnote-target-bg, color-mix(in srgb, var(--bs-primary, #0d6efd) 8%, transparent));
   border-radius: var(--bs-border-radius-sm, 0.25rem);
 }
 
@@ -477,12 +494,12 @@
 
 .wiki-footnote-popover {
   position: fixed;
-  z-index: 1080;
+  z-index: var(--wiki-footnote-popover-layer, 1080);
   width: max-content;
   max-width: min(24rem, calc(100vw - 1.5rem));
   background: var(--wiki-prose-footnote-popover-bg, var(--wiki-chrome-surface-bg, var(--bs-body-bg, #fff)));
   border: 1px solid var(--wiki-prose-footnote-popover-border, var(--wiki-prose-footnote-border, var(--bs-border-color, #dee2e6)));
-  border-radius: var(--bs-border-radius, 0.5rem);
+  border-radius: var(--bs-border-radius, 0.375rem);
   box-shadow: var(--wiki-prose-footnote-popover-shadow, 0 0.75rem 2rem rgba(0, 0, 0, 0.18));
   color: var(--wiki-prose-footnote-color, var(--wiki-prose-color, var(--bs-body-color, inherit)));
   font-family: var(--wiki-prose-font-family, var(--bs-body-font-family, inherit));
@@ -664,7 +681,7 @@
 .wiki-article-prose thead th {
   color: var(--wiki-prose-table-head-color, var(--bs-secondary-color, inherit));
   font-family: var(--wiki-prose-table-head-font-family, var(--bs-body-font-family, inherit));
-  font-size: 0.88rem;
+  font-size: 0.875rem;
 }
 
 .wiki-article-prose figure.table figcaption {
@@ -712,13 +729,13 @@
   justify-content: center;
   padding: 0.45rem 0.55rem;
   text-align: center;
-  font-size: 0.86rem;
+  font-size: 0.875rem;
 }
 
 .wiki-article-prose .wiki-alignment-table--compact .wiki-alignment-table__cell {
   aspect-ratio: 1 / 1;
   padding: 0.28rem 0.35rem;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.1;
 }
@@ -903,7 +920,7 @@
   box-sizing: border-box;
   position: relative;
   isolation: isolate;
-  border-radius: var(--bs-border-radius, 0.5rem);
+  border-radius: var(--bs-border-radius, 0.375rem);
   background: transparent;
   padding: 0;
 }
@@ -943,16 +960,19 @@
 .wiki-article-prose .wiki-media-cell.wiki-media-cell--gilded {
   box-sizing: border-box;
   border: 1px solid color-mix(in srgb, var(--wiki-prose-gilded-border, #b4955c) 76%, #fff 24%);
-  border-radius: var(--bs-border-radius, 0.5rem);
+  border-radius: var(--bs-border-radius, 0.375rem);
   background: linear-gradient(145deg, rgba(42, 26, 50, 0.84), rgba(14, 11, 17, 0.94));
-  box-shadow: inset 0 0 0 1px rgba(255, 244, 214, 0.08), inset 0 1px 0 rgba(255, 244, 214, 0.1), 0 0.65rem 1.45rem rgba(0, 0, 0, 0.28);
+  /* Floating-Only Rule: inset texture only, no resting drop shadow */
+  box-shadow: inset 0 0 0 1px rgba(255, 244, 214, 0.08), inset 0 1px 0 rgba(255, 244, 214, 0.1);
+  /* Owned dark surface: ink must not inherit the host theme's (possibly dark) body color */
+  color: var(--wiki-media-cell-color, #e5e0d6);
   padding: 0.9rem;
 }
 
 .wiki-article-prose .wiki-media-cell.wiki-media-cell--custom {
   box-sizing: border-box;
   border: 1px solid var(--wiki-media-cell-custom-border, currentColor);
-  border-radius: var(--bs-border-radius, 0.45rem);
+  border-radius: var(--bs-border-radius, 0.375rem);
   background-color: var(--wiki-media-cell-custom-bg, transparent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
   padding: 0.9rem;
@@ -960,19 +980,24 @@
 
 .wiki-article-prose .wiki-media-cell.wiki-media-cell--well {
   box-sizing: border-box;
-  border-radius: var(--bs-border-radius, 0.5rem);
+  border-radius: var(--bs-border-radius, 0.375rem);
   background: linear-gradient(145deg, rgba(31, 18, 35, 0.82), rgba(8, 7, 10, 0.92));
-  box-shadow: inset 0 1px 0 rgba(255, 244, 214, 0.045), 0 0.85rem 2rem rgba(0, 0, 0, 0.34);
+  /* Floating-Only Rule: inset texture only, no resting drop shadow */
+  box-shadow: inset 0 1px 0 rgba(255, 244, 214, 0.045);
+  /* Owned dark surface: ink must not inherit the host theme's (possibly dark) body color */
+  color: var(--wiki-media-cell-color, #e5e0d6);
   padding: 0.9rem;
 }
 
+/* Themes override per-variant tokens on :root (--wiki-callout-note-bg, --wiki-callout-danger-bg, ...);
+   the generic --wiki-callout-* names are assigned here, so setting them on :root would never win */
 .wiki-article-prose .wiki-callout {
-  --wiki-callout-bg: #443b49;
-  --wiki-callout-border: #766f7d;
-  --wiki-callout-rail: #111015;
-  --wiki-callout-icon-bg: #332c38;
-  --wiki-callout-icon: url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/scroll-unfurled.svg");
-  --wiki-callout-text: #ece7df;
+  --wiki-callout-bg: var(--wiki-callout-note-bg, #443b49);
+  --wiki-callout-border: var(--wiki-callout-note-border, #766f7d);
+  --wiki-callout-rail: var(--wiki-callout-note-rail, #111015);
+  --wiki-callout-icon-bg: var(--wiki-callout-note-icon-bg, #332c38);
+  --wiki-callout-icon: var(--wiki-callout-note-icon, url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/scroll-unfurled.svg"));
+  --wiki-callout-text: var(--wiki-callout-note-text, #ece7df);
   position: relative;
   display: flow-root;
   min-height: calc(3.5rem + 1.9rem);
@@ -984,7 +1009,8 @@
   border-bottom: 1px solid color-mix(in srgb, var(--wiki-callout-bg) 58%, #000 42%);
   border-radius: 0;
   background: var(--wiki-callout-bg);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.16), 0 0.65rem 1.35rem rgba(0, 0, 0, 0.22);
+  /* Floating-Only Rule: inset texture only, no resting drop shadow */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.16);
   color: var(--wiki-callout-text);
   margin: 1rem 0;
   padding: 0.95rem 1.1rem;
@@ -1000,14 +1026,14 @@
 }
 
 .wiki-article-prose .wiki-callout::after {
-content: "";
+  content: "";
   position: absolute;
   top: 0.95rem;
   left: 1.1rem;
   width: 3.5rem;
   height: 3.5rem;
   background: rgba(255, 255, 255, 0.94);
-  mask: var(--wiki-callout-icon) center / 1.75rem 1.75rem no-repeat;
+  mask: var(--wiki-callout-icon) center / 2.5rem 2.5rem no-repeat;
   -webkit-mask: var(--wiki-callout-icon) center / 2.5rem 2.5rem no-repeat;
 }
 
@@ -1071,35 +1097,38 @@ content: "";
 
 .wiki-article-prose .wiki-callout--note,
 .wiki-article-prose .wiki-callout--info {
-  --wiki-callout-bg: #443b49;
-  --wiki-callout-border: #766f7d;
-  --wiki-callout-rail: #111015;
-  --wiki-callout-icon-bg: #332c38;
-  --wiki-callout-icon: url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/scroll-unfurled.svg");
+  --wiki-callout-bg: var(--wiki-callout-note-bg, #443b49);
+  --wiki-callout-border: var(--wiki-callout-note-border, #766f7d);
+  --wiki-callout-rail: var(--wiki-callout-note-rail, #111015);
+  --wiki-callout-icon-bg: var(--wiki-callout-note-icon-bg, #332c38);
+  --wiki-callout-icon: var(--wiki-callout-note-icon, url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/scroll-unfurled.svg"));
 }
 
 .wiki-article-prose .wiki-callout--success {
-  --wiki-callout-bg: #365b47;
-  --wiki-callout-border: #5f876e;
-  --wiki-callout-rail: #14251d;
-  --wiki-callout-icon-bg: #254233;
-  --wiki-callout-icon: url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/candle-flame.svg");
+  --wiki-callout-bg: var(--wiki-callout-success-bg, #365b47);
+  --wiki-callout-border: var(--wiki-callout-success-border, #5f876e);
+  --wiki-callout-rail: var(--wiki-callout-success-rail, #14251d);
+  --wiki-callout-icon-bg: var(--wiki-callout-success-icon-bg, #254233);
+  --wiki-callout-icon: var(--wiki-callout-success-icon, url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/candle-flame.svg"));
+  --wiki-callout-text: var(--wiki-callout-success-text, #ece7df);
 }
 
 .wiki-article-prose .wiki-callout--warning {
-  --wiki-callout-bg: #855d33;
-  --wiki-callout-border: #ac8554;
-  --wiki-callout-rail: #2a1b0c;
-  --wiki-callout-icon-bg: #624321;
-  --wiki-callout-icon: url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/stabbed-note.svg");
+  --wiki-callout-bg: var(--wiki-callout-warning-bg, #855d33);
+  --wiki-callout-border: var(--wiki-callout-warning-border, #ac8554);
+  --wiki-callout-rail: var(--wiki-callout-warning-rail, #2a1b0c);
+  --wiki-callout-icon-bg: var(--wiki-callout-warning-icon-bg, #624321);
+  --wiki-callout-icon: var(--wiki-callout-warning-icon, url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/stabbed-note.svg"));
+  --wiki-callout-text: var(--wiki-callout-warning-text, #ece7df);
 }
 
 .wiki-article-prose .wiki-callout--danger {
-  --wiki-callout-bg: #793131;
-  --wiki-callout-border: #a25a57;
-  --wiki-callout-rail: #10080a;
-  --wiki-callout-icon-bg: #552121;
-  --wiki-callout-icon: url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/duality-mask.svg");
+  --wiki-callout-bg: var(--wiki-callout-danger-bg, #793131);
+  --wiki-callout-border: var(--wiki-callout-danger-border, #a25a57);
+  --wiki-callout-rail: var(--wiki-callout-danger-rail, #10080a);
+  --wiki-callout-icon-bg: var(--wiki-callout-danger-icon-bg, #552121);
+  --wiki-callout-icon: var(--wiki-callout-danger-icon, url("/assets/plugins/nodebb-plugin-westgate-wiki/game-icons/duality-mask.svg"));
+  --wiki-callout-text: var(--wiki-callout-danger-text, #ece7df);
 }
 
 .wiki-article-prose .wiki-infobox {
@@ -1109,10 +1138,12 @@ content: "";
   width: var(--wiki-infobox-reader-width);
   margin: 0 0 1rem var(--wiki-infobox-reader-gutter);
   border: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.38));
-  border-radius: var(--wiki-infobox-radius, var(--bs-border-radius, 0.5rem));
+  border-radius: var(--wiki-infobox-radius, var(--bs-border-radius, 0.375rem));
   background: var(--wiki-infobox-bg, linear-gradient(145deg, rgba(31, 18, 35, 0.94), rgba(8, 7, 10, 0.96)));
-  box-shadow: var(--wiki-infobox-shadow, inset 0 1px 0 rgba(255, 244, 214, 0.06), 0 0.85rem 2rem rgba(0, 0, 0, 0.3));
-  color: var(--wiki-infobox-color, var(--wiki-prose-color, var(--bs-body-color, inherit)));
+  /* Floating-Only Rule: inset texture only by default; themes may add depth via the token */
+  box-shadow: var(--wiki-infobox-shadow, inset 0 1px 0 rgba(255, 244, 214, 0.06));
+  /* Owned dark surface: ink must not inherit the host theme's (possibly dark) body color */
+  color: var(--wiki-infobox-color, #e5e0d6);
   overflow: hidden;
 }
 
@@ -1129,7 +1160,7 @@ content: "";
   border-bottom: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.32));
   color: var(--wiki-infobox-title-color, var(--wiki-prose-heading-color, inherit));
   font-family: var(--wiki-prose-heading-font-family, var(--bs-heading-font-family, inherit));
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.25;
   padding: 0.65rem 0.8rem;
@@ -1138,7 +1169,7 @@ content: "";
 
 .wiki-article-prose .wiki-infobox__subtitle {
   color: var(--wiki-prose-caption-color, var(--bs-secondary-color, inherit));
-  font-size: 0.88rem;
+  font-size: 0.875rem;
   padding: 0.45rem 0.8rem 0;
   text-align: center;
 }
@@ -1167,7 +1198,7 @@ content: "";
   border-bottom: 1px solid var(--wiki-infobox-border, rgba(194, 163, 90, 0.18));
   color: var(--wiki-infobox-section-color, var(--wiki-prose-link-color, inherit));
   font-family: var(--wiki-prose-heading-font-family, var(--bs-heading-font-family, inherit));
-  font-size: 0.88rem;
+  font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0;
   margin: 0.75rem 0 0;
@@ -1260,10 +1291,12 @@ content: "";
 .wiki-article-prose .wiki-poetry-quote__body {
   position: relative;
   border: 1px solid var(--wiki-poetry-quote-border, rgba(194, 163, 90, 0.46));
-  border-radius: var(--wiki-poetry-quote-radius, var(--bs-border-radius, 0.5rem));
+  border-radius: var(--wiki-poetry-quote-radius, var(--bs-border-radius, 0.375rem));
   background: var(--wiki-poetry-quote-bg, linear-gradient(145deg, #1b101d 0%, #100d14 62%, #08070a 100%));
-  box-shadow: var(--wiki-poetry-quote-shadow, inset 0 1px 0 rgba(255, 244, 214, 0.06), 0 0.85rem 2rem rgba(0, 0, 0, 0.24));
-  color: var(--wiki-poetry-quote-color, var(--wiki-prose-color, var(--bs-body-color, #d8d0c5)));
+  /* Floating-Only Rule: inset texture only by default; themes may add depth via the token */
+  box-shadow: var(--wiki-poetry-quote-shadow, inset 0 1px 0 rgba(255, 244, 214, 0.06));
+  /* Owned dark surface: ink must not inherit the host theme's (possibly dark) body color */
+  color: var(--wiki-poetry-quote-color, #d8d0c5);
   margin: 0;
   padding: 0.85rem 3rem 0.95rem;
   text-align: var(--wiki-poetry-quote-text-align, left);
@@ -1281,7 +1314,7 @@ content: "";
 .wiki-article-prose .wiki-poetry-quote__body::after {
   position: absolute;
   color: var(--wiki-poetry-quote-mark-color, var(--wiki-prose-link-color, #c2a35a));
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--wiki-prose-quote-ornament-font-family, Georgia, serif);
   font-size: 2.4rem;
   font-weight: 700;
   line-height: 1;
@@ -1344,7 +1377,7 @@ content: "";
 }
 
 .wiki-article-prose .wiki-poetry-quote__attribution {
-  color: var(--wiki-poetry-quote-attribution-color, var(--wiki-prose-heading-color, #d4b764));
+  color: var(--wiki-poetry-quote-attribution-color, #d4b764);
   font-size: 0.95em;
   margin-top: 0.35rem;
   text-align: left;

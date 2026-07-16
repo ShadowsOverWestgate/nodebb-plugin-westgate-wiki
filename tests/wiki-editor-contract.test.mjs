@@ -916,7 +916,7 @@ await test("media cell style css exists in article and editor prose", function (
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-media-cell\.wiki-media-cell--shadow::after\s*\{[^}]*filter:\s*blur\(25px\)/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-media-cell\.wiki-media-cell--shadow \.wiki-media-cell__shadow-content\s*\{[^}]*z-index:\s*1/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-media-cell\.wiki-media-cell--well\s*\{[^}]*background:\s*linear-gradient\(145deg,\s*rgba\(31,\s*18,\s*35,\s*0\.82\),\s*rgba\(8,\s*7,\s*10,\s*0\.92\)\)/);
-  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-media-cell\.wiki-media-cell--well\s*\{[^}]*box-shadow:\s*inset\s+0\s+1px\s+0\s+rgba\(255,\s*244,\s*214,\s*0\.045\),\s*0\s+0\.85rem\s+2rem\s+rgba\(0,\s*0,\s*0,\s*0\.34\)/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-media-cell\.wiki-media-cell--well\s*\{[^}]*box-shadow:\s*inset\s+0\s+1px\s+0\s+rgba\(255,\s*244,\s*214,\s*0\.045\)/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-media-cell\[style\*="color"\] :where\(p,\s*li\)\s*\{[^}]*color:\s*inherit/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-media-cell\.wiki-media-cell--shadow\s*\{[^}]*position:\s*relative/);
   assert.match(editorCss, /\.westgate-wiki-compose \.wiki-editor__content \.wiki-media-cell\.wiki-media-cell--shadow::after\s*\{[^}]*filter:\s*blur\(60px\)/);
@@ -2631,7 +2631,7 @@ await test("wikiCallout Backspace shortcut unwraps a callout from an empty parag
 await test("wikiCallout css uses themed icon callout bars in articles and editor", function () {
   const pluginJson = JSON.parse(pluginJsonSource);
   assert.equal(pluginJson.staticDirs["game-icons"], "public/game-icons");
-  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*--wiki-callout-icon:\s*url\("\/assets\/plugins\/nodebb-plugin-westgate-wiki\/game-icons\/scroll-unfurled\.svg"\)/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*--wiki-callout-icon:\s*var\(--wiki-callout-note-icon,\s*url\("\/assets\/plugins\/nodebb-plugin-westgate-wiki\/game-icons\/scroll-unfurled\.svg"\)\)/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*display:\s*flow-root/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*min-height:\s*calc\(3\.5rem\s*\+\s*1\.9rem\)/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout\s*\{[\s\S]*border-left:\s*0\.85rem\s+solid\s+var\(--wiki-callout-rail\)/);
@@ -2642,7 +2642,7 @@ await test("wikiCallout css uses themed icon callout bars in articles and editor
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout::before\s*\{[\s\S]*margin:\s*0\s+1rem\s+0\.45rem\s+0/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout::before\s*\{[\s\S]*width:\s*[0-9.]+rem/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout::before\s*\{[\s\S]*height:\s*[0-9.]+rem/);
-  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout::after\s*\{[\s\S]*mask:\s*var\(--wiki-callout-icon\)\s+center\s*\/\s*1\.75rem\s+1\.75rem\s+no-repeat/);
+  assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout::after\s*\{[\s\S]*mask:\s*var\(--wiki-callout-icon\)\s+center\s*\/\s*2\.5rem\s+2\.5rem\s+no-repeat/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout--success\s*\{[\s\S]*candle-flame\.svg/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout--warning\s*\{[\s\S]*stabbed-note\.svg/);
   assert.match(articleBodyCss, /\.wiki-article-prose \.wiki-callout--danger\s*\{[\s\S]*duality-mask\.svg/);
