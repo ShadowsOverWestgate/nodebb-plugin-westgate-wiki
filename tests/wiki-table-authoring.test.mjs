@@ -12,21 +12,7 @@ import { CellSelection } from "@tiptap/pm/tables";
 import PreservedNodeAttributes from "../tiptap/src/extensions/preserved-node-attributes.mjs";
 import { installJsdomGlobals } from "./helpers/jsdom-setup.mjs";
 
-function test(name, fn) {
-  try {
-    const result = fn();
-    if (result && typeof result.then === "function") {
-      return result.then(function () {
-        process.stdout.write(`ok - ${name}\n`);
-      });
-    }
-    process.stdout.write(`ok - ${name}\n`);
-  } catch (err) {
-    process.stderr.write(`not ok - ${name}\n`);
-    throw err;
-  }
-  return Promise.resolve();
-}
+import { test } from "node:test";
 
 installJsdomGlobals();
 

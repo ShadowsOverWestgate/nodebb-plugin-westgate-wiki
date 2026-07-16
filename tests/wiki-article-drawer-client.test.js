@@ -5,15 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { JSDOM } = require("jsdom");
 
-function test(name, fn) {
-  try {
-    fn();
-    process.stdout.write(`ok - ${name}\n`);
-  } catch (err) {
-    process.stderr.write(`not ok - ${name}\n`);
-    throw err;
-  }
-}
+const { test } = require("node:test");
 
 const script = fs.readFileSync(path.join(__dirname, "..", "public/wiki-article-toc.js"), "utf8");
 
@@ -149,36 +141,8 @@ test("article ToC headings with children start expanded with an accessible colla
   assert.equal(childList.hidden, true);
 });
 
-test("article ToC displays heading labels in title-style casing", function () {
-  const dom = createDom([
-    "<h2>WORSHIP AND PRACTICE</h2>",
-    "<h3>daily practices</h3>",
-    "<h4>relations with other faiths</h4>",
-    "<h2>THE FAITH ACROSS FAERÛN</h2>",
-    "<h3>opening a pr</h3>"
-  ].join(""));
-  const { document } = dom.window;
-  const labels = Array.from(document.querySelectorAll(".wiki-article-toc__link"))
-    .map((link) => link.textContent);
-  const ids = Array.from(document.querySelectorAll(".wiki-article-toc__heading"))
-    .map((heading) => heading.id);
-
-  assert.deepEqual(labels, [
-    "Worship and Practice",
-    "Daily Practices",
-    "Relations with Other Faiths",
-    "The Faith Across Faerûn",
-    "Opening a PR"
-  ]);
-  assert.deepEqual(ids, [
-    "worship-and-practice",
-    "daily-practices",
-    "relations-with-other-faiths",
-    "the-faith-across-faerun",
-    "opening-a-pr"
-  ]);
-});
-
+// ponytail: JS title-casing of ToC labels was removed from
+// public/wiki-article-toc.js; its test went with it. Restore alongside the feature.
 test("article headings scroll to the current hash after generated ids are assigned", function () {
   const dom = createDom("<h2>Alpha section</h2><p>Text</p>", {
     url: "https://example.test/wiki/example#alpha-section"

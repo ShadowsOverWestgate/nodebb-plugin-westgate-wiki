@@ -11,10 +11,7 @@ const WIKI_COMPOSE_BLOCKING_SAVE_STATUSES = new Set([
 ]);
 
 function utf8ByteLength(str) {
-  if (typeof TextEncoder !== "undefined") {
-    return new TextEncoder().encode(str).length;
-  }
-  return unescape(encodeURIComponent(str)).length;
+  return new TextEncoder().encode(str).length;
 }
 
 function decodePayloadB64(b64) {

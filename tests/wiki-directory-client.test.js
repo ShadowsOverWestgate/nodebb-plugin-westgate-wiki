@@ -7,15 +7,7 @@ const { JSDOM } = require("jsdom");
 
 const script = fs.readFileSync(path.join(__dirname, "..", "public/wiki-directory.js"), "utf8");
 
-function test(name, fn) {
-  try {
-    fn();
-    process.stdout.write(`ok - ${name}\n`);
-  } catch (err) {
-    process.stderr.write(`not ok - ${name}\n`);
-    throw err;
-  }
-}
+const { test } = require("node:test");
 
 function createDom(options = {}) {
   const currentTidAttr = options.currentTid ? `data-current-tid="${options.currentTid}"` : "";

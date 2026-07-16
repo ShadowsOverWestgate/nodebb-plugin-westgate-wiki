@@ -2,15 +2,7 @@
 
 const assert = require("node:assert/strict");
 
-function test(name, fn) {
-  try {
-    fn();
-    process.stdout.write(`ok - ${name}\n`);
-  } catch (err) {
-    process.stderr.write(`not ok - ${name}\n`);
-    throw err;
-  }
-}
+const { test } = require("node:test");
 
 test("package scripts and dependencies are Tiptap-only", function () {
   const pkg = require("../package.json");

@@ -27,7 +27,6 @@ const wikiDirectory = require("../lib/tree/wiki-directory-service");
 
 (async () => {
   wikiDirectory.invalidateAllWikiCaches();
-  wikiDirectory.resetCacheMetrics();
   config.invalidateSettingsCache();
   wikiPaths.invalidateNamespaceIndexCache({ skipSettingsInvalidation: true });
 
@@ -43,18 +42,18 @@ const wikiDirectory = require("../lib/tree/wiki-directory-service");
     await wikiDirectory.getOrderedSummaries(cid, cid, false);
   }
 
-  let metrics = wikiDirectory.getCacheMetrics();
-  assert.strictEqual(metrics.summaries.size, wikiDirectory.SUMMARY_CACHE_MAX_ENTRIES, "summary cache should be capped");
-
+  // Pruning past the TTL empties the caches, so the returned removal count is
+  // the number of live entries — the cap check without a metrics counter.
   const expiredCount = wikiDirectory.pruneExpiredCaches(Date.now() + wikiDirectory.CACHE_TTL_MS + 1);
-  assert(expiredCount >= wikiDirectory.SUMMARY_CACHE_MAX_ENTRIES, "expired summary entries should be pruned");
-  metrics = wikiDirectory.getCacheMetrics();
-  assert.strictEqual(metrics.summaries.size, 0, "expired summary cache entries should not linger");
+  assert.strictEqual(expiredCount, wikiDirectory.SUMMARY_CACHE_MAX_ENTRIES, "summary cache should be capped and prunable");
+  assert.strictEqual(wikiDirectory.pruneExpiredCaches(Date.now() + wikiDirectory.CACHE_TTL_MS + 1), 0, "expired summary cache entries should not linger");
 
   await wikiDirectory.getAllTopicSlugRows(1);
-  assert.strictEqual(wikiDirectory.getCacheMetrics().slugScans.size, 1, "slug scan cache size should be reported");
-  wikiDirectory.pruneExpiredCaches(Date.now() + wikiDirectory.CACHE_TTL_MS + 1);
-  assert.strictEqual(wikiDirectory.getCacheMetrics().slugScans.size, 0, "expired slug scan entries should be pruned");
+  assert.strictEqual(
+    wikiDirectory.pruneExpiredCaches(Date.now() + wikiDirectory.CACHE_TTL_MS + 1),
+    1,
+    "expired slug scan entries should be pruned"
+  );
 
   console.log("wiki cache bounds tests passed");
 })().catch((err) => {

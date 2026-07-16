@@ -5,8 +5,6 @@ const cacheService = require("./lib/core/cache-service");
 const config = require("./lib/core/config");
 const adminControllers = require("./lib/controllers/admin");
 const wikiArchiveAdminControllers = require("./lib/controllers/wiki-archive-admin");
-const serializer = require("./lib/core/serializer");
-const topicService = require("./lib/read/topic-service");
 const wikiLinkAutocomplete = require("./lib/content/wiki-link-autocomplete");
 const wikiSearchService = require("./lib/read/wiki-search-service");
 const wikiUserAutocomplete = require("./lib/features/wiki-user-autocomplete");
@@ -25,8 +23,6 @@ const wikiNativeMutationGuards = require("./lib/pages/wiki-native-mutation-guard
 const wikiRevisionActions = require("./lib/pages/wiki-revision-actions");
 const wikiTopdataBotPrivileges = require("./lib/forum/wiki-topdata-bot-privileges");
 const wikiRevisionPermissions = require("./lib/pages/wiki-revision-permissions");
-const wikiRevisions = require("./lib/pages/wiki-revisions");
-const wikiService = require("./lib/read/wiki-service");
 const wikiPaths = require("./lib/tree/wiki-paths");
 const wikiPageValidation = require("./lib/pages/wiki-page-validation");
 const wikiTopicPurge = require("./lib/pages/wiki-topic-purge");
@@ -366,55 +362,4 @@ plugin.wikiFilterPrivilegesTopicsGet = async function (data) {
     data.deletable = false;
   }
   return data;
-};
-
-function getWikiCacheMetrics() {
-  const wikiDirectory = require("./lib/tree/wiki-directory-service");
-  return {
-    config: typeof config.getCacheMetrics === "function" ? config.getCacheMetrics() : {},
-    wikiPaths: typeof wikiPaths.getCacheMetrics === "function" ? wikiPaths.getCacheMetrics() : {},
-    wikiDirectory: typeof wikiDirectory.getCacheMetrics === "function" ? wikiDirectory.getCacheMetrics() : {}
-  };
-}
-
-function resetWikiCacheMetrics() {
-  const wikiDirectory = require("./lib/tree/wiki-directory-service");
-  if (typeof config.resetCacheMetrics === "function") {
-    config.resetCacheMetrics();
-  }
-  if (typeof wikiPaths.resetCacheMetrics === "function") {
-    wikiPaths.resetCacheMetrics();
-  }
-  if (typeof wikiDirectory.resetCacheMetrics === "function") {
-    wikiDirectory.resetCacheMetrics();
-  }
-}
-
-plugin.services = {
-  cacheService,
-  cacheMetrics: {
-    get: getWikiCacheMetrics,
-    reset: resetWikiCacheMetrics
-  },
-  config,
-  forumExclusionService,
-  serializer,
-  topicService,
-  wikiLinkAutocomplete,
-  wikiSearchService,
-  wikiArticleCss,
-  wikiDiscussionPlaceholder,
-  wikiDiscussionSettings,
-  wikiFootnotes,
-  wikiLinks,
-  wikiMentionNotifications,
-  wikiArticleWatch,
-  wikiEditLocks,
-  wikiUserMentions,
-  wikiPageValidation,
-  wikiRevisionPermissions,
-  wikiRevisions,
-  wikiPaths,
-  wikiService,
-  wikiDirectory: require("./lib/tree/wiki-directory-service")
 };

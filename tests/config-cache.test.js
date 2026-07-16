@@ -62,8 +62,6 @@ const config = require("../lib/core/config");
   assert.strictEqual(state.metaGetCalls, 6, "category mutation should invalidate cached settings");
 
   assert.equal(typeof config.invalidateSettingsCache, "function");
-  assert.equal(typeof config.getCacheMetrics, "function");
-  assert.equal(typeof config.resetCacheMetrics, "function");
 
   console.log("config cache tests passed");
 })().catch((err) => {

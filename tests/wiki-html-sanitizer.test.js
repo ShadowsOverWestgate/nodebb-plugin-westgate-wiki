@@ -4,15 +4,7 @@ const assert = require("node:assert/strict");
 
 const wikiHtmlSanitizer = require("../lib/content/wiki-html-sanitizer");
 
-function test(name, fn) {
-  try {
-    fn();
-    process.stdout.write(`ok - ${name}\n`);
-  } catch (err) {
-    process.stderr.write(`not ok - ${name}\n`);
-    throw err;
-  }
-}
+const { test } = require("node:test");
 
 test("sanitizeWikiHtml removes script tags and keeps safe markup", function () {
   const html = '<p>Hello <strong>world</strong><script>alert(1)</script></p>';

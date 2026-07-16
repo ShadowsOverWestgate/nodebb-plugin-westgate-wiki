@@ -18,53 +18,6 @@
   const DRAWER_BACKDROP_ATTR = "data-wiki-drawer-backdrop";
   const DRAWER_OPEN_CLASS = "wiki-article-drawer--open";
   const MODAL_OPEN_CLASS = "wiki-article-drawer-modal-open";
-  const TITLE_CASE_SMALL_WORDS = new Set([
-    "a",
-    "an",
-    "and",
-    "as",
-    "at",
-    "but",
-    "by",
-    "for",
-    "from",
-    "in",
-    "into",
-    "nor",
-    "of",
-    "on",
-    "onto",
-    "or",
-    "per",
-    "the",
-    "to",
-    "via",
-    "vs",
-    "with"
-  ]);
-  const TITLE_CASE_ACRONYMS = new Map([
-    ["api", "API"],
-    ["css", "CSS"],
-    ["d&d", "D&D"],
-    ["dm", "DM"],
-    ["html", "HTML"],
-    ["id", "ID"],
-    ["js", "JS"],
-    ["json", "JSON"],
-    ["npc", "NPC"],
-    ["npcs", "NPCs"],
-    ["nwn", "NWN"],
-    ["pc", "PC"],
-    ["pcs", "PCs"],
-    ["pr", "PR"],
-    ["prs", "PRs"],
-    ["pve", "PvE"],
-    ["pvp", "PvP"],
-    ["sql", "SQL"],
-    ["ui", "UI"],
-    ["url", "URL"],
-    ["xp", "XP"]
-  ]);
   let drawersGlobalBound = false;
 
   function textToSlug(s) {
@@ -77,61 +30,6 @@
     return t
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
-  }
-
-  function capitalizeFirstLetter(value) {
-    return String(value || "").replace(/^\p{L}/u, function (letter) {
-      return letter.toLocaleUpperCase();
-    });
-  }
-
-  function titleCaseCore(value, wordIndex, wordCount) {
-    const lower = String(value || "").toLocaleLowerCase();
-    if (!lower) {
-      return "";
-    }
-
-    const acronym = TITLE_CASE_ACRONYMS.get(lower);
-    if (acronym) {
-      return acronym;
-    }
-
-    if (wordIndex > 0 && wordIndex < wordCount - 1 && TITLE_CASE_SMALL_WORDS.has(lower)) {
-      return lower;
-    }
-
-    return lower.split(/([-/])/).map(function (part, index, parts) {
-      if (part === "-" || part === "/") {
-        return part;
-      }
-      if (!part) {
-        return part;
-      }
-      if (index > 0 && index < parts.length - 1 && TITLE_CASE_SMALL_WORDS.has(part)) {
-        return part;
-      }
-      return capitalizeFirstLetter(part);
-    }).join("");
-  }
-
-  function titleCaseToken(token, wordIndex, wordCount) {
-    const match = String(token || "").match(/^([^\p{L}\p{N}]*)(.*?)([^\p{L}\p{N}]*)$/u);
-    if (!match) {
-      return token;
-    }
-
-    return match[1] + titleCaseCore(match[2], wordIndex, wordCount) + match[3];
-  }
-
-  function formatTocLabel(value) {
-    const text = String(value || "").replace(/\s+/g, " ").trim();
-    const words = text.match(/\S+/g) || [];
-    let wordIndex = 0;
-    return text.replace(/\S+/g, function (token) {
-      const formatted = titleCaseToken(token, wordIndex, words.length);
-      wordIndex += 1;
-      return formatted;
-    });
   }
 
   function ensureHeadingIds(headings) {
@@ -194,7 +92,7 @@
       const a = document.createElement("a");
       a.className = "wiki-article-toc__link";
       a.setAttribute("href", "#" + h.id);
-      a.textContent = formatTocLabel(h.textContent || "");
+      a.textContent = String(h.textContent || "").replace(/\s+/g, " ").trim();
       row.appendChild(a);
       parentList.appendChild(li);
 

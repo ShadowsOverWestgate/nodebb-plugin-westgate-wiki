@@ -5,15 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { JSDOM } = require("jsdom");
 
-function test(name, fn) {
-  try {
-    fn();
-    process.stdout.write(`ok - ${name}\n`);
-  } catch (err) {
-    process.stderr.write(`not ok - ${name}\n`);
-    throw err;
-  }
-}
+const { test } = require("node:test");
 
 const rootDir = path.join(__dirname, "..");
 const wikiJs = fs.readFileSync(path.join(rootDir, "public/wiki.js"), "utf8");
@@ -121,22 +113,8 @@ function setScrollY(window, value) {
   window.dispatchEvent(new window.Event("scroll"));
 }
 
-test("mobile page tools hide on downward scroll and return on upward scroll", function () {
-  const dom = createDom(true);
-  const dock = dom.window.document.querySelector(".wiki-fab-dock--floating");
-
-  setScrollY(dom.window, 10);
-  assert.equal(dock.classList.contains("wiki-fab-dock--mobile-hidden"), false);
-
-  setScrollY(dom.window, 90);
-  assert.equal(dock.classList.contains("wiki-fab-dock--mobile-hidden"), true);
-  assert.equal(dock.getAttribute("aria-hidden"), "true");
-
-  setScrollY(dom.window, 40);
-  assert.equal(dock.classList.contains("wiki-fab-dock--mobile-hidden"), false);
-  assert.equal(dock.getAttribute("aria-hidden"), "false");
-});
-
+// ponytail: hide-on-scroll behavior was removed from public/wiki.js; its test
+// went with it. Restore the test alongside the feature if it comes back.
 test("desktop page tools do not hide on downward scroll", function () {
   const dom = createDom(false);
   const dock = dom.window.document.querySelector(".wiki-fab-dock--floating");

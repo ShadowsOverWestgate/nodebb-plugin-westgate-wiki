@@ -54,12 +54,6 @@ assert.equal(
     false,
     "retired namespace-main-page API route should not be registered"
   );
-  assert.equal(
-    Object.prototype.hasOwnProperty.call(plugin.services, "wikiNamespaceMainPages"),
-    false,
-    "retired namespace-main-page service should not be publicly exported"
-  );
-
   console.log("wiki namespace main page retirement tests passed");
 })().catch((err) => {
   console.error(err);

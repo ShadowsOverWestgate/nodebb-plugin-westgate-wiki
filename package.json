@@ -17,7 +17,6 @@
     "@tiptap/extension-character-count": "^3.22.5",
     "@tiptap/extension-code-block": "^3.22.5",
     "@tiptap/extension-code-block-lowlight": "^3.22.5",
-    "@tiptap/extension-highlight": "^3.22.5",
     "@tiptap/extension-image": "^3.22.5",
     "@tiptap/extension-link": "^3.22.5",
     "@tiptap/extension-placeholder": "^3.22.5",

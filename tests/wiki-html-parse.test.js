@@ -10,15 +10,7 @@ installNodebbStubs();
 
 const wikiHtmlParse = require("../lib/content/wiki-html-parse");
 
-function test(name, fn) {
-  try {
-    fn();
-    process.stdout.write(`ok - ${name}\n`);
-  } catch (err) {
-    process.stderr.write(`not ok - ${name}\n`);
-    throw err;
-  }
-}
+const { test } = require("node:test");
 
 test("looksLikeWikiStoredHtml accepts topdata bot pages that begin with marker comments", function () {
   const html = fs.readFileSync(

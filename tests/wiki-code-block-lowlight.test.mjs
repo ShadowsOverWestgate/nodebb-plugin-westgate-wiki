@@ -41,21 +41,7 @@ function createEditor(content) {
   return { editor, mount };
 }
 
-function test(name, fn) {
-  try {
-    const result = fn();
-    if (result && typeof result.then === "function") {
-      return result.then(function () {
-        process.stdout.write(`ok - ${name}\n`);
-      });
-    }
-    process.stdout.write(`ok - ${name}\n`);
-  } catch (err) {
-    process.stderr.write(`not ok - ${name}\n`);
-    throw err;
-  }
-  return Promise.resolve();
-}
+import { test } from "node:test";
 
 await test("code blocks preserve registered common language classes", function () {
   const { editor, mount } = createEditor([

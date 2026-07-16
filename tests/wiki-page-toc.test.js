@@ -4,15 +4,7 @@ const assert = require("assert");
 
 const wikiPageToc = require("../lib/content/wiki-page-toc");
 
-function test(name, fn) {
-  try {
-    fn();
-    console.log(`ok - ${name}`);
-  } catch (err) {
-    console.error(`not ok - ${name}`);
-    throw err;
-  }
-}
+const { test } = require("node:test");
 
 test("extractHeadingToc matches article ToC ids for plain and duplicate headings", function () {
   const headings = wikiPageToc.extractHeadingToc(`

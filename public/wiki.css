@@ -9,6 +9,12 @@
  * Optional reading cap: max-width: var(--wiki-root-max-width, none);
  */
 
+:root {
+  /* Overlay scrims — themes may override. Strong variant backs fullscreen/error dialogs. */
+  --wiki-scrim: rgba(15, 23, 42, 0.5);
+  --wiki-scrim-strong: rgba(15, 10, 24, 0.74);
+}
+
 .westgate-wiki {
   --wiki-sidebar-scroll-max-height: 50vh;
   width: 100%;
@@ -869,7 +875,7 @@
 }
 
 .wiki-history-fullscreen__backdrop {
-  background: rgba(0, 0, 0, 0.74);
+  background: var(--wiki-scrim-strong, rgba(15, 10, 24, 0.74));
   inset: 0;
   position: absolute;
 }
@@ -1142,7 +1148,7 @@ body.wiki-history-fullscreen-open {
 }
 
 .wiki-article-drawer-backdrop {
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--wiki-scrim, rgba(15, 23, 42, 0.5));
   border: 0;
   inset: 0;
   margin: 0;
@@ -2144,7 +2150,7 @@ a[href*="/wiki/"][href*="redlink=1"] {
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(15, 10, 24, 0.72);
+  background: var(--wiki-scrim-strong, rgba(15, 10, 24, 0.74));
 }
 
 .wiki-compose-error-dialog {
@@ -2200,7 +2206,7 @@ a[href*="/wiki/"][href*="redlink=1"] {
 }
 
 .wiki-compose-css-dialog::backdrop {
-  background: rgba(15, 23, 42, 0.55);
+  background: var(--wiki-scrim, rgba(15, 23, 42, 0.5));
 }
 
 .wiki-compose-css-dialog__panel {
@@ -2235,8 +2241,8 @@ a[href*="/wiki/"][href*="redlink=1"] {
   display: grid;
   grid-template-columns: 3.5rem minmax(0, 1fr);
   min-height: 0;
-  background: #111827;
-  color: #e5e7eb;
+  background: var(--wiki-chrome-editor-bg, #111827);
+  color: var(--wiki-chrome-editor-fg, #e5e7eb);
   font: 0.875rem/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
@@ -2254,10 +2260,10 @@ a[href*="/wiki/"][href*="redlink=1"] {
 
 .wiki-compose-css-lines {
   overflow: hidden;
-  color: #94a3b8;
+  color: var(--wiki-chrome-editor-muted, #94a3b8);
   text-align: right;
   user-select: none;
-  border-right: 1px solid rgba(148, 163, 184, 0.3);
+  border-right: 1px solid var(--wiki-chrome-editor-border, rgba(148, 163, 184, 0.3));
 }
 
 .wiki-compose-css-highlight,
@@ -2277,34 +2283,34 @@ a[href*="/wiki/"][href*="redlink=1"] {
   height: 100%;
   min-height: 24rem;
   color: transparent;
-  caret-color: #f9fafb;
+  caret-color: var(--wiki-chrome-editor-caret, #f9fafb);
   background: transparent;
   outline: 0;
 }
 
 .wiki-compose-css-input::selection {
-  color: #f9fafb;
-  background: rgba(96, 165, 250, 0.45);
+  color: var(--wiki-chrome-editor-caret, #f9fafb);
+  background: var(--wiki-chrome-editor-selection, rgba(96, 165, 250, 0.45));
 }
 
 .wiki-compose-css-token--comment {
-  color: #94a3b8;
+  color: var(--wiki-chrome-editor-muted, #94a3b8);
 }
 
 .wiki-compose-css-token--at {
-  color: #f472b6;
+  color: var(--wiki-chrome-editor-accent, #f472b6);
 }
 
 .wiki-compose-css-token--selector {
-  color: #93c5fd;
+  color: var(--wiki-chrome-editor-token-selector, #93c5fd);
 }
 
 .wiki-compose-css-token--property {
-  color: #a7f3d0;
+  color: var(--wiki-chrome-editor-token-property, #a7f3d0);
 }
 
 .wiki-compose-css-token--value {
-  color: #fde68a;
+  color: var(--wiki-chrome-editor-token-value, #fde68a);
 }
 
 .westgate-wiki a.wiki-user-mention {

@@ -120,10 +120,6 @@
     }
   }
 
-  function clearDiff(diffMount) {
-    clearNode(diffMount);
-  }
-
   function diffLineClass(line, state) {
     if (/^(Index:|={3,})/.test(line)) {
       state.inHunk = false;
@@ -199,10 +195,6 @@
     lines.forEach(function (line, index) {
       appendDiffLine(diffMount, line, index + 1, diffLineClass(line, state));
     });
-  }
-
-  function renderInitialSource(diffMount, source) {
-    renderSourceLines(diffMount, "Initial revision source", source);
   }
 
   function getDiffBaseRevision(state, revision) {
@@ -399,7 +391,7 @@
         }
         renderDiff(diffMount, diff.diff || "");
       } else {
-        renderInitialSource(diffMount, detail.source || "");
+        renderSourceLines(diffMount, "Initial revision source", detail.source || "");
       }
 
       setFullscreenButtonsDisabled(root, false);
@@ -411,7 +403,7 @@
         return;
       }
       clearLoadedDetails(state);
-      clearDiff(diffMount);
+      clearNode(diffMount);
       renderTextMessage(beforePreview, "");
       renderTextMessage(afterPreview, "");
       setStatus(root, (err && err.message) || String(err), "error");
