@@ -443,13 +443,41 @@ const config = require("../lib/core/config");
   assert.match(
     parseHookData.postData.content,
     /href="\/wiki\/Hidden_Root\/Readable_Child\/Public_Page/,
-    "parse hook should fall back to anonymous privileges when no reliable viewer uid is present"
+    "parse hook should preserve page links when no reliable viewer uid is present"
   );
   assert.match(
     parseHookData.postData.content,
     /href="\/wiki\/Hidden_Root\/Readable_Child"/,
-    "parse hook should preserve public namespace links when no reliable viewer uid is present"
+    "parse hook should preserve namespace links when no reliable viewer uid is present"
   );
+
+  state.hiddenCategoryCidsByUid.set(0, new Set([10, 11]));
+  state.hiddenTopicTidsByUid.set(0, new Set([140]));
+  require("../lib/tree/wiki-directory-service").invalidateAllWikiCaches();
+  const restrictedParseHookData = {
+    postData: {
+      uid: 1,
+      cid: 11,
+      content: [
+        '<span class="wiki-entity wiki-entity--namespace" data-wiki-entity="namespace" data-wiki-target="Hidden Root/Readable Child" data-wiki-label="Restricted namespace">Restricted namespace</span>',
+        '<span class="wiki-entity wiki-entity--page" data-wiki-entity="page" data-wiki-target="Hidden Root/Readable Child/Public Page" data-wiki-label="Restricted page">Restricted page</span>'
+      ].join(" ")
+    }
+  };
+  await wikiLinks.transformWikiPostContent(restrictedParseHookData);
+  assert.match(
+    restrictedParseHookData.postData.content,
+    /href="\/wiki\/Hidden_Root\/Readable_Child">Restricted namespace<\/a>/,
+    "cached parse output should preserve authored links to restricted namespaces"
+  );
+  assert.match(
+    restrictedParseHookData.postData.content,
+    /href="\/wiki\/Hidden_Root\/Readable_Child\/Public_Page">Restricted page<\/a>/,
+    "cached parse output should preserve authored links to restricted pages"
+  );
+
+  state.hiddenCategoryCidsByUid = new Map();
+  state.hiddenTopicTidsByUid = new Map();
 
   const stablePageMarkerHtml = await wikiLinks.replaceWikiLinks(
     "[[tid:140|Public Page]] [[cid:11|Readable Child]]",

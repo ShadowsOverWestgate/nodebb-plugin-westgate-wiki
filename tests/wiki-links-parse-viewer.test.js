@@ -148,7 +148,7 @@ async function withThrowingPageStubs(fn) {
   }
 }
 
-test("transformWikiPostContent uses the anonymous parse-cache viewer, not hook uid fields", async () => {
+test("transformWikiPostContent builds shared links without using hook uid fields", async () => {
   await withWikiLinksStubs(async (wikiLinks) => {
     const anonymousParse = {
       postData: {
