@@ -1,4 +1,9 @@
 <div class="wiki-search-chrome" data-wiki-search-chrome>
+  <!-- IF canManageWiki -->
+  <a class="wiki-search-chrome__manage" href="{config.relative_path}/wiki/manage" title="Manage wiki pages">
+    <i class="fa fa-table" aria-hidden="true"></i> Manage
+  </a>
+  <!-- ENDIF canManageWiki -->
   <form class="wiki-search-chrome__form" action="{config.relative_path}/wiki/search" method="get" role="search" data-wiki-search-form>
     <label class="visually-hidden" for="wiki-search-chrome-input">Search the wiki</label>
     <div class="wiki-search-chrome__control">

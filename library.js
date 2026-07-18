@@ -261,6 +261,17 @@ plugin.registerApiRoutes = async function ({ router, middleware }) {
   );
 };
 
+// Expose `canManageWiki` to every wiki page template (hub, section, article) so
+// the shared search-chrome header can show a Manage link. Wired on each
+// filter:<template>.build hook — the single chokepoint every res.render passes
+// through — instead of every render call site.
+plugin.addWikiManageChrome = async function (hookData) {
+  const wikiNamespaceCreators = require("./lib/features/wiki-namespace-creators");
+  const uid = hookData && hookData.req ? hookData.req.uid : 0;
+  hookData.templateData.canManageWiki = await wikiNamespaceCreators.getCanCreateWikiNamespaces(uid);
+  return hookData;
+};
+
 plugin.addAdminNavigation = async function (header) {
   header.plugins.push({
     route: "/plugins/westgate-wiki",

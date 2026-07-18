@@ -1070,8 +1070,8 @@ $(document).ready(function () {
     btn.setAttribute("aria-label", watched ? "Stop watching wiki article edits" : "Watch wiki article edits");
     btn.classList.toggle("active", watched);
     if (icon) {
-      icon.classList.toggle("fa-eye", !watched);
-      icon.classList.toggle("fa-eye-slash", watched);
+      icon.classList.toggle("fa-bell-slash", !watched);
+      icon.classList.toggle("fa-bell", watched);
     }
   }
 

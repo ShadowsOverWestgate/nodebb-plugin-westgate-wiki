@@ -246,6 +246,18 @@
     {
       "hook": "action:settings.set",
       "method": "invalidateWikiPathCaches"
+    },
+    {
+      "hook": "filter:wiki.build",
+      "method": "addWikiManageChrome"
+    },
+    {
+      "hook": "filter:wiki-page.build",
+      "method": "addWikiManageChrome"
+    },
+    {
+      "hook": "filter:wiki-section.build",
+      "method": "addWikiManageChrome"
     }
   ]
 }
