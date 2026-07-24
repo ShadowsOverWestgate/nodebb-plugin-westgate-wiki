@@ -89,6 +89,16 @@ For a live forum to test against, sow-nodebb
 (https://git.westgate.pw/ShadowsOverWestgate/sow-nodebb) has a
 `docker-compose.dev.yml` that bind-mounts a local checkout of this plugin.
 
+**Assume that stack is dirty when you arrive, and leave it clean.** Reset it
+(`make dev-reset`) before the first boot of a testing session and tear it down
+after every cycle, including a failed one; its volumes and seeded data
+otherwise survive into the next session. The trap to know: wiki pages seeded
+while this checkout was on another branch were written by *that* branch's
+code, so after switching branches, re-seed rather than trusting what is
+already there. Full rules and the other recurring traps — the `./nodebb
+activate` hang, the asset-build marker that makes a plain restart skip the
+rebuild, the Playwright login selectors — are in `sow-nodebb/AGENTS.md`.
+
 ## Release
 
 Merge here first. Then update this plugin's commit SHA in `plugins.lock` in
