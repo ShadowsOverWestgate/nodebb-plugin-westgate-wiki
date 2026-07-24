@@ -103,12 +103,16 @@ Tests must survive harmless changes to constants, defaults, wording, ordering, f
 
 ### Issue tracker
 
-Issues live in this repo's Gitea Issues on `git.westgate.pw`, driven by the `tea` CLI. See `docs/agents/issue-tracker.md`.
+Issues live in Gitea at git.westgate.pw (`ShadowsOverWestgate/sow-nodebb-plugin-wiki`), managed with the `tea` CLI. Issues follow ownership — file work in the repo that owns it, not the one you happen to be standing in. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+Default label vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: `CONTEXT.md` at the repo root plus `docs/adr/`. See `docs/agents/domain.md`.
+
+### Where work lives
+
+Markdown here is **reference, law, or an ADR — nothing else** (`sow-codebase` ADR-0001). Live work -> wayfinder maps + Gitea issues (closeable, assignable, queryable). Settled decisions -> ADR files in `docs/adr/` (immutable, never closed, only superseded). Standing law -> `DOCTRINE.md` / `AGENTS.md` / `CONTEXT.md`. Current-state reference -> docs describing what the code does now. Everything else — plans, specs, concepts, handoffs, trackers — is process: it belongs in a Gitea issue, not a file. Harvest unfinished intent to an issue before deleting a process doc. `sow-docs` is deprecated and read-only.
