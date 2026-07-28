@@ -52,7 +52,11 @@ preference — move it.
 - **Read an issue**: `tea issues <number>` and
   `tea api repos/ShadowsOverWestgate/sow-nodebb-plugin-wiki/issues/<number>/comments` for comments.
 - **List issues**: `tea issues list --state open` (add `--labels ...` to filter).
-- **Comment**: `tea comment <number> "..."`
+- **Comment**: `tea comment <number> "..." </dev/null`
+  Always redirect stdin. `tea` reads stdin to EOF and appends it to the body,
+  so any non-interactive shell (every agent) hangs forever without
+  `</dev/null`. Same trap on `tea issues create --description` and
+  `tea pr create`.
 - **Apply / remove labels**: `tea api --method PATCH` on the issue, or
   `tea api repos/ShadowsOverWestgate/sow-nodebb-plugin-wiki/issues/<number>/labels` endpoints.
 - **Close**: `tea issues close <number>`
@@ -81,4 +85,4 @@ Used by `/wayfinder`. The **map** is a single issue with **child** issues as tic
 - **Blocking**: Gitea's **native dependencies API** — the canonical, UI-visible representation (shows as "Depends on" / "Blocks" on the issue page). Add an edge with `tea api -X POST repos/ShadowsOverWestgate/sow-nodebb-plugin-wiki/issues/<child>/dependencies -f owner=ShadowsOverWestgate -f repo=sow-nodebb-plugin-wiki -F index=<blocker>`, where `<blocker>` is the blocker's issue **index** (its `#number` — Gitea's dependency API takes the index directly, unlike GitHub's numeric database id). Check status with `tea api repos/ShadowsOverWestgate/sow-nodebb-plugin-wiki/issues/<child>/dependencies` (GET) — a ticket is unblocked when every returned issue's `state` is `closed`.
 - **Frontier query**: list the map's open children (`tea issues list --state open`, keep the ones whose description contains `Part of #<map>`), drop any with an open dependency (per the GET above) or an assignee; first in map order wins.
 - **Claim**: `tea issues edit <n> --add-assignees <username>` — the session's first write.
-- **Resolve**: `tea comment <n> "<answer>"`, then `tea issues close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
+- **Resolve**: `tea comment <n> "<answer>" </dev/null`, then `tea issues close <n>`, then append a context pointer (gist + link) to the map's Decisions-so-far.
