@@ -9,6 +9,8 @@ const state = {
   isAdmin: true,
   groupMembership: [],
   privilegesByCid: new Map(),
+  canByCid: new Map(),
+  canDefault: {},
   settings: { categoryIds: "41", includeChildCategories: "1", wikiNamespaceCreateGroups: "", homeTopicId: "3741" },
   categories: new Map([
     [41, { cid: 41, name: "Codebase", slug: "41/codebase", parentCid: 0 }],
@@ -93,7 +95,11 @@ installNodebbStubs({
     "./src/privileges": {
       categories: {
         get: async (cid) => state.privilegesByCid.get(parseInt(cid, 10)) ||
-          ({ read: true, "topics:read": true, "topics:create": true })
+          ({ read: true, "topics:read": true, "topics:create": true }),
+        can: async (privilege, cid) => {
+          const granted = state.canByCid.get(parseInt(cid, 10));
+          return granted ? !!granted[privilege] : state.canDefault[privilege] !== false;
+        }
       },
       topics: {
         filterTids: async (privilege, tids) => (Array.isArray(tids) ? tids : [])
@@ -215,6 +221,55 @@ test("wiki manage raw browse", async (t) => {
     assert.equal(byTid.get(3736).canTombstone, true, "deleted rows can still be tombstoned");
     assert.equal(byTid.get(3735).canTombstone, false, "already-tombstoned rows offer no tombstone action");
     assert.equal(byTid.get(3741).canTombstone, false, "the wiki home topic offers no tombstone action");
+
+    assert.equal(byTid.get(3735).canRestore, true, "tombstoned rows offer the undo");
+    assert.equal(byTid.get(3733).canRestore, false, "live rows offer nothing to restore");
+    assert.equal(byTid.get(3741).canRestore, false, "the wiki home topic is never tombstoned or restored");
+
+    assert.equal(byTid.get(3735).canPurge, true, "a hard-purge holder may purge tombstoned rows");
+    assert.equal(byTid.get(3733).canPurge, false, "live rows are never purgeable");
+    assert.equal(byTid.get(3741).canPurge, false, "the wiki home topic can never be purged");
+    assert.match(
+      byTid.get(3733).purgeUnavailableReason,
+      /tombstone/i,
+      "a row that cannot be purged says why"
+    );
+    assert.equal(
+      byTid.get(3733).actionTitle,
+      byTid.get(3733).purgeUnavailableReason,
+      "the row action carries that explanation, so no control is unexplained"
+    );
+    assert.match(byTid.get(3741).purgeUnavailableReason, /home page/i);
+    assert.equal(byTid.get(3741).showPurgeUnavailableReason, true, "the home row has no action button to explain itself");
+
+    assert.equal(ns41.tombstonedCount, 2, "namespaces count what is staged for removal");
+    assert.equal(ns41.canHardPurge, true);
+    assert.equal(ns78.tombstonedCount, 0);
+    assert.equal(state.render.data.tombstonedCount, 2, "the wiki-wide count sums the namespaces");
+    assert.equal(state.render.data.canHardPurge, true);
+    assert.ok(state.render.data.purgeChunkSize > 0, "the client is told how big a purge chunk may be");
+  });
+
+  await t.test("editors without the hard purge privilege get no purge controls", async () => {
+    state.isAdmin = true;
+    state.render = null;
+    state.canDefault = { "wiki:hard-purge": false };
+    wikiDirectory.invalidateAllWikiCaches();
+
+    await controller.renderManage({ uid: 1 }, resStub);
+
+    const ns41 = state.render.data.namespaces.find((ns) => parseInt(ns.cid, 10) === 41);
+    const byTid = new Map(ns41.rows.map((row) => [parseInt(row.tid, 10), row]));
+    assert.equal(state.render.data.canHardPurge, false, "no purge control anywhere");
+    assert.equal(ns41.canHardPurge, false);
+    assert.equal(ns41.tombstonedCount, 2, "a manager still sees how much is staged, purge privilege or not");
+    assert.equal(byTid.get(3735).canPurge, false);
+    assert.equal(byTid.get(3735).purgeUnavailableReason, "", "an absent privilege is not explained as a page problem");
+    assert.equal(byTid.get(3735).canRestore, true, "reversible tidying does not need the destructive privilege");
+    assert.equal(byTid.get(3733).canTombstone, true);
+
+    state.canDefault = {};
+    wikiDirectory.invalidateAllWikiCaches();
   });
 
   await t.test("non-admin managers do not see read-restricted namespaces", async () => {

@@ -2449,3 +2449,13 @@ a[href*="/wiki/"][href*="redlink=1"] {
     max-height: var(--wiki-sidebar-scroll-max-height, 50vh);
   }
 }
+
+/* /wiki/manage bulk purge bar: stays reachable while scrolling a long list */
+.wiki-manage-purge-bar {
+  background: var(--bs-body-bg, #fff);
+  border-top: 1px solid var(--bs-border-color, rgba(0, 0, 0, 0.15));
+  bottom: 0;
+  padding: 0.5rem 0;
+  position: sticky;
+  z-index: 5;
+}

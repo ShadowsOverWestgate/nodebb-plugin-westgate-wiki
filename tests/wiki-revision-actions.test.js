@@ -1640,7 +1640,9 @@ test("registers revision API routes with ensureLoggedIn middleware", async () =>
     ["get", "/westgate-wiki/revisions/:tid/:fromRevisionId/:toRevisionId/diff"],
     ["put", "/westgate-wiki/revisions/:tid/:revisionId/restore"],
     ["put", "/westgate-wiki/page/tombstone"],
-    ["delete", "/westgate-wiki/page/hard-purge"]
+    ["put", "/westgate-wiki/page/restore"],
+    ["delete", "/westgate-wiki/page/hard-purge"],
+    ["delete", "/westgate-wiki/pages/purge-tombstoned"]
   ];
 
   for (const [method, routePath] of expected) {
@@ -1649,4 +1651,231 @@ test("registers revision API routes with ensureLoggedIn middleware", async () =>
     assert.deepEqual(route.middleware, [ensureLoggedIn]);
     assert.equal(typeof route.handler, "function");
   }
+});
+
+test("restorePage clears the tombstone, needs only the tombstone privilege, and is attributable", async () => {
+  const harness = createHarness();
+
+  await loadActions(harness, async (actions) => {
+    const res = {};
+    await actions.restorePage({ uid: 9, body: { tid: "42" } }, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.payload.ok, true);
+    assert.deepEqual(harness.calls.clearTombstoneIfRevision, [{ tid: 42, revisionId: "rev-tombstone" }]);
+    assert.equal(harness.state.tombstone, null, "the page is no longer tombstoned");
+    assert.equal(harness.calls.canHardPurge.length, 0, "restoring does not require the destructive privilege");
+
+    const appended = harness.calls.appendRevision[0];
+    assert.equal(appended.action, "untombstone");
+    assert.equal(appended.uid, 9, "history records the account that ran the restore");
+    assert.deepEqual(harness.calls.invalidateNamespace, [{ cid: 7 }]);
+  });
+
+  const denied = createHarness({
+    state: { page: { ...createHarness().state.page, canDeleteWikiPage: false, topicPrivileges: {} } }
+  });
+  await loadActions(denied, async (actions) => {
+    const res = {};
+    await actions.restorePage({ uid: 9, body: { tid: "42" } }, res);
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(denied.calls.clearTombstoneIfRevision.length, 0);
+  });
+
+  const live = createHarness({ state: { tombstone: null } });
+  await loadActions(live, async (actions) => {
+    const res = {};
+    await actions.restorePage({ uid: 9, body: { tid: "42" } }, res);
+
+    assert.equal(res.statusCode, 409, "a page that is not tombstoned has nothing to restore");
+    assert.equal(live.calls.clearTombstoneIfRevision.length, 0);
+    assert.equal(live.calls.appendRevision.length, 0);
+  });
+});
+
+// Bulk purge harness: several pages across two namespaces, each with its own
+// tombstone state, so a batch can be observed end to end.
+function createBulkHarness(options = {}) {
+  const calls = { invalidateNamespace: [], purged: [], canHardPurge: [], getRawTopicRows: [] };
+  const rows = options.rows || [
+    { tid: 101, cid: 7, westgateWikiTombstoned: "1" },
+    { tid: 102, cid: 7 },
+    { tid: 103, cid: 7, westgateWikiTombstoned: "1" },
+    { tid: 201, cid: 8, westgateWikiTombstoned: "1" },
+    { tid: 999, cid: 8, westgateWikiTombstoned: "1" }
+  ];
+  const purgeableCids = options.purgeableCids || [7, 8];
+  const failingTids = options.failingTids || [];
+
+  const stubs = {
+    nodebb: {
+      "./src/controllers/helpers": {
+        formatApiResponse(status, res, payload) {
+          res.statusCode = status;
+          res.payload = payload;
+          return payload;
+        }
+      },
+      "./src/posts": {}
+    },
+    project: {
+      "lib/core/config.js": {
+        getSettings: async () => ({
+          isConfigured: true,
+          effectiveCategoryIds: [7, 8],
+          homeTopicId: 999
+        })
+      },
+      "lib/tree/wiki-directory-service.js": {
+        invalidateNamespace: (cid) => calls.invalidateNamespace.push(cid),
+        getRawTopicRows: async (cid) => {
+          calls.getRawTopicRows.push(cid);
+          return rows.filter((row) => row.cid === cid);
+        }
+      },
+      "lib/tree/wiki-paths.js": {
+        invalidateWikiTreeIndex: () => {}
+      },
+      "lib/pages/wiki-revision-permissions.js": {
+        canHardPurge: async (cid, uid) => {
+          calls.canHardPurge.push({ cid, uid });
+          return purgeableCids.includes(cid);
+        },
+        canViewHistory: async () => true,
+        canRestore: async () => true
+      },
+      "lib/read/topic-service.js": {
+        getWikiPage: async (tid) => {
+          const row = rows.find((each) => each.tid === tid);
+          return row ?
+            { status: "ok", topic: { tid, cid: row.cid, mainPid: tid * 10 }, canDeleteWikiPage: true } :
+            { status: "not-found" };
+        }
+      },
+      "lib/pages/wiki-tombstones.js": {
+        isTombstonedTopic: (row) => String(row && row.westgateWikiTombstoned) === "1",
+        getTombstone: async (tid) => {
+          const row = rows.find((each) => each.tid === tid);
+          return row && String(row.westgateWikiTombstoned) === "1" ?
+            { tombstoned: true, at: 1, uid: 5, revisionId: `rev-${tid}` } :
+            null;
+        },
+        getTombstoneIfRevision: async (tid) => {
+          const row = rows.find((each) => each.tid === tid);
+          return row && String(row.westgateWikiTombstoned) === "1" ?
+            { tombstoned: true, at: 1, uid: 5, revisionId: `rev-${tid}` } :
+            null;
+        },
+        hardPurgeCheckedTombstone: async (tid) => {
+          if (failingTids.includes(tid)) {
+            throw new Error("topic-locked");
+          }
+          calls.purged.push(tid);
+          const row = rows.find((each) => each.tid === tid);
+          if (row) {
+            rows.splice(rows.indexOf(row), 1);
+          }
+          return { tid, purged: true };
+        }
+      },
+      "lib/pages/wiki-revisions.js": {
+        getRevisionPurge: async () => null,
+        getRevisionRecord: async (tid, revisionId) => ({ revisionId, action: "tombstone" }),
+        beginRevisionPurge: async () => ({ active: true }),
+        markRevisionPurgeTopicPurged: async () => ({}),
+        purgeRevisions: async () => ({}),
+        clearRevisionPurge: async () => ({})
+      }
+    }
+  };
+
+  return { calls, rows, stubs };
+}
+
+async function loadBulkActions(harness, fn) {
+  return withStubs(harness.stubs, async () => fn(require("../lib/pages/wiki-revision-actions")));
+}
+
+test("bulk purge removes every tombstoned page in a namespace and leaves the rest alone", async () => {
+  const harness = createBulkHarness();
+
+  await loadBulkActions(harness, async (actions) => {
+    const res = {};
+    await actions.purgeTombstonedPages({ uid: 9, body: { cid: 7 } }, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.payload.purged, [101, 103]);
+    assert.deepEqual(res.payload.failed, []);
+    assert.equal(res.payload.remaining, 0);
+    assert.equal(res.payload.done, true);
+    assert.deepEqual(harness.calls.purged, [101, 103], "pages that are not tombstoned are skipped");
+    assert.deepEqual(
+      harness.calls.invalidateNamespace,
+      [7],
+      "cache invalidation fires once per namespace, not once per page"
+    );
+  });
+});
+
+test("bulk purge never touches the wiki home page and honours per-namespace privileges", async () => {
+  const wikiWide = createBulkHarness();
+  await loadBulkActions(wikiWide, async (actions) => {
+    const res = {};
+    await actions.purgeTombstonedPages({ uid: 9, body: {} }, res);
+
+    assert.deepEqual(res.payload.purged, [101, 103, 201]);
+    assert.equal(wikiWide.calls.purged.includes(999), false, "the wiki home page is never purged");
+    assert.deepEqual(wikiWide.calls.invalidateNamespace, [7, 8]);
+  });
+
+  const restricted = createBulkHarness({ purgeableCids: [8] });
+  await loadBulkActions(restricted, async (actions) => {
+    const res = {};
+    await actions.purgeTombstonedPages({ uid: 9, body: {} }, res);
+
+    assert.deepEqual(res.payload.purged, [201], "namespaces the caller may not purge are left untouched");
+  });
+
+  const nothing = createBulkHarness({ purgeableCids: [] });
+  await loadBulkActions(nothing, async (actions) => {
+    const res = {};
+    await actions.purgeTombstonedPages({ uid: 9, body: {} }, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.payload.purged, [], "a caller without the hard purge privilege purges nothing");
+    assert.deepEqual(nothing.calls.invalidateNamespace, []);
+  });
+});
+
+test("a bulk purge continues past a failure and reports which pages failed and why", async () => {
+  const harness = createBulkHarness({ failingTids: [101] });
+
+  await loadBulkActions(harness, async (actions) => {
+    const res = {};
+    await actions.purgeTombstonedPages({ uid: 9, body: { cid: 7 } }, res);
+
+    assert.deepEqual(res.payload.purged, [103], "one locked page does not abandon the others");
+    assert.deepEqual(res.payload.failed, [{ tid: 101, reason: "topic-locked" }]);
+    assert.equal(res.payload.remaining, 1, "a failed page stays tombstoned and can be retried");
+    assert.equal(res.payload.done, false);
+  });
+});
+
+test("bulk purge rejects an oversized chunk instead of silently truncating it", async () => {
+  const harness = createBulkHarness();
+
+  await loadBulkActions(harness, async (actions) => {
+    const res = {};
+    await actions.purgeTombstonedPages({ uid: 9, body: { cid: 7, limit: actions.BULK_PURGE_MAX_CHUNK + 1 } }, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.deepEqual(harness.calls.purged, []);
+
+    const bounded = {};
+    await actions.purgeTombstonedPages({ uid: 9, body: { cid: 7, limit: 1 } }, bounded);
+    assert.deepEqual(bounded.payload.purged, [101], "a bounded chunk purges only its share");
+    assert.equal(bounded.payload.remaining, 1);
+    assert.equal(bounded.payload.done, false);
+  });
 });

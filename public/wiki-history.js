@@ -458,7 +458,14 @@
     if (!revision || !revision.revisionId || !state.canRestore) {
       return;
     }
-    if (!window.confirm("Restore this wiki revision? The current page content will be replaced.")) {
+    const confirmAction = window.westgateWiki && window.westgateWiki.confirmAction;
+    const confirmed = confirmAction ? await confirmAction({
+      title: "Restore wiki revision",
+      message: "Restore this wiki revision? The current page content will be replaced.",
+      confirmLabel: "Restore",
+      confirmClass: "btn-primary"
+    }) : false;
+    if (!confirmed) {
       return;
     }
 
@@ -517,12 +524,14 @@
   async function hardPurgePage(root, state) {
     const button = findHardPurgeButton(root);
     const title = state.pageTitle || "this page";
-    const typed = window.prompt(`Type "${title}" to permanently hard purge this tombstoned wiki page.`);
-    if (typed === null) {
-      return;
-    }
-    if (typed !== title) {
-      setStatus(root, "Hard purge confirmation did not match the page title.", "error");
+    const confirmTyped = window.westgateWiki && window.westgateWiki.confirmTyped;
+    const confirmed = confirmTyped ? await confirmTyped({
+      title: "Hard purge wiki page",
+      message: `This permanently removes "${title}". It cannot be undone. Type ${title} to confirm.`,
+      phrase: title,
+      confirmLabel: "Hard purge"
+    }) : false;
+    if (!confirmed) {
       return;
     }
 

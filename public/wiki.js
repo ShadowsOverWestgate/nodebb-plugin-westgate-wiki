@@ -1165,7 +1165,17 @@ $(document).ready(function () {
 
     event.preventDefault();
 
-    if (!window.confirm("Hide this wiki page? Staff can restore it later from revision history.")) {
+    // The manage page tombstones without a prompt, because there the undo sits
+    // in the same row. Here the page navigates away, so keep the confirmation —
+    // through the forum's modal, never the browser's suppressible dialog.
+    const confirmAction = window.westgateWiki && window.westgateWiki.confirmAction;
+    const confirmed = confirmAction ? await confirmAction({
+      title: "Hide wiki page",
+      message: "Hide this wiki page? Staff can restore it later from the wiki manager or the page's revision history.",
+      confirmLabel: "Hide page",
+      confirmClass: "btn-danger"
+    }) : false;
+    if (!confirmed) {
       return;
     }
 

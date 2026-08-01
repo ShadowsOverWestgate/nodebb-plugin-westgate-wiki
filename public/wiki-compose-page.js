@@ -519,8 +519,17 @@ async function initWikiComposePage() {
           return;
         }
 
-        if (hasUnsavedChanges && !window.confirm("You have unsaved changes. Return to the article anyway?")) {
-          return;
+        if (hasUnsavedChanges) {
+          const confirmAction = window.westgateWiki && window.westgateWiki.confirmAction;
+          const confirmed = confirmAction ? await confirmAction({
+            title: "Unsaved changes",
+            message: "You have unsaved changes. Return to the article anyway?",
+            confirmLabel: "Discard changes",
+            confirmClass: "btn-danger"
+          }) : false;
+          if (!confirmed) {
+            return;
+          }
         }
         await destroyWikiEditor();
 

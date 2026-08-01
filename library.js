@@ -205,10 +205,24 @@ plugin.registerApiRoutes = async function ({ router, middleware }) {
   );
   routeHelpers.setupApiRoute(
     router,
+    "put",
+    "/westgate-wiki/page/restore",
+    [middleware.ensureLoggedIn],
+    wikiRevisionActions.restorePage
+  );
+  routeHelpers.setupApiRoute(
+    router,
     "delete",
     "/westgate-wiki/page/hard-purge",
     [middleware.ensureLoggedIn],
     wikiRevisionActions.hardPurgePage
+  );
+  routeHelpers.setupApiRoute(
+    router,
+    "delete",
+    "/westgate-wiki/pages/purge-tombstoned",
+    [middleware.ensureLoggedIn],
+    wikiRevisionActions.purgeTombstonedPages
   );
   routeHelpers.setupApiRoute(
     router,

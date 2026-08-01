@@ -6,6 +6,8 @@ const { JSDOM } = require("jsdom");
 const path = require("node:path");
 const test = require("node:test");
 
+const { installConfirmStub } = require("./helpers/wiki-confirm-dom");
+
 const root = path.resolve(__dirname, "..");
 
 function readProjectFile(relativePath) {
@@ -648,7 +650,7 @@ test("wiki history client requires exact title confirmation before hard purge DE
       json: async () => ({ response: { ok: true } })
     };
   };
-  dom.window.prompt = () => "Moonlit";
+  const modal = installConfirmStub(dom, { typed: "Moonlit" });
 
   dom.window.eval(client);
   dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
@@ -657,9 +659,9 @@ test("wiki history client requires exact title confirmation before hard purge DE
   await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
 
   assert.equal(fetchCalls.length, 0, "mismatched typed confirmation must not call DELETE");
-  assert.match(dom.window.document.querySelector("[data-wiki-history-status]").textContent, /did not match/i);
+  assert.equal(modal.calls.length, 1, "the confirmation is the forum modal, not a browser dialog");
 
-  dom.window.prompt = () => "Moonlit Page";
+  modal.typed = "Moonlit Page";
   button.dispatchEvent(new dom.window.Event("click", { bubbles: true }));
   await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
   await new Promise((resolve) => dom.window.setTimeout(resolve, 0));
@@ -705,7 +707,7 @@ test("wiki history client initializes on history route with relative_path", asyn
       json: async () => ({ response: { ok: true } })
     };
   };
-  dom.window.prompt = () => "Moonlit Page";
+  installConfirmStub(dom, { typed: "Moonlit Page" });
 
   dom.window.eval(client);
   dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
@@ -753,7 +755,7 @@ test("wiki history client ignores forged hard purge controls outside history rou
       json: async () => ({ response: { ok: true } })
     };
   };
-  dom.window.prompt = () => "Moonlit Page";
+  installConfirmStub(dom, { typed: "Moonlit Page" });
 
   dom.window.eval(client);
   dom.window.document.dispatchEvent(new dom.window.Event("DOMContentLoaded"));
